@@ -1,3 +1,9 @@
 node_modules
 dist
 .DS_Store
+
+# Personal financial data must never be committed
+*.xlsx
+*.xls
+*.csv
+*.wvault
