@@ -1,0 +1,104 @@
+import { useState } from 'react'
+import { useVault } from './VaultContext.jsx'
+import { COUNTRIES, COUNTRY_CODES } from '../lib/format.js'
+import { PassphraseForm } from './ui.jsx'
+import { download, isAbort, pickExcel } from '../lib/fileio.js'
+
+export default function Settings() {
+  const v = useVault()
+  const { data, update } = v
+  const [c1, c2] = data.settings.countries
+  const [changing, setChanging] = useState(false)
+  const [msg, setMsg] = useState('')
+  const [busy, setBusy] = useState(false)
+  const setSettings = (patch) => update((d) => ({ ...d, settings: { ...d.settings, ...patch } }))
+
+  const exportExcel = async () => {
+    if (!window.confirm('The Excel copy is NOT encrypted: anyone who gets it can read all your account numbers and balances. Export anyway?')) return
+    const { exportWorkbook } = await import('../lib/excel.js')
+    download('WealthTracker-export.xlsx', await exportWorkbook(data), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+  }
+  const importExcel = async () => {
+    try {
+      const f = await pickExcel()
+      const { importWorkbook } = await import('../lib/excel.js')
+      const { data: d, warnings } = await importWorkbook(f.buffer)
+      if (!window.confirm(`Replace ALL current data with ${d.accounts.length} items, ${d.policies.length} policies and ${d.balances.length} balances from ${f.name}?`)) return
+      update(() => d)
+      setMsg(`Imported ${f.name}.${warnings.length ? ' Skipped: ' + warnings.join(' ') : ''}`)
+    } catch (e) {
+      if (!isAbort(e)) setMsg(e.message)
+    }
+  }
+  const changePass = async (p) => {
+    setBusy(true)
+    try { await v.changePassphrase(p); setChanging(false); setMsg('Passphrase changed and file re-encrypted.') } finally { setBusy(false) }
+  }
+
+  return (
+    <>
+      <div className="panel">
+        <div className="p-head"><div className="title">Settings</div></div>
+        <div className="col">
+          {[['Country 1', c1, 0, c2], ['Country 2', c2, 1, c1]].map(([label, val, idx, other]) => (
+            <div className="row" key={label}>
+              <span>{label}</span>
+              <select className="pw sm" value={val} onChange={(e) => {
+                const next = [...data.settings.countries]
+                next[idx] = e.target.value
+                setSettings({ countries: next })
+              }}>
+                {COUNTRY_CODES.filter((k) => k !== other).map((k) => <option key={k} value={k}>{COUNTRIES[k].flag} {COUNTRIES[k].name} ({COUNTRIES[k].currency})</option>)}
+              </select>
+            </div>
+          ))}
+          <p className="note">Changing a country only changes what is shown. Data for the other countries stays in your file.</p>
+          <div className="row">
+            <span>“Parent” label<small>Rename to e.g. “Mom” or “Dad”</small></span>
+            <input className="pw sm" value={data.settings.parentLabel} maxLength={20} onChange={(e) => setSettings({ parentLabel: e.target.value })} onBlur={(e) => !e.target.value.trim() && setSettings({ parentLabel: 'Parent' })} />
+          </div>
+        </div>
+      </div>
+
+      <div className="panel">
+        <div className="p-head"><div className="title">🔒 Security</div></div>
+        <div className="col">
+          <div className="row">
+            <span>Data file<small>{v.fileName} · AES-256-GCM, key derived from your passphrase</small></span>
+            <span className="row-actions">
+              <button className="btn" onClick={v.lock}>Lock now</button>
+              <button className="btn" onClick={v.switchFile}>Change file</button>
+            </span>
+          </div>
+          {!v.canWrite && (
+            <div className="row">
+              <span>Save a copy<small>This browser cannot save in place. Download after changes.</small></span>
+              <button className="btn primary" onClick={v.downloadNow}>Download encrypted file</button>
+            </div>
+          )}
+          <div className="row">
+            <span>Passphrase<small>Re-encrypts the whole file</small></span>
+            <button className="btn" onClick={() => setChanging(!changing)}>{changing ? 'Cancel' : 'Change passphrase'}</button>
+          </div>
+          {changing && <div className="inline-form"><PassphraseForm submitLabel="Change passphrase" onSubmit={changePass} busy={busy} /></div>}
+          <div className="row">
+            <span>Auto-lock after<small>Idle time before the app locks itself</small></span>
+            <select className="pw sm" value={data.settings.autoLockMin} onChange={(e) => setSettings({ autoLockMin: Number(e.target.value) })}>
+              <option value={5}>5 min</option><option value={10}>10 min</option><option value={30}>30 min</option><option value={0}>Never</option>
+            </select>
+          </div>
+          <div className="row">
+            <span>Export decrypted Excel copy<small>For opening in Excel. The copy is NOT encrypted. Delete it when done.</small></span>
+            <button className="btn danger-btn" onClick={exportExcel}>Export…</button>
+          </div>
+          <div className="row">
+            <span>Import from Excel<small>Replaces all current data with a workbook exported from this app.</small></span>
+            <button className="btn" onClick={importExcel}>Import…</button>
+          </div>
+          {msg && <div className="note">{msg}</div>}
+          <div className="warn">Also recommended: keep the file on an encrypted disk (BitLocker / FileVault) and keep a second backup copy somewhere private. Data files are excluded from this Git repository.</div>
+        </div>
+      </div>
+    </>
+  )
+}
