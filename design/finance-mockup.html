@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Finance section mockup</title>
+<style>
+/* Tokens copied from pmo-hub public/theme.css (Warm Paper / Midnight) */
+:root{color-scheme:light;--font:'Segoe UI',system-ui,-apple-system,sans-serif;--r:12px;--r-sm:8px;
+--bg:#f7f4ee;--surface:#fffdf9;--surface-2:#f1ece2;--text:#2b2722;--muted:#7a7266;--line:#e6dfd2;
+--accent:#0f6e6e;--accent-text:#fff;--head:#0f4c4c;--head-text:#fff;--shadow:0 8px 30px rgba(60,40,10,.18);
+--red:#c8402f;--amber:#d98e04;--green:#3f8f55;--blue:#4a7fb0;--grey:#a39a8b;--on-status:#fff}
+:root[data-theme="dark"]{color-scheme:dark;--r:6px;--r-sm:5px;--bg:#0f1420;--surface:#181f2e;--surface-2:#212a3d;
+--text:#e7ebf3;--muted:#9aa5ba;--line:#2a3347;--accent:#6ea8ff;--accent-text:#0b1220;--head:#0a0e17;--head-text:#e7ebf3;
+--shadow:0 8px 30px rgba(0,0,0,.6);--red:#ff6b6b;--amber:#ffc233;--green:#3ddc84;--blue:#5cb3ff;--grey:#74809a;--on-status:#0b1220}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--r:6px;--r-sm:5px;--bg:#0f1420;--surface:#181f2e;--surface-2:#212a3d;
+--text:#e7ebf3;--muted:#9aa5ba;--line:#2a3347;--accent:#6ea8ff;--accent-text:#0b1220;--head:#0a0e17;--head-text:#e7ebf3;
+--shadow:0 8px 30px rgba(0,0,0,.6);--red:#ff6b6b;--amber:#ffc233;--green:#3ddc84;--blue:#5cb3ff;--grey:#74809a;--on-status:#0b1220}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font)}
+header{background:var(--head);color:var(--head-text);padding:12px 24px;display:flex;justify-content:space-between;align-items:center}
+header h1{font-size:1.05rem;margin:0}
+button{font:inherit;cursor:pointer}
+.btn{background:transparent;border:1px solid currentColor;color:inherit;border-radius:var(--r-sm);padding:5px 12px;font-size:.85rem}
+.btn.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+main{max-width:1180px;margin:0 auto;padding:24px 16px 60px}
+.note{color:var(--muted);font-size:.85rem;margin:0 0 20px}
+h2.sec{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:28px 0 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:16px}
+@media(max-width:480px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.p-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)}
+.p-head .title{display:flex;align-items:center;gap:10px;font-weight:600}
+.flag{font-size:1.3rem}
+.cur{font-size:.75rem;background:var(--surface-2);color:var(--muted);padding:2px 8px;border-radius:99px}
+.picker{background:var(--surface-2);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:4px 8px;font:inherit;font-size:.85rem}
+.networth{padding:16px 18px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;border-bottom:1px solid var(--line)}
+.kpi small{display:block;color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em}
+.kpi b{font-size:1.25rem}
+.pos{color:var(--green)}.neg{color:var(--red)}
+.bar{height:8px;border-radius:99px;background:var(--red);margin:0 18px 14px;overflow:hidden;display:flex}
+.bar i{background:var(--green);display:block}
+.cols{display:grid;grid-template-columns:1fr 1fr}
+@media(max-width:700px){.cols{grid-template-columns:1fr}}
+.col{padding:14px 18px}
+.col+.col{border-left:1px solid var(--line)}
+@media(max-width:700px){.col+.col{border-left:0;border-top:1px solid var(--line)}}
+.col h3{margin:0 0 8px;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;display:flex;justify-content:space-between}
+.col h3.a{color:var(--green)}.col h3.l{color:var(--red)}
+.row{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:.92rem}
+.row span:first-child small{display:block;color:var(--muted);font-size:.72rem}
+.row .v{font-variant-numeric:tabular-nums;white-space:nowrap}
+.add{margin-top:10px;width:100%;background:transparent;border:1px dashed var(--line);color:var(--muted);border-radius:var(--r-sm);padding:6px}
+.add:hover{color:var(--accent);border-color:var(--accent)}
+.foot{padding:8px 18px;background:var(--surface-2);color:var(--muted);font-size:.75rem;display:flex;justify-content:space-between}
+.tag{font-size:.65rem;padding:1px 6px;border-radius:99px;color:var(--on-status);margin-left:6px;vertical-align:middle}
+.t-blue{background:var(--blue)}.t-amber{background:var(--amber)}.t-grey{background:var(--grey)}.t-green{background:var(--green)}
+/* edit state */
+.edit .row{align-items:center}
+.edit input{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:4px 6px;font:inherit;font-size:.88rem}
+.edit .row .v input{width:110px;text-align:right}
+.x{background:none;border:0;color:var(--red);font-size:1rem}
+/* modal */
+.modal{max-width:380px;margin:0 auto}
+.field{display:block;margin:10px 0;font-size:.8rem;color:var(--muted)}
+.field input,.field select{display:block;width:100%;margin-top:4px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 8px;font:inherit}
+.actions{display:flex;gap:8px;justify-content:flex-end;padding:12px 18px;border-top:1px solid var(--line)}
+.empty{padding:26px;text-align:center;color:var(--muted);font-size:.9rem}
+</style>
+</head>
+<body>
+<header>
+  <h1>My Dashboard</h1>
+  <button class="btn" onclick="var r=document.documentElement;r.dataset.theme=(r.dataset.theme==='dark'?'light':'dark')">Toggle light / dark</button>
+</header>
+<main>
+  <p class="note">MOCKUP ONLY — no code yet. Colors come from pmo-hub's theme (Warm Paper / Midnight). Use the button above to preview both themes.</p>
+
+  <!-- ========== Mockup A: main view ========== -->
+  <h2 class="sec">A · Finance section (default view): two country panels side by side</h2>
+  <div class="grid">
+
+    <article class="panel">
+      <div class="p-head">
+        <div class="title"><span class="flag">🇺🇸</span> United States <span class="cur">USD $</span></div>
+        <div><select class="picker"><option>USA</option><option>India</option><option>UK</option><option>Australia</option><option>Switzerland</option></select> <button class="btn">Edit</button></div>
+      </div>
+      <div class="networth">
+        <div class="kpi"><small>Net worth</small><b class="pos">$ 312,450</b></div>
+        <div class="kpi"><small>Assets</small><b>$ 398,200</b></div>
+        <div class="kpi"><small>Liabilities</small><b class="neg">$ 85,750</b></div>
+      </div>
+      <div class="bar" title="Assets vs liabilities"><i style="width:78%"></i></div>
+      <div class="cols">
+        <div class="col">
+          <h3 class="a"><span>Assets</span><span>$ 398,200</span></h3>
+          <div class="row"><span>Checking<small>Chase</small></span><span class="v">$ 8,200</span></div>
+          <div class="row"><span>401(k)<small>Fidelity</small></span><span class="v">$ 184,000</span></div>
+          <div class="row"><span>Brokerage<small>Schwab</small></span><span class="v">$ 96,000</span></div>
+          <div class="row"><span>Home equity<small>Property</small></span><span class="v">$ 110,000</span></div>
+          <button class="add">+ Add asset</button>
+        </div>
+        <div class="col">
+          <h3 class="l"><span>Liabilities</span><span>$ 85,750</span></h3>
+          <div class="row"><span>Mortgage<small>Wells Fargo</small></span><span class="v">$ 78,000</span></div>
+          <div class="row"><span>Auto loan<small>Toyota Financial</small></span><span class="v">$ 6,300</span></div>
+          <div class="row"><span>Credit card<small>Amex</small></span><span class="v">$ 1,450</span></div>
+          <button class="add">+ Add liability</button>
+        </div>
+      </div>
+      <div class="foot"><span>Last updated 27 Oct 2026</span><span>Manual entry</span></div>
+    </article>
+
+    <article class="panel">
+      <div class="p-head">
+        <div class="title"><span class="flag">🇮🇳</span> India <span class="cur">INR ₹</span></div>
+        <div><select class="picker"><option>India</option><option>USA</option><option>UK</option><option>Australia</option><option>Switzerland</option></select> <button class="btn">Edit</button></div>
+      </div>
+      <div class="networth">
+        <div class="kpi"><small>Net worth</small><b class="pos">₹ 1,12,40,000</b></div>
+        <div class="kpi"><small>Assets</small><b>₹ 1,38,00,000</b></div>
+        <div class="kpi"><small>Liabilities</small><b class="neg">₹ 25,60,000</b></div>
+      </div>
+      <div class="bar"><i style="width:84%"></i></div>
+      <div class="cols">
+        <div class="col">
+          <h3 class="a"><span>Assets</span><span>₹ 1,38,00,000</span></h3>
+          <div class="row"><span>Savings<small>HDFC</small></span><span class="v">₹ 6,50,000</span></div>
+          <div class="row"><span>Mutual funds<small>Zerodha</small></span><span class="v">₹ 41,50,000</span></div>
+          <div class="row"><span>PPF / EPF<small>Retirement</small></span><span class="v">₹ 30,00,000</span></div>
+          <div class="row"><span>Apartment<small>Pune</small></span><span class="v">₹ 60,00,000</span></div>
+          <button class="add">+ Add asset</button>
+        </div>
+        <div class="col">
+          <h3 class="l"><span>Liabilities</span><span>₹ 25,60,000</span></h3>
+          <div class="row"><span>Home loan<small>SBI</small></span><span class="v">₹ 24,00,000</span></div>
+          <div class="row"><span>Credit card<small>ICICI</small></span><span class="v">₹ 1,60,000</span></div>
+          <button class="add">+ Add liability</button>
+        </div>
+      </div>
+      <div class="foot"><span>Last updated 20 Oct 2026</span><span>Manual entry</span></div>
+    </article>
+  </div>
+
+  <!-- ========== Mockup B: edit mode + add form ========== -->
+  <h2 class="sec">B · Edit mode (click Edit) and the Add form</h2>
+  <div class="grid">
+    <article class="panel edit">
+      <div class="p-head">
+        <div class="title"><span class="flag">🇺🇸</span> United States <span class="cur">USD $</span></div>
+        <div><button class="btn primary">Done</button></div>
+      </div>
+      <div class="cols">
+        <div class="col">
+          <h3 class="a"><span>Assets</span></h3>
+          <div class="row"><span><input value="Checking" /></span><span class="v"><input value="8200" /></span><button class="x" title="Delete">✕</button></div>
+          <div class="row"><span><input value="401(k)" /></span><span class="v"><input value="184000" /></span><button class="x">✕</button></div>
+          <div class="row"><span><input value="Brokerage" /></span><span class="v"><input value="96000" /></span><button class="x">✕</button></div>
+          <button class="add">+ Add asset</button>
+        </div>
+        <div class="col">
+          <h3 class="l"><span>Liabilities</span></h3>
+          <div class="row"><span><input value="Mortgage" /></span><span class="v"><input value="78000" /></span><button class="x">✕</button></div>
+          <div class="row"><span><input value="Auto loan" /></span><span class="v"><input value="6300" /></span><button class="x">✕</button></div>
+          <button class="add">+ Add liability</button>
+        </div>
+      </div>
+      <div class="foot"><span>Changes save automatically in this browser</span><span></span></div>
+    </article>
+
+    <article class="panel modal">
+      <div class="p-head"><div class="title">Add asset · 🇺🇸 USA</div><button class="x" style="color:var(--muted)">✕</button></div>
+      <div style="padding:6px 18px 14px">
+        <label class="field">Name<input value="Savings account" /></label>
+        <label class="field">Category / institution (optional)<input value="Ally" /></label>
+        <label class="field">Current value (USD)<input value="25,000" /></label>
+      </div>
+      <div class="actions"><button class="btn">Cancel</button><button class="btn primary">Save</button></div>
+    </article>
+  </div>
+
+  <!-- ========== Mockup C: empty / country picker ========== -->
+  <h2 class="sec">C · A new country slot (empty state) and the allowed countries</h2>
+  <div class="grid">
+    <article class="panel">
+      <div class="p-head">
+        <div class="title"><span class="flag">🇬🇧</span> United Kingdom <span class="cur">GBP £</span></div>
+        <div><select class="picker"><option>UK</option><option>USA</option><option>India</option><option>Australia</option><option>Switzerland</option></select></div>
+      </div>
+      <div class="empty">Nothing here yet.<br />Add your first asset or liability.<br /><br /><button class="btn primary">+ Add asset</button> <button class="btn" style="color:var(--text)">+ Add liability</button></div>
+    </article>
+    <article class="panel">
+      <div class="p-head"><div class="title">Allowed countries &amp; currencies</div></div>
+      <div class="col">
+        <div class="row"><span>🇺🇸 USA</span><span class="v">USD $</span></div>
+        <div class="row"><span>🇮🇳 India</span><span class="v">INR ₹ (lakh/crore grouping)</span></div>
+        <div class="row"><span>🇬🇧 UK</span><span class="v">GBP £</span></div>
+        <div class="row"><span>🇦🇺 Australia</span><span class="v">AUD $</span></div>
+        <div class="row"><span>🇨🇭 Switzerland</span><span class="v">CHF</span></div>
+        <p class="note" style="margin:10px 0 0">The two panels can't show the same country at once.</p>
+      </div>
+    </article>
+  </div>
+</main>
+</body>
+</html>

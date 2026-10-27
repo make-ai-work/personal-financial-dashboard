@@ -1,0 +1,25 @@
+{
+  "name": "personal-dashboard",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test test/*.test.js",
+    "test:e2e": "node test/e2e/finance.e2e.mjs",
+    "test:e2e:pets": "node test/e2e/pets.e2e.mjs",
+    "test:e2e:countries": "node test/e2e/countries.e2e.mjs",
+    "test:e2e:property": "node test/e2e/property.e2e.mjs"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.2.0",
+    "vite": "^7.3.7"
+  }
+}

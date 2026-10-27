@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Finance mockup v5</title>
+<style>
+/* Tokens from pmo-hub public/theme.css (Warm Paper / Midnight) */
+:root{color-scheme:light;--font:'Segoe UI',system-ui,-apple-system,sans-serif;--r:12px;--r-sm:8px;
+--bg:#f7f4ee;--surface:#fffdf9;--surface-2:#f1ece2;--text:#2b2722;--muted:#7a7266;--line:#e6dfd2;
+--accent:#0f6e6e;--accent-text:#fff;--head:#0f4c4c;--head-text:#fff;--shadow:0 8px 30px rgba(60,40,10,.18);
+--purple:#8b6cf0;--red:#c8402f;--amber:#d98e04;--green:#3f8f55;--blue:#4a7fb0;--grey:#a39a8b;--on-status:#fff}
+:root[data-theme="dark"]{--purple:#a58bff;color-scheme:dark;--r:6px;--r-sm:5px;--bg:#0f1420;--surface:#181f2e;--surface-2:#212a3d;
+--text:#e7ebf3;--muted:#9aa5ba;--line:#2a3347;--accent:#6ea8ff;--accent-text:#0b1220;--head:#0a0e17;--head-text:#e7ebf3;
+--shadow:0 8px 30px rgba(0,0,0,.6);--red:#ff6b6b;--amber:#ffc233;--green:#3ddc84;--blue:#5cb3ff;--grey:#74809a;--on-status:#0b1220}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--purple:#a58bff;color-scheme:dark;--r:6px;--r-sm:5px;--bg:#0f1420;--surface:#181f2e;--surface-2:#212a3d;
+--text:#e7ebf3;--muted:#9aa5ba;--line:#2a3347;--accent:#6ea8ff;--accent-text:#0b1220;--head:#0a0e17;--head-text:#e7ebf3;
+--shadow:0 8px 30px rgba(0,0,0,.6);--red:#ff6b6b;--amber:#ffc233;--green:#3ddc84;--blue:#5cb3ff;--grey:#74809a;--on-status:#0b1220}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font)}
+header{background:var(--head);color:var(--head-text);padding:10px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{font-size:1.05rem;margin:0}
+.file{font-size:.8rem;opacity:.85}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px}
+button{font:inherit;cursor:pointer}
+.btn{background:transparent;border:1px solid currentColor;color:inherit;border-radius:var(--r-sm);padding:5px 12px;font-size:.85rem}
+.btn.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+nav{background:var(--surface);border-bottom:1px solid var(--line);padding:0 24px;display:flex;gap:4px;overflow-x:auto}
+nav button{background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:12px 14px;white-space:nowrap}
+nav button.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+main{max-width:1180px;margin:0 auto;padding:22px 16px 60px}
+.mock{display:none}.mock.on{display:block}
+.note{color:var(--muted);font-size:.85rem;margin:0 0 16px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.p-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);gap:8px;flex-wrap:wrap}
+.title{display:flex;align-items:center;gap:10px;font-weight:600}
+.cur{font-size:.75rem;background:var(--surface-2);color:var(--muted);padding:2px 8px;border-radius:99px}
+.pos{color:var(--green)}.neg{color:var(--red)}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 18px}
+@media(max-width:560px){.kpis{grid-template-columns:1fr}}
+.kpi small{display:block;color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em}
+.kpi b{font-size:1.3rem;font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th,td{padding:10px 18px;text-align:right;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--surface-2)}
+tr.total td{font-weight:700;background:var(--surface-2)}
+td small{display:block;color:var(--muted);font-size:.72rem}
+.fx{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;background:var(--surface-2);font-size:.82rem;color:var(--muted);gap:8px;flex-wrap:wrap}
+.fx b{color:var(--text)}
+.tag{font-size:.65rem;padding:1px 7px;border-radius:99px;color:var(--on-status);background:var(--blue);margin-left:6px}
+.cols{display:grid;grid-template-columns:1fr 1fr}
+@media(max-width:700px){.cols{grid-template-columns:1fr}}
+.col{padding:14px 18px}.col+.col{border-left:1px solid var(--line)}
+@media(max-width:700px){.col+.col{border-left:0;border-top:1px solid var(--line)}}
+.col h3{margin:0 0 8px;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;display:flex;justify-content:space-between}
+.col h3.a{color:var(--green)}.col h3.l{color:var(--red)}
+.row{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:.92rem}
+.row small{display:block;color:var(--muted);font-size:.72rem}
+.row .v{font-variant-numeric:tabular-nums;white-space:nowrap}
+.add{margin-top:10px;width:100%;background:transparent;border:1px dashed var(--line);color:var(--muted);border-radius:var(--r-sm);padding:6px}
+.chart{padding:10px 18px 16px}
+.chart svg{width:100%;height:auto;display:block}
+.legend{display:flex;gap:16px;font-size:.78rem;color:var(--muted);padding:0 18px 12px;flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:3px;margin-right:6px;vertical-align:middle;border-radius:2px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden}
+.seg button{background:var(--surface);border:0;color:var(--muted);padding:4px 10px;font-size:.8rem}
+.seg button.on{background:var(--accent);color:var(--accent-text)}
+.upd{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.upd input{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:4px 8px;font:inherit;font-size:.85rem}
+.center{max-width:520px;margin:30px auto;text-align:center;padding:28px 24px}
+.center h2{margin:0 0 6px}
+.choice{display:grid;gap:10px;margin:20px 0 6px;text-align:left}
+.choice button{background:var(--surface-2);border:1px solid var(--line);color:var(--text);border-radius:var(--r-sm);padding:12px 14px;text-align:left}
+.choice button small{display:block;color:var(--muted);margin-top:2px}
+.choice button.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+.choice button.primary small{color:inherit;opacity:.85}
+.choice button[disabled]{opacity:.55;cursor:not-allowed}
+
+.chip{font-size:.65rem;padding:1px 8px;border-radius:99px;color:var(--on-status);margin-left:6px;vertical-align:middle;font-weight:600}
+.c-mine{background:var(--accent);color:var(--accent-text)}.c-joint{background:var(--amber)}.c-parent{background:var(--purple)}
+.radios{display:flex;gap:8px;margin-top:6px}
+.radios label{flex:1;border:1px solid var(--line);border-radius:var(--r-sm);padding:8px;text-align:center;background:var(--bg);color:var(--text);font-size:.85rem;margin:0}
+.radios label.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.radios small{display:block;color:var(--muted);font-size:.7rem}
+.field{display:block;margin:12px 0;font-size:.8rem;color:var(--muted)}
+.field input{display:block;width:100%;margin-top:4px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 8px;font:inherit}
+.bar2{padding:10px 24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.8rem;color:var(--muted)}
+
+.tblw{overflow-x:auto}
+.tblw table{min-width:900px;font-size:.84rem}
+.tblw th,.tblw td{padding:9px 10px;white-space:nowrap}
+.t-a td:nth-child(-n+4),.t-a th:nth-child(-n+4),.t-a td:nth-child(6),.t-a th:nth-child(6),.t-a td:nth-child(7),.t-a th:nth-child(7),
+.t-l td:nth-child(-n+4),.t-l th:nth-child(-n+4),
+.t-p td:nth-child(-n+4),.t-p th:nth-child(-n+4),.t-p td:nth-child(6),.t-p th:nth-child(6){text-align:left}
+.tblw td.w{white-space:normal}
+.mix{display:flex;height:9px;border-radius:99px;overflow:hidden;min-width:110px;background:var(--surface-2)}
+.mix i{display:block}
+.m-eq{background:var(--blue)}.m-cash{background:var(--green)}.m-pm{background:var(--amber)}.m-bd{background:var(--purple)}
+.mixtxt{font-size:.68rem;color:var(--muted);margin-top:3px}
+.soon{background:var(--amber)}
+.mixleg{display:flex;gap:14px;flex-wrap:wrap;padding:8px 12px;font-size:.75rem;color:var(--muted);border-top:1px solid var(--line)}
+.mixleg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.sub{font-size:.78rem;color:var(--muted);font-weight:400}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.four{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(max-width:560px){.two{grid-template-columns:1fr}.four{grid-template-columns:1fr 1fr}}
+.field select{display:block;width:100%;margin-top:4px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 8px;font:inherit}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+
+.pw{display:block;width:100%;margin-top:4px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 10px;font:inherit}
+.meter{display:flex;gap:4px;margin-top:6px}.meter i{flex:1;height:5px;border-radius:99px;background:var(--surface-2)}.meter i.on{background:var(--green)}
+.err{color:var(--red);font-size:.82rem;margin-top:8px}
+.warn{background:var(--surface-2);border-left:3px solid var(--amber);padding:10px 12px;border-radius:var(--r-sm);font-size:.82rem;text-align:left;margin:14px 0}
+.steps{display:flex;gap:8px;justify-content:center;font-size:.75rem;color:var(--muted);margin-bottom:14px}
+.steps b{color:var(--accent)}
+.lock{font-size:2.2rem}
+</style>
+</head>
+<body>
+<header>
+  <h1>My Dashboard</h1>
+  <span class="file"><span class="dot"></span>🔒 WealthTracker.wvault · encrypted · saved just now · auto-locks in 10 min <button class="btn" style="margin-left:8px;padding:2px 10px;font-size:.75rem">Lock now</button></span>
+  <span><button class="btn" onclick="var r=document.documentElement;r.dataset.theme=(r.dataset.theme==='dark'?'light':'dark')">Light / dark</button></span>
+</header>
+<nav id="tabs">
+  <button class="on" data-m="m1">Summary</button>
+  <button data-m="m2">🇺🇸 USA</button>
+  <button data-m="m3">🇮🇳 India</button>
+  <button data-m="m4">Add account</button>
+  <button data-m="m6">Add insurance</button>
+  <button data-m="m5">Settings</button>
+  <button data-m="m7">First run</button>
+  <button data-m="m8">Unlock</button>
+</nav>
+<div class="bar2">Show:
+  <span class="seg" id="filter"><button class="on" data-f="all">All</button><button data-f="mine">Mine</button><button data-f="joint">Joint</button><button data-f="parent">Parent</button></span>
+  <button class="btn" id="shownum" style="color:var(--text)">Show account numbers</button><span>Filter applies to every screen · fake sample data · mockup only</span>
+</div>
+<main>
+<section class="mock on" id="m1">
+  <div class="panel">
+    <div class="p-head"><div class="title">Summary · <span id="fl1">All</span></div></div>
+    <table id="sum"></table>
+    <div class="fx"><span>Exchange rate: <b>1 USD = ₹ 84.00</b> <span class="tag">live</span> fetched 27 Oct 2026, 18:10</span><button class="btn" style="color:var(--text)">Refresh</button></div>
+  </div>
+  <div class="panel">
+    <div class="p-head"><div class="title">By ownership · net worth</div></div>
+    <table id="own"></table>
+  </div>
+  <div class="panel">
+    <div class="p-head"><div class="title">Insurance <span class="sub">not counted in net worth</span></div></div>
+    <table id="ins"></table>
+  </div>
+</section>
+
+<section class="mock" id="m2"><div id="c-us"></div></section>
+<section class="mock" id="m3"><div id="c-in"></div></section>
+
+<section class="mock" id="m4">
+  <div class="panel" style="max-width:640px;margin:0 auto">
+    <div class="p-head"><div class="title">Add asset · 🇺🇸 USA <span class="sub">(liabilities use the same form without asset mix and maturity)</span></div></div>
+    <div style="padding:6px 18px 14px">
+      <div class="two"><label class="field">Account name<input value="1-year CD" /></label><label class="field">Account number<input class="mono" value="7710334450" /></label></div>
+      <div class="two"><label class="field">Bank / holding company<input value="Ally" /></label><label class="field">Current balance (USD)<input value="22,000" /></label></div>
+      <div class="field">Who owns it?
+        <div class="radios" id="rad"><label class="on" data-c="mine">Mine<small>Only me</small></label><label data-c="joint">Joint<small>Me + parent</small></label><label data-c="parent">Parent<small>Only parent</small></label></div></div>
+      <div class="field">Asset mix (% — must total 100)
+        <div class="four"><label class="field" style="margin:4px 0">Equities<input value="0" /></label><label class="field" style="margin:4px 0">Cash equivalents<input value="100" /></label><label class="field" style="margin:4px 0">Precious metals<input value="0" /></label><label class="field" style="margin:4px 0">Bonds<input value="0" /></label></div>
+        <span style="color:var(--green)">Total 100% ✓</span></div>
+      <div class="two"><label class="field">Deposit maturity date (optional)<input type="date" value="2027-02-01" /></label><label class="field">Value at maturity (optional, USD)<input value="23,100" /></label></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;padding:12px 18px;border-top:1px solid var(--line)"><button class="btn" style="color:var(--text)">Cancel</button><button class="btn primary">Save</button></div>
+  </div>
+</section>
+
+<section class="mock" id="m6">
+  <div class="panel" style="max-width:640px;margin:0 auto">
+    <div class="p-head"><div class="title">Add insurance policy · 🇺🇸 USA</div></div>
+    <div style="padding:6px 18px 14px">
+      <div class="two"><label class="field">Policy name<input value="Term life" /></label><label class="field">Policy number<input class="mono" value="POL-100234" /></label></div>
+      <div class="two"><label class="field">Policy company<input value="AIG" /></label><label class="field">Death benefit (USD)<input value="750,000" /></label></div>
+      <div class="two"><label class="field">Maturity date (optional)<input type="date" value="2045-06-01" /></label><label class="field">Value on maturity (optional, USD)<input value="" placeholder="none for term policies" /></label></div>
+      <div class="field">Whose policy?
+        <div class="radios" id="rad2"><label class="on" data-c="mine">Mine<small>Only me</small></label><label data-c="joint">Joint<small>Me + parent</small></label><label data-c="parent">Parent<small>Only parent</small></label></div></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;padding:12px 18px;border-top:1px solid var(--line)"><button class="btn" style="color:var(--text)">Cancel</button><button class="btn primary">Save</button></div>
+  </div>
+</section>
+
+<section class="mock" id="m7">
+  <div class="panel" style="max-width:520px;margin:20px auto;padding:26px 24px;text-align:center">
+    <div class="steps"><b>1 · Choose file</b> › 2 · Set passphrase › 3 · Done</div>
+    <h2 style="margin:0 0 6px">Where is your data?</h2>
+    <p class="note">Everything is encrypted with your passphrase before it is saved. Nothing is sent to a server.</p>
+    <div class="choice" style="text-align:left;display:grid;gap:10px">
+      <button class="primary" style="background:var(--accent);color:var(--accent-text);border:0;border-radius:var(--r-sm);padding:12px 14px;text-align:left">Create a new encrypted file<small style="display:block;opacity:.85">Starts empty. You set the passphrase next.</small></button>
+      <button style="background:var(--surface-2);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 14px;text-align:left">Open an existing encrypted file<small style="display:block;color:var(--muted)">A .wvault file you made before.</small></button>
+      <button style="background:var(--surface-2);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 14px;text-align:left">Import from an Excel file<small style="display:block;color:var(--muted)">One time. Reads your WealthTracker.xlsx, then saves as a new encrypted file. The original is left untouched, so delete it yourself afterwards.</small></button>
+      <button disabled style="background:var(--surface-2);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 14px;text-align:left;opacity:.55">Save to Google Drive<small style="display:block;color:var(--muted)">Coming in a later step.</small></button>
+    </div>
+  </div>
+  <div class="panel" style="max-width:520px;margin:20px auto;padding:26px 24px">
+    <div class="steps"><b>2 · Set passphrase</b></div>
+    <label class="field" style="display:block;font-size:.8rem;color:var(--muted)">Passphrase<input class="pw" type="password" value="correct horse battery" /></label>
+    <div class="meter"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+    <small style="color:var(--green)">Strong · 4 words or 14+ characters works well</small>
+    <label class="field" style="display:block;font-size:.8rem;color:var(--muted);margin-top:14px">Confirm passphrase<input class="pw" type="password" value="correct horse battery" /></label>
+    <div class="warn"><b>There is no recovery.</b> If you forget this passphrase, the file cannot be opened by anyone, including me. Store it in a password manager.</div>
+    <label style="font-size:.85rem"><input type="checkbox" checked /> I understand and have saved my passphrase</label>
+    <div style="text-align:right;margin-top:14px"><button class="btn primary">Create encrypted file</button></div>
+  </div>
+</section>
+
+<section class="mock" id="m8">
+  <div class="panel" style="max-width:420px;margin:30px auto;padding:30px 26px;text-align:center">
+    <div class="lock">🔒</div>
+    <h2 style="margin:8px 0 2px">WealthTracker.wvault</h2>
+    <p class="note">Enter your passphrase to unlock.</p>
+    <input class="pw" type="password" placeholder="Passphrase" value="••••••••" style="text-align:center" />
+    <div class="err">Wrong passphrase or damaged file. 2 attempts left before a 30-second wait.</div>
+    <button class="btn primary" style="margin-top:16px;width:100%;padding:9px">Unlock</button>
+    <p class="note" style="margin:14px 0 0">The passphrase stays in memory only while unlocked. Closing the tab locks the file.</p>
+  </div>
+</section>
+
+<section class="mock" id="m5">
+  <div class="panel">
+    <div class="p-head"><div class="title">Settings</div></div>
+    <div class="col">
+      <div class="row"><span>Country 1</span><span>USA</span></div>
+      <div class="row"><span>Country 2</span><span>India</span></div>
+      <div class="row"><span>"Parent" label<small>Rename to e.g. "Mom" or "Dad"</small></span><span><input value="Parent" style="background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:4px 8px;font:inherit;width:110px" /></span></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="p-head"><div class="title">🔒 Security</div></div>
+    <div class="col">
+      <div class="row"><span>Data file<small>WealthTracker.wvault · AES-256-GCM, key derived from your passphrase</small></span><span><button class="btn" style="color:var(--text)">Change file</button></span></div>
+      <div class="row"><span>Passphrase<small>Re-encrypts the whole file</small></span><span><button class="btn" style="color:var(--text)">Change passphrase</button></span></div>
+      <div class="row"><span>Auto-lock after<small>Idle time before the app locks itself</small></span><span><select style="background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:4px 8px;font:inherit"><option>5 min</option><option selected>10 min</option><option>30 min</option><option>Never</option></select></span></div>
+      <div class="row"><span>Export decrypted Excel copy<small>For opening in Excel. The copy is NOT encrypted. Delete it when done.</small></span><span><button class="btn" style="color:var(--red)">Export…</button></span></div>
+      <div class="warn">Also recommended: keep the file on an encrypted disk (BitLocker / FileVault), and keep a second backup copy somewhere private. The data file is excluded from this Git repository.</div>
+    </div>
+  </div>
+</section>
+</main>
+<script>
+const FX=84, TODAY=new Date('2026-10-27'), CAT={mine:'Mine',joint:'Joint',parent:'Parent'};
+const MIXN=['Equities','Cash equivalents','Precious metals','Bonds'], MIXC=['eq','cash','pm','bd'];
+// asset: [name, acctNo, bank, balance, cat, mix[eq,cash,pm,bd]|null, maturityDate|null, maturityValue|null]
+// liability: [name, acctNo, lender, balance, cat]
+// policy: [name, policyNo, company, cat, deathBenefit, maturityDate|null, maturityValue|null]
+const C={
+ us:{flag:'🇺🇸',name:'United States',code:'USD',sym:'$ ',loc:'en-US',
+  A:[['Checking','000123456821','Chase',8200,'mine',[0,100,0,0],null,null],
+     ['401(k)','884402917','Fidelity',184000,'mine',[70,5,0,25],null,null],
+     ['Brokerage','X55203718','Schwab',96000,'joint',[85,10,0,5],null,null],
+     ['Home (equity)','','Property',110000,'joint',null,null,null],
+     ['1-year CD','7710334450','Ally',22000,'parent',[0,100,0,0],'2027-02-01',23100]],
+  L:[['Mortgage','3300918823','Wells Fargo',78000,'joint'],['Auto loan','55120044','Toyota Financial',6300,'mine'],['Credit card','371449635','Amex',1450,'mine']],
+  P:[['Term life','POL-100234','AIG','mine',750000,'2045-06-01',null],['Whole life','WL-77015','MetLife','parent',100000,'2040-09-15',62000]],
+  pts:'60,150 110,142 160,134 210,134 260,120 310,110 360,110 410,92 460,78 510,60 560,52 620,36',hol:[3,6]},
+ in:{flag:'🇮🇳',name:'India',code:'INR',sym:'₹ ',loc:'en-IN',
+  A:[['Savings','50100234567890','HDFC',650000,'mine',[0,100,0,0],null,null],
+     ['Mutual funds','4412876','Zerodha',4150000,'mine',[80,5,0,15],null,null],
+     ['PPF','33008812','SBI',3000000,'mine',[0,0,0,100],'2036-04-01',5200000],
+     ['Apartment (Pune)','','Property',6000000,'joint',null,null,null],
+     ['Fixed deposit','77120045','SBI',900000,'parent',[0,100,0,0],'2027-06-30',975000]],
+  L:[['Home loan','HL0099231','SBI',2400000,'joint'],['Credit card','5241880021','ICICI',160000,'mine']],
+  P:[['Endowment plan','LIC-5794031','LIC India','mine',2500000,'2034-03-28',4100000]],
+  pts:'60,158 110,150 160,146 210,146 260,130 310,124 360,124 410,104 460,90 510,76 560,62 620,44',hol:[3,6]}};
+let f='all', reveal=false;
+const keep=(i,ci)=>f==='all'||i[ci]===f;
+const kA=i=>keep(i,4), kP=i=>keep(i,3);
+const fmt=(k,n)=>C[k].sym+Math.round(n).toLocaleString(C[k].loc);
+const dt=d=>d?new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—';
+const soon=d=>d&&(new Date(d)-TODAY)/864e5<=365?'<span class="chip soon" title="Matures within 12 months">soon</span>':'';
+const sum=arr=>arr.filter(kA).reduce((s,i)=>s+i[3],0);
+const chip=c=>`<span class="chip c-${c}">${CAT[c]}</span>`;
+const acct=n=>!n?'—':reveal?n:'•••• '+n.slice(-4);
+const mixCell=m=>{if(!m)return '<span style="color:var(--muted)">n/a</span>';
+ const bar=m.map((p,i)=>p?`<i class="m-${MIXC[i]}" style="width:${p}%" title="${MIXN[i]} ${p}%"></i>`:'').join('');
+ const txt=m.map((p,i)=>p?`${['Eq','Cash','Metals','Bonds'][i]} ${p}`:'').filter(Boolean).join(' · ');
+ return `<div class="mix">${bar}</div><div class="mixtxt">${txt}</div>`};
+function chart(k){const c=C[k],xs=[60,110,160,210,260,310,360,410,460,510,560,620],p=c.pts.split(' ');
+ const dots=p.map((q,i)=>{const[x,y]=q.split(',');return `<circle cx="${x}" cy="${y}" r="3.5" ${c.hol.includes(i)?'fill="var(--surface)" stroke="var(--accent)" stroke-width="1.5"':'fill="var(--accent)"'}/>`}).join('');
+ return `<svg viewBox="0 0 640 220"><g stroke="var(--line)"><line x1="48" y1="20" x2="630" y2="20"/><line x1="48" y1="70" x2="630" y2="70"/><line x1="48" y1="120" x2="630" y2="120"/><line x1="48" y1="170" x2="630" y2="170"/></g><polyline fill="none" stroke="var(--accent)" stroke-width="2.5" points="${c.pts}"/>${dots}<g fill="var(--muted)" font-size="10" text-anchor="middle"><text x="60" y="206">Nov '25</text><text x="160" y="206">Jan</text><text x="260" y="206">Mar</text><text x="360" y="206">May</text><text x="460" y="206">Jul</text><text x="560" y="206">Sep</text></g></svg>`}
+
+function country(k){const c=C[k],A=c.A.filter(kA),L=c.L.filter(kA),P=c.P.filter(kP),a=sum(c.A),l=sum(c.L);
+ const empty=n=>`<tr><td colspan="${n}" style="text-align:left;color:var(--muted)">Nothing in this category</td></tr>`;
+ const aRows=A.map(i=>`<tr><td><b>${i[0]}</b></td><td class="mono">${acct(i[1])}</td><td>${i[2]}</td><td>${chip(i[4])}</td><td><b>${fmt(k,i[3])}</b></td><td>${mixCell(i[5])}</td><td>${dt(i[6])} ${soon(i[6])}</td><td>${i[7]?fmt(k,i[7]):'—'}</td></tr>`).join('')||empty(8);
+ const lRows=L.map(i=>`<tr><td><b>${i[0]}</b></td><td class="mono">${acct(i[1])}</td><td>${i[2]}</td><td>${chip(i[4])}</td><td><b class="neg">${fmt(k,i[3])}</b></td></tr>`).join('')||empty(5);
+ const pRows=P.map(i=>`<tr><td><b>${i[0]}</b></td><td class="mono">${reveal?i[1]:'•••• '+i[1].slice(-4)}</td><td>${i[2]}</td><td>${chip(i[3])}</td><td><b>${fmt(k,i[4])}</b></td><td>${dt(i[5])} ${soon(i[5])}</td><td>${i[6]?fmt(k,i[6]):'—'}</td></tr>`).join('')||empty(7);
+ const leg=MIXN.map((n,i)=>`<span><i class="m-${MIXC[i]}"></i>${n}</span>`).join('');
+ return `<div class="panel"><div class="p-head"><div class="title">${c.flag} ${c.name} <span class="cur">${c.code}</span></div><div class="upd"><label>Update date <input type="date" value="${k==='us'?'2026-10-27':'2026-10-20'}"/></label><button class="btn primary">Save update</button></div></div>
+ <div class="kpis"><div class="kpi"><small>Net worth · ${f==='all'?'All':CAT[f]}</small><b class="pos">${fmt(k,a-l)}</b></div><div class="kpi"><small>Assets</small><b>${fmt(k,a)}</b></div><div class="kpi"><small>Liabilities</small><b class="neg">${fmt(k,l)}</b></div></div></div>
+ <div class="panel"><div class="p-head"><div class="title">Assets <span class="sub">${fmt(k,a)}</span></div><button class="btn" style="color:var(--text)">+ Add asset</button></div>
+  <div class="tblw"><table class="t-a"><tr><th>Account name</th><th>Account number</th><th>Bank / holding co.</th><th>Owner</th><th>Current balance</th><th>Asset mix</th><th>Maturity date</th><th>Value at maturity</th></tr>${aRows}</table></div><div class="mixleg">${leg}</div></div>
+ <div class="panel"><div class="p-head"><div class="title">Liabilities <span class="sub">${fmt(k,l)}</span></div><button class="btn" style="color:var(--text)">+ Add liability</button></div>
+  <div class="tblw"><table class="t-l" style="min-width:0"><tr><th>Account name</th><th>Account number</th><th>Lender</th><th>Owner</th><th>Current balance</th></tr>${lRows}</table></div></div>
+ <div class="panel"><div class="p-head"><div class="title">Insurance <span class="sub">not counted in net worth</span></div><button class="btn" style="color:var(--text)">+ Add policy</button></div>
+  <div class="tblw"><table class="t-p" style="min-width:760px"><tr><th>Policy</th><th>Policy number</th><th>Policy company</th><th>Owner</th><th>Death benefit</th><th>Maturity date</th><th>Value on maturity</th></tr>${pRows}</table></div></div>
+ <div class="panel"><div class="p-head"><div class="title">Month by month · ${c.name} · ${f==='all'?'All':CAT[f]}</div></div><div class="chart">${chart(k)}</div><div class="legend"><span>Filled dot = updated that month (earliest update date)</span><span>Hollow dot = carried forward</span></div></div>`}
+function render(){
+ document.getElementById('c-us').innerHTML=country('us');document.getElementById('c-in').innerHTML=country('in');
+ document.getElementById('fl1').textContent=f==='all'?'All':CAT[f];
+ document.getElementById('shownum').textContent=reveal?'Hide account numbers':'Show account numbers';
+ const T=k=>[sum(C[k].A),sum(C[k].L)];const[ua,ul]=T('us'),[ia,il]=T('in');
+ const usd=n=>'$ '+Math.round(n).toLocaleString('en-US'),inr=n=>'₹ '+Math.round(n).toLocaleString('en-IN');
+ const totUSD=[ua+ia/FX,ul+il/FX];
+ document.getElementById('sum').innerHTML=`<tr><th>Country</th><th>Assets</th><th>Liabilities</th><th>Net worth</th></tr>
+ <tr><td>🇺🇸 USA <span class="cur">USD</span></td><td>${fmt('us',ua)}</td><td class="neg">${fmt('us',ul)}</td><td class="pos">${fmt('us',ua-ul)}</td></tr>
+ <tr><td>🇮🇳 India <span class="cur">INR</span></td><td>${fmt('in',ia)}</td><td class="neg">${fmt('in',il)}</td><td class="pos">${fmt('in',ia-il)}</td></tr>
+ <tr class="total"><td>Total in USD</td><td>${usd(totUSD[0])}</td><td>${usd(totUSD[1])}</td><td>${usd(totUSD[0]-totUSD[1])}</td></tr>
+ <tr class="total"><td>Total in INR</td><td>${inr(totUSD[0]*FX)}</td><td>${inr(totUSD[1]*FX)}</td><td>${inr((totUSD[0]-totUSD[1])*FX)}</td></tr>`;
+ const net=(k,cat)=>{const c=C[k];const s=a=>a.filter(i=>i[4]===cat).reduce((x,i)=>x+i[3],0);return s(c.A)-s(c.L)};
+ let rows='',tu=0,ti=0;
+ for(const cat of ['mine','joint','parent']){const u=net('us',cat),i=net('in',cat);tu+=u;ti+=i;rows+=`<tr><td>${chip(cat)}</td><td>${fmt('us',u)}</td><td>${fmt('in',i)}</td><td>${usd(u+i/FX)}</td></tr>`}
+ rows+=`<tr class="total"><td>Total</td><td>${fmt('us',tu)}</td><td>${fmt('in',ti)}</td><td>${usd(tu+ti/FX)}</td></tr>`;
+ document.getElementById('own').innerHTML=`<tr><th>Category</th><th>USA</th><th>India</th><th>Combined (USD)</th></tr>`+rows;
+ const pol=k=>C[k].P.filter(kP);const db=k=>pol(k).reduce((s,p)=>s+p[4],0);
+ const nxt=k=>{const d=pol(k).map(p=>p[5]).filter(Boolean).sort()[0];return dt(d)};
+ document.getElementById('ins').innerHTML=`<tr><th>Country</th><th>Policies</th><th>Total death benefit</th><th>Next maturity</th></tr>
+ <tr><td>🇺🇸 USA</td><td>${pol('us').length}</td><td>${fmt('us',db('us'))}</td><td>${nxt('us')}</td></tr>
+ <tr><td>🇮🇳 India</td><td>${pol('in').length}</td><td>${fmt('in',db('in'))}</td><td>${nxt('in')}</td></tr>
+ <tr class="total"><td>Combined (USD)</td><td>${pol('us').length+pol('in').length}</td><td>${usd(db('us')+db('in')/FX)}</td><td></td></tr>`;
+}
+document.getElementById('shownum').onclick=()=>{reveal=!reveal;render()};
+document.querySelectorAll('#filter button').forEach(b=>b.onclick=()=>{f=b.dataset.f;document.querySelectorAll('#filter button').forEach(x=>x.classList.toggle('on',x===b));render()});
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('.mock').forEach(s=>s.classList.toggle('on',s.id===b.dataset.m))});
+['rad','rad2'].forEach(id=>document.querySelectorAll('#'+id+' label').forEach(l=>l.onclick=()=>document.querySelectorAll('#'+id+' label').forEach(x=>x.classList.toggle('on',x===l))));
+render();
+</script>
+</body>
+</html>

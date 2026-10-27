@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Countries mockup</title>
+<style>
+/* Tokens from pmo-hub public/theme.css (Warm Paper / Midnight) */
+:root{color-scheme:light;--font:'Segoe UI',system-ui,-apple-system,sans-serif;--r:12px;--r-sm:8px;
+--bg:#f7f4ee;--surface:#fffdf9;--surface-2:#f1ece2;--text:#2b2722;--muted:#7a7266;--line:#e6dfd2;
+--accent:#0f6e6e;--accent-text:#fff;--head:#0f4c4c;--head-text:#fff;--shadow:0 8px 30px rgba(60,40,10,.18);
+--purple:#8b6cf0;--red:#c8402f;--amber:#d98e04;--green:#3f8f55;--blue:#4a7fb0;--grey:#a39a8b;--on-status:#fff}
+:root[data-theme="dark"]{--purple:#a58bff;color-scheme:dark;--r:6px;--r-sm:5px;--bg:#0f1420;--surface:#181f2e;--surface-2:#212a3d;
+--text:#e7ebf3;--muted:#9aa5ba;--line:#2a3347;--accent:#6ea8ff;--accent-text:#0b1220;--head:#0a0e17;--head-text:#e7ebf3;
+--shadow:0 8px 30px rgba(0,0,0,.6);--red:#ff6b6b;--amber:#ffc233;--green:#3ddc84;--blue:#5cb3ff;--grey:#74809a;--on-status:#0b1220}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--purple:#a58bff;color-scheme:dark;--r:6px;--r-sm:5px;--bg:#0f1420;--surface:#181f2e;--surface-2:#212a3d;
+--text:#e7ebf3;--muted:#9aa5ba;--line:#2a3347;--accent:#6ea8ff;--accent-text:#0b1220;--head:#0a0e17;--head-text:#e7ebf3;
+--shadow:0 8px 30px rgba(0,0,0,.6);--red:#ff6b6b;--amber:#ffc233;--green:#3ddc84;--blue:#5cb3ff;--grey:#74809a;--on-status:#0b1220}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font)}
+header{background:var(--head);color:var(--head-text);padding:10px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{font-size:1.05rem;margin:0}
+.file{font-size:.8rem;opacity:.85}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px}
+button{font:inherit;cursor:pointer}
+.btn{background:transparent;border:1px solid currentColor;color:inherit;border-radius:var(--r-sm);padding:5px 12px;font-size:.85rem}
+.btn.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+nav{background:var(--surface);border-bottom:1px solid var(--line);padding:0 24px;display:flex;gap:4px;overflow-x:auto}
+nav button{background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:12px 14px;white-space:nowrap}
+nav button.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+main{max-width:1180px;margin:0 auto;padding:22px 16px 60px}
+.mock{display:none}.mock.on{display:block}
+.note{color:var(--muted);font-size:.85rem;margin:0 0 16px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.p-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);gap:8px;flex-wrap:wrap}
+.title{display:flex;align-items:center;gap:10px;font-weight:600}
+.cur{font-size:.75rem;background:var(--surface-2);color:var(--muted);padding:2px 8px;border-radius:99px}
+.pos{color:var(--green)}.neg{color:var(--red)}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 18px}
+@media(max-width:560px){.kpis{grid-template-columns:1fr}}
+.kpi small{display:block;color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em}
+.kpi b{font-size:1.3rem;font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th,td{padding:10px 18px;text-align:right;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--surface-2)}
+tr.total td{font-weight:700;background:var(--surface-2)}
+td small{display:block;color:var(--muted);font-size:.72rem}
+.fx{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;background:var(--surface-2);font-size:.82rem;color:var(--muted);gap:8px;flex-wrap:wrap}
+.fx b{color:var(--text)}
+.tag{font-size:.65rem;padding:1px 7px;border-radius:99px;color:var(--on-status);background:var(--blue);margin-left:6px}
+.cols{display:grid;grid-template-columns:1fr 1fr}
+@media(max-width:700px){.cols{grid-template-columns:1fr}}
+.col{padding:14px 18px}.col+.col{border-left:1px solid var(--line)}
+@media(max-width:700px){.col+.col{border-left:0;border-top:1px solid var(--line)}}
+.col h3{margin:0 0 8px;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;display:flex;justify-content:space-between}
+.col h3.a{color:var(--green)}.col h3.l{color:var(--red)}
+.row{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:.92rem}
+.row small{display:block;color:var(--muted);font-size:.72rem}
+.row .v{font-variant-numeric:tabular-nums;white-space:nowrap}
+.add{margin-top:10px;width:100%;background:transparent;border:1px dashed var(--line);color:var(--muted);border-radius:var(--r-sm);padding:6px}
+.chart{padding:10px 18px 16px}
+.chart svg{width:100%;height:auto;display:block}
+.legend{display:flex;gap:16px;font-size:.78rem;color:var(--muted);padding:0 18px 12px;flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:3px;margin-right:6px;vertical-align:middle;border-radius:2px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden}
+.seg button{background:var(--surface);border:0;color:var(--muted);padding:4px 10px;font-size:.8rem}
+.seg button.on{background:var(--accent);color:var(--accent-text)}
+.upd{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.upd input{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:4px 8px;font:inherit;font-size:.85rem}
+.center{max-width:520px;margin:30px auto;text-align:center;padding:28px 24px}
+.center h2{margin:0 0 6px}
+.choice{display:grid;gap:10px;margin:20px 0 6px;text-align:left}
+.choice button{background:var(--surface-2);border:1px solid var(--line);color:var(--text);border-radius:var(--r-sm);padding:12px 14px;text-align:left}
+.choice button small{display:block;color:var(--muted);margin-top:2px}
+.choice button.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+.choice button.primary small{color:inherit;opacity:.85}
+.choice button[disabled]{opacity:.55;cursor:not-allowed}
+
+.chip{font-size:.65rem;padding:1px 8px;border-radius:99px;color:var(--on-status);margin-left:6px;vertical-align:middle;font-weight:600}
+.c-mine{background:var(--accent);color:var(--accent-text)}.c-joint{background:var(--amber)}.c-parent{background:var(--purple)}
+.radios{display:flex;gap:8px;margin-top:6px}
+.radios label{flex:1;border:1px solid var(--line);border-radius:var(--r-sm);padding:8px;text-align:center;background:var(--bg);color:var(--text);font-size:.85rem;margin:0}
+.radios label.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.radios small{display:block;color:var(--muted);font-size:.7rem}
+.field{display:block;margin:12px 0;font-size:.8rem;color:var(--muted)}
+.field input{display:block;width:100%;margin-top:4px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 8px;font:inherit}
+.bar2{padding:10px 24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.8rem;color:var(--muted)}
+
+.tblw{overflow-x:auto}
+.tblw table{min-width:900px;font-size:.84rem}
+.tblw th,.tblw td{padding:9px 10px;white-space:nowrap}
+.t-a td:nth-child(-n+4),.t-a th:nth-child(-n+4),.t-a td:nth-child(6),.t-a th:nth-child(6),.t-a td:nth-child(7),.t-a th:nth-child(7),
+.t-l td:nth-child(-n+4),.t-l th:nth-child(-n+4),
+.t-p td:nth-child(-n+4),.t-p th:nth-child(-n+4),.t-p td:nth-child(6),.t-p th:nth-child(6){text-align:left}
+.tblw td.w{white-space:normal}
+.mix{display:flex;height:9px;border-radius:99px;overflow:hidden;min-width:110px;background:var(--surface-2)}
+.mix i{display:block}
+.m-eq{background:var(--blue)}.m-cash{background:var(--green)}.m-pm{background:var(--amber)}.m-bd{background:var(--purple)}
+.mixtxt{font-size:.68rem;color:var(--muted);margin-top:3px}
+.soon{background:var(--amber)}
+.mixleg{display:flex;gap:14px;flex-wrap:wrap;padding:8px 12px;font-size:.75rem;color:var(--muted);border-top:1px solid var(--line)}
+.mixleg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.sub{font-size:.78rem;color:var(--muted);font-weight:400}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.four{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(max-width:560px){.two{grid-template-columns:1fr}.four{grid-template-columns:1fr 1fr}}
+.field select{display:block;width:100%;margin-top:4px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 8px;font:inherit}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+
+.pw{display:block;width:100%;margin-top:4px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 10px;font:inherit}
+.meter{display:flex;gap:4px;margin-top:6px}.meter i{flex:1;height:5px;border-radius:99px;background:var(--surface-2)}.meter i.on{background:var(--green)}
+.err{color:var(--red);font-size:.82rem;margin-top:8px}
+.warn{background:var(--surface-2);border-left:3px solid var(--amber);padding:10px 12px;border-radius:var(--r-sm);font-size:.82rem;text-align:left;margin:14px 0}
+.steps{display:flex;gap:8px;justify-content:center;font-size:.75rem;color:var(--muted);margin-bottom:14px}
+.steps b{color:var(--accent)}
+.lock{font-size:2.2rem}
+
+.page{max-width:1180px;margin:0 auto;padding:18px 16px 60px}
+.pg{display:none}.pg.on{display:block}
+td.l,th.l{text-align:left}
+.pcard{display:grid;grid-template-columns:1.4fr repeat(4,1fr);gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);align-items:center;cursor:pointer}
+.pcard:hover{background:var(--surface-2)}
+@media(max-width:900px){.pcard{grid-template-columns:1fr 1fr}}
+.pcard small,.kv small{display:block;color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em}
+.pcard b{font-variant-numeric:tabular-nums}
+.pcard .nm{font-weight:600}.pcard .nm span{display:block;color:var(--muted);font-weight:400;font-size:.8rem}
+.kv{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:14px 18px}
+@media(max-width:800px){.kv{grid-template-columns:1fr 1fr}}
+.kv b{font-weight:600}
+.src{font-size:.68rem;background:var(--surface-2);color:var(--muted);border-radius:99px;padding:1px 8px;margin-left:4px}
+.field{display:block;margin:10px 0;font-size:.8rem;color:var(--muted)}
+.field input,.field select,.field textarea{display:block;width:100%;margin-top:4px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 8px;font:inherit}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.f3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:600px){.f2,.f3{grid-template-columns:1fr}}
+.mw{max-width:600px;margin:0 auto 16px}
+.pad{padding:14px 18px}.sub{font-size:.78rem;color:var(--muted);font-weight:400}
+.foot2{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--line)}
+.chart{padding:10px 18px 6px}.chart svg{width:100%;height:auto;display:block}
+.legend{display:flex;gap:16px;font-size:.78rem;color:var(--muted);padding:2px 18px 12px;flex-wrap:wrap}.legend i{display:inline-block;width:12px;height:3px;margin-right:6px;vertical-align:middle;border-radius:2px}
+.fx{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;background:var(--surface-2);font-size:.82rem;color:var(--muted);gap:8px;flex-wrap:wrap}.fx b{color:var(--text)}
+.tag{font-size:.65rem;padding:1px 7px;border-radius:99px;color:var(--on-status);background:var(--blue);margin-left:6px}
+.ltv{height:7px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin-top:4px;width:100%}.ltv i{display:block;height:100%;background:var(--accent)}
+
+.cl{padding:6px 18px}
+.crow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.crow .fl{font-size:1.3rem}.crow .nm{flex:1}.crow .nm small{display:block;color:var(--muted);font-size:.72rem}
+.crow.off{opacity:.6}
+.mv{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--muted);padding:2px 8px}
+.base{font-size:.66rem;background:var(--accent);color:var(--accent-text);border-radius:99px;padding:1px 8px}
+.hid{font-size:.66rem;background:var(--surface-2);color:var(--muted);border-radius:99px;padding:1px 8px}
+.mw{max-width:640px;margin:0 auto 16px}
+.pad{padding:14px 18px}.sub{font-size:.78rem;color:var(--muted);font-weight:400}
+</style>
+</head>
+<body>
+<header><h1>My Dashboard</h1><span><button class="btn" onclick="var r=document.documentElement;r.dataset.theme=(r.dataset.theme==='dark'?'light':'dark')">Light / dark</button></span></header>
+<nav id="tabs"><button>Home</button><button class="on" id="t-fin" onclick="top_('fin')">Finance Dashboard</button><button>🐾 Pets</button><button id="t-prop" onclick="top_('prop')">🏠 Property</button></nav>
+<nav id="sub" style="background:transparent;padding:0 24px"></nav>
+<div class="page">
+<p class="note">MOCKUP ONLY — fake numbers. Switch between Finance and Property above, then use the sub-tabs. Each section keeps its own country list.</p>
+
+<!-- FINANCE -->
+<section class="pg on" id="f-sum">
+ <div class="panel"><div class="p-head"><div class="title">Summary · All</div></div>
+  <div class="tblw"><table><tr><th class="l">Country</th><th>Assets</th><th>Liabilities</th><th>Net worth</th></tr>
+   <tr><td class="l">🇺🇸 USA <span class="cur">USD</span></td><td>$ 126,200</td><td class="neg">$ 78,000</td><td class="pos">$ 48,200</td></tr>
+   <tr><td class="l">🇮🇳 India <span class="cur">INR</span></td><td>₹ 18,40,000</td><td class="neg">₹ 2,10,000</td><td class="pos">₹ 16,30,000</td></tr>
+   <tr><td class="l">🇬🇧 UK <span class="cur">GBP</span></td><td>£ 24,000</td><td class="neg">£ 3,500</td><td class="pos">£ 20,500</td></tr>
+   <tr class="total"><td class="l">Total in USD</td><td>$ 175,550</td><td>$ 85,300</td><td>$ 90,250</td></tr>
+   <tr class="total"><td class="l">Total in INR</td><td>₹ 1,47,46,200</td><td>₹ 71,65,200</td><td>₹ 75,81,000</td></tr>
+   <tr class="total"><td class="l">Total in GBP</td><td>£ 136,929</td><td>£ 66,534</td><td>£ 70,395</td></tr></table></div>
+  <div class="fx"><span>Exchange rates from USD: <b>₹ 84.00</b> · <b>£ 0.78</b><span class="tag">live</span> fetched 27 Oct 2026, 18:10</span><span><button class="btn">Refresh</button> <button class="btn">Set manually</button></span></div>
+ </div>
+</section>
+<section class="pg" id="f-set">
+ <div class="panel mw"><div class="p-head"><div class="title">Finance · Countries shown</div></div>
+  <div class="cl">
+   <div class="crow"><input type="checkbox" checked><span class="fl">🇺🇸</span><span class="nm">USA <span class="cur">USD</span> <span class="base">reporting currency</span><small>4 accounts · 1 policy</small></span><button class="mv">↑</button><button class="mv">↓</button></div>
+   <div class="crow"><input type="checkbox" checked><span class="fl">🇮🇳</span><span class="nm">India <span class="cur">INR</span><small>2 accounts</small></span><button class="mv">↑</button><button class="mv">↓</button></div>
+   <div class="crow"><input type="checkbox" checked><span class="fl">🇬🇧</span><span class="nm">UK <span class="cur">GBP</span><small>1 account</small></span><button class="mv">↑</button><button class="mv">↓</button></div>
+   <div class="crow off"><input type="checkbox" ><span class="fl">🇦🇺</span><span class="nm">Australia <span class="cur">AUD</span><small>No data yet</small></span><span class="hid">hidden</span></div>
+   <div class="crow off"><input type="checkbox" ><span class="fl">🇨🇭</span><span class="nm">Switzerland <span class="cur">CHF</span><small>No data yet</small></span><span class="hid">hidden</span></div>
+  </div>
+  <div class="pad sub">Pick one to five countries. Each gets its own tab. The first one in the list is the reporting currency: exchange rates are fetched from it. Unticking a country only hides it; its accounts stay in your encrypted file and come back when you tick it again.</div>
+  <div class="pad" style="border-top:1px solid var(--line)"><div class="warn" style="margin:0">Unticking <b>India</b> will hide 2 accounts. Nothing is deleted. <button class="btn" style="margin-left:8px">Hide India</button></div></div>
+ </div>
+</section>
+
+<!-- PROPERTY -->
+<section class="pg" id="p-ov">
+ <div class="panel"><div class="p-head"><div class="title">Property summary</div></div>
+  <div class="tblw"><table><tr><th class="l">Country</th><th>Properties</th><th>Value</th><th>Mortgage balance</th><th>Equity</th></tr>
+   <tr><td class="l">🇺🇸 USA <span class="cur">USD</span></td><td>1</td><td>$ 410,000</td><td class="neg">$ 218,400</td><td class="pos">$ 191,600</td></tr>
+   <tr><td class="l">🇮🇳 India <span class="cur">INR</span></td><td>1</td><td>₹ 60,00,000</td><td class="neg">₹ 23,10,000</td><td class="pos">₹ 36,90,000</td></tr>
+   <tr><td class="l">🇦🇺 Australia <span class="cur">AUD</span></td><td>1</td><td>A$ 780,000</td><td class="neg">A$ 520,000</td><td class="pos">A$ 260,000</td></tr>
+   <tr class="total"><td class="l">Total in USD</td><td>3</td><td>$ 936,000</td><td>$ 560,000</td><td>$ 376,000</td></tr>
+   <tr class="total"><td class="l">Total in INR</td><td>3</td><td>₹ 7,86,24,000</td><td>₹ 4,70,40,000</td><td>₹ 3,15,84,000</td></tr>
+   <tr class="total"><td class="l">Total in AUD</td><td>3</td><td>A$ 1,420,000</td><td>A$ 850,000</td><td>A$ 570,000</td></tr></table></div>
+  <div class="fx"><span>Exchange rates from USD: <b>₹ 84.00</b> · <b>A$ 1.52</b><span class="tag">live</span></span><span>Property is not counted in the Finance Dashboard totals.</span></div>
+ </div>
+</section>
+<section class="pg" id="p-set">
+ <div class="panel mw"><div class="p-head"><div class="title">Property · Countries shown</div></div>
+  <div class="cl">
+   <div class="crow"><input type="checkbox" checked><span class="fl">🇺🇸</span><span class="nm">USA <span class="cur">USD</span> <span class="base">reporting currency</span><small>1 property</small></span><button class="mv">↑</button><button class="mv">↓</button></div>
+   <div class="crow"><input type="checkbox" checked><span class="fl">🇮🇳</span><span class="nm">India <span class="cur">INR</span><small>1 property</small></span><button class="mv">↑</button><button class="mv">↓</button></div>
+   <div class="crow off"><input type="checkbox" ><span class="fl">🇬🇧</span><span class="nm">UK <span class="cur">GBP</span><small>No properties yet</small></span><span class="hid">hidden</span></div>
+   <div class="crow"><input type="checkbox" checked><span class="fl">🇦🇺</span><span class="nm">Australia <span class="cur">AUD</span><small>1 property</small></span><button class="mv">↑</button><button class="mv">↓</button></div>
+   <div class="crow off"><input type="checkbox" ><span class="fl">🇨🇭</span><span class="nm">Switzerland <span class="cur">CHF</span><small>No properties yet</small></span><span class="hid">hidden</span></div>
+  </div>
+  <div class="pad sub">Independent of Finance: you can own property in a country with no Finance tab, and the other way round. Same rules: one to five countries, first is the reporting currency, unticking hides but never deletes.</div>
+ </div>
+</section>
+</div>
+<script>
+const subs={fin:[['f-sum','Summary'],['','🇺🇸 USA'],['','🇮🇳 India'],['','🇬🇧 UK'],['f-set','Settings']],prop:[['p-ov','Overview'],['','🇺🇸 USA'],['','🇮🇳 India'],['','🇦🇺 Australia'],['p-set','Settings']]};
+function show(id){document.querySelectorAll('.pg').forEach(s=>s.classList.toggle('on',s.id===id));document.querySelectorAll('#sub button').forEach(b=>b.classList.toggle('on',b.dataset.m===id))}
+function top_(k){document.getElementById('t-fin').classList.toggle('on',k==='fin');document.getElementById('t-prop').classList.toggle('on',k==='prop');
+ const n=document.getElementById('sub');n.innerHTML=subs[k].map(([id,l])=>`<button data-m="${id}" ${id?'':'style="opacity:.8"'}>${l}</button>`).join('');
+ n.querySelectorAll('button').forEach(b=>b.onclick=()=>b.dataset.m&&show(b.dataset.m));show(subs[k][0][0]);n.firstChild.classList.add('on')}
+top_('fin');
+</script></body></html>

@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Finance mockup v2</title>
+<style>
+/* Tokens from pmo-hub public/theme.css (Warm Paper / Midnight) */
+:root{color-scheme:light;--font:'Segoe UI',system-ui,-apple-system,sans-serif;--r:12px;--r-sm:8px;
+--bg:#f7f4ee;--surface:#fffdf9;--surface-2:#f1ece2;--text:#2b2722;--muted:#7a7266;--line:#e6dfd2;
+--accent:#0f6e6e;--accent-text:#fff;--head:#0f4c4c;--head-text:#fff;--shadow:0 8px 30px rgba(60,40,10,.18);
+--red:#c8402f;--amber:#d98e04;--green:#3f8f55;--blue:#4a7fb0;--grey:#a39a8b;--on-status:#fff}
+:root[data-theme="dark"]{color-scheme:dark;--r:6px;--r-sm:5px;--bg:#0f1420;--surface:#181f2e;--surface-2:#212a3d;
+--text:#e7ebf3;--muted:#9aa5ba;--line:#2a3347;--accent:#6ea8ff;--accent-text:#0b1220;--head:#0a0e17;--head-text:#e7ebf3;
+--shadow:0 8px 30px rgba(0,0,0,.6);--red:#ff6b6b;--amber:#ffc233;--green:#3ddc84;--blue:#5cb3ff;--grey:#74809a;--on-status:#0b1220}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--r:6px;--r-sm:5px;--bg:#0f1420;--surface:#181f2e;--surface-2:#212a3d;
+--text:#e7ebf3;--muted:#9aa5ba;--line:#2a3347;--accent:#6ea8ff;--accent-text:#0b1220;--head:#0a0e17;--head-text:#e7ebf3;
+--shadow:0 8px 30px rgba(0,0,0,.6);--red:#ff6b6b;--amber:#ffc233;--green:#3ddc84;--blue:#5cb3ff;--grey:#74809a;--on-status:#0b1220}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font)}
+header{background:var(--head);color:var(--head-text);padding:10px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{font-size:1.05rem;margin:0}
+.file{font-size:.8rem;opacity:.85}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px}
+button{font:inherit;cursor:pointer}
+.btn{background:transparent;border:1px solid currentColor;color:inherit;border-radius:var(--r-sm);padding:5px 12px;font-size:.85rem}
+.btn.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+nav{background:var(--surface);border-bottom:1px solid var(--line);padding:0 24px;display:flex;gap:4px;overflow-x:auto}
+nav button{background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:12px 14px;white-space:nowrap}
+nav button.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+main{max-width:1000px;margin:0 auto;padding:22px 16px 60px}
+.mock{display:none}.mock.on{display:block}
+.note{color:var(--muted);font-size:.85rem;margin:0 0 16px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.p-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);gap:8px;flex-wrap:wrap}
+.title{display:flex;align-items:center;gap:10px;font-weight:600}
+.cur{font-size:.75rem;background:var(--surface-2);color:var(--muted);padding:2px 8px;border-radius:99px}
+.pos{color:var(--green)}.neg{color:var(--red)}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 18px}
+@media(max-width:560px){.kpis{grid-template-columns:1fr}}
+.kpi small{display:block;color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em}
+.kpi b{font-size:1.3rem;font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th,td{padding:10px 18px;text-align:right;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--surface-2)}
+tr.total td{font-weight:700;background:var(--surface-2)}
+td small{display:block;color:var(--muted);font-size:.72rem}
+.fx{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;background:var(--surface-2);font-size:.82rem;color:var(--muted);gap:8px;flex-wrap:wrap}
+.fx b{color:var(--text)}
+.tag{font-size:.65rem;padding:1px 7px;border-radius:99px;color:var(--on-status);background:var(--blue);margin-left:6px}
+.cols{display:grid;grid-template-columns:1fr 1fr}
+@media(max-width:700px){.cols{grid-template-columns:1fr}}
+.col{padding:14px 18px}.col+.col{border-left:1px solid var(--line)}
+@media(max-width:700px){.col+.col{border-left:0;border-top:1px solid var(--line)}}
+.col h3{margin:0 0 8px;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;display:flex;justify-content:space-between}
+.col h3.a{color:var(--green)}.col h3.l{color:var(--red)}
+.row{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:.92rem}
+.row small{display:block;color:var(--muted);font-size:.72rem}
+.row .v{font-variant-numeric:tabular-nums;white-space:nowrap}
+.add{margin-top:10px;width:100%;background:transparent;border:1px dashed var(--line);color:var(--muted);border-radius:var(--r-sm);padding:6px}
+.chart{padding:10px 18px 16px}
+.chart svg{width:100%;height:auto;display:block}
+.legend{display:flex;gap:16px;font-size:.78rem;color:var(--muted);padding:0 18px 12px;flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:3px;margin-right:6px;vertical-align:middle;border-radius:2px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden}
+.seg button{background:var(--surface);border:0;color:var(--muted);padding:4px 10px;font-size:.8rem}
+.seg button.on{background:var(--accent);color:var(--accent-text)}
+.upd{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.upd input{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:4px 8px;font:inherit;font-size:.85rem}
+.center{max-width:520px;margin:30px auto;text-align:center;padding:28px 24px}
+.center h2{margin:0 0 6px}
+.choice{display:grid;gap:10px;margin:20px 0 6px;text-align:left}
+.choice button{background:var(--surface-2);border:1px solid var(--line);color:var(--text);border-radius:var(--r-sm);padding:12px 14px;text-align:left}
+.choice button small{display:block;color:var(--muted);margin-top:2px}
+.choice button.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+.choice button.primary small{color:inherit;opacity:.85}
+.choice button[disabled]{opacity:.55;cursor:not-allowed}
+</style>
+</head>
+<body>
+<header>
+  <h1>My Dashboard</h1>
+  <span class="file"><span class="dot"></span>WealthTracker.xlsx · saved just now</span>
+  <span><button class="btn" onclick="var r=document.documentElement;r.dataset.theme=(r.dataset.theme==='dark'?'light':'dark')">Light / dark</button></span>
+</header>
+<nav id="tabs">
+  <button class="on" data-m="m1">Summary</button>
+  <button data-m="m2">🇺🇸 USA</button>
+  <button data-m="m3">🇮🇳 India</button>
+  <button data-m="m4">First run</button>
+  <button data-m="m5">Settings</button>
+</nav>
+<main>
+<p class="note">MOCKUP ONLY — sample numbers, no code yet. Click the tabs above to move between screens (the last two tabs show the first-run prompt and settings).</p>
+
+<!-- 1 SUMMARY -->
+<section class="mock on" id="m1">
+  <div class="panel">
+    <div class="p-head"><div class="title">Summary · all countries</div>
+      <div class="seg"><button class="on">Show in USD</button><button>Show in INR</button></div></div>
+    <table>
+      <tr><th>Country</th><th>Assets</th><th>Liabilities</th><th>Net worth</th></tr>
+      <tr><td>🇺🇸 USA <span class="cur">USD</span><small>updated 27 Oct 2026</small></td><td>$ 398,200</td><td class="neg">$ 85,750</td><td class="pos">$ 312,450</td></tr>
+      <tr><td>🇮🇳 India <span class="cur">INR</span><small>updated 20 Oct 2026</small></td><td>₹ 1,38,00,000</td><td class="neg">₹ 25,60,000</td><td class="pos">₹ 1,12,40,000</td></tr>
+      <tr class="total"><td>Total in USD</td><td>$ 563,600</td><td>$ 117,300</td><td>$ 446,300</td></tr>
+      <tr class="total"><td>Total in INR</td><td>₹ 4,73,42,000</td><td>₹ 98,53,000</td><td>₹ 3,74,89,000</td></tr>
+    </table>
+    <div class="fx"><span>Exchange rate: <b>1 USD = ₹ 84.00</b> <span class="tag">live</span> fetched 27 Oct 2026, 18:10</span><span><button class="btn" style="color:var(--text)">Refresh</button></span></div>
+  </div>
+  <div class="panel">
+    <div class="p-head"><div class="title">Combined net worth by month <span class="cur">in USD</span></div></div>
+    <div class="chart">
+      <svg viewBox="0 0 640 200" role="img" aria-label="Combined net worth by month">
+        <g stroke="var(--line)" stroke-width="1"><line x1="40" y1="20" x2="630" y2="20"/><line x1="40" y1="70" x2="630" y2="70"/><line x1="40" y1="120" x2="630" y2="120"/><line x1="40" y1="170" x2="630" y2="170"/></g>
+        <g fill="var(--muted)" font-size="10"><text x="4" y="24">$ 460k</text><text x="4" y="74">$ 400k</text><text x="4" y="124">$ 340k</text><text x="4" y="174">$ 280k</text></g>
+        <polyline fill="none" stroke="var(--accent)" stroke-width="2.5" points="50,150 100,142 150,138 200,128 250,126 300,112 350,100 400,96 450,80 500,70 550,52 620,40"/>
+        <g fill="var(--muted)" font-size="10" text-anchor="middle"><text x="50" y="190">May</text><text x="150" y="190">Jul</text><text x="250" y="190">Sep</text><text x="350" y="190">Nov</text><text x="450" y="190">Jan</text><text x="550" y="190">Mar</text></g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- 2 USA DETAIL -->
+<section class="mock" id="m2">
+  <div class="panel">
+    <div class="p-head"><div class="title">🇺🇸 United States <span class="cur">USD $</span></div>
+      <div class="upd"><label>Update date <input type="date" value="2026-10-27" /></label><button class="btn primary">Save update</button></div></div>
+    <div class="kpis">
+      <div class="kpi"><small>Net worth</small><b class="pos">$ 312,450</b></div>
+      <div class="kpi"><small>Assets</small><b>$ 398,200</b></div>
+      <div class="kpi"><small>Liabilities</small><b class="neg">$ 85,750</b></div>
+    </div>
+    <div class="cols" style="border-top:1px solid var(--line)">
+      <div class="col"><h3 class="a"><span>Assets</span><span>$ 398,200</span></h3>
+        <div class="row"><span>Checking<small>Chase</small></span><span class="v">$ 8,200</span></div>
+        <div class="row"><span>401(k)<small>Fidelity</small></span><span class="v">$ 184,000</span></div>
+        <div class="row"><span>Brokerage<small>Schwab</small></span><span class="v">$ 96,000</span></div>
+        <div class="row"><span>Home equity<small>Property</small></span><span class="v">$ 110,000</span></div>
+        <button class="add">+ Add asset</button></div>
+      <div class="col"><h3 class="l"><span>Liabilities</span><span>$ 85,750</span></h3>
+        <div class="row"><span>Mortgage<small>Wells Fargo</small></span><span class="v">$ 78,000</span></div>
+        <div class="row"><span>Auto loan<small>Toyota Financial</small></span><span class="v">$ 6,300</span></div>
+        <div class="row"><span>Credit card<small>Amex</small></span><span class="v">$ 1,450</span></div>
+        <button class="add">+ Add liability</button></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="p-head"><div class="title">Month by month · USA</div>
+      <div class="seg"><button class="on">Net worth</button><button>Assets &amp; liabilities</button></div></div>
+    <div class="chart">
+      <svg viewBox="0 0 640 220" role="img" aria-label="USA month by month">
+        <g stroke="var(--line)"><line x1="48" y1="20" x2="630" y2="20"/><line x1="48" y1="70" x2="630" y2="70"/><line x1="48" y1="120" x2="630" y2="120"/><line x1="48" y1="170" x2="630" y2="170"/></g>
+        <g fill="var(--muted)" font-size="10"><text x="4" y="24">$ 320k</text><text x="4" y="74">$ 280k</text><text x="4" y="124">$ 240k</text><text x="4" y="174">$ 200k</text></g>
+        <polyline fill="none" stroke="var(--accent)" stroke-width="2.5" points="60,150 110,142 160,134 210,134 260,120 310,110 360,110 410,92 460,78 510,60 560,52 620,36"/>
+        <g fill="var(--accent)"><circle cx="60" cy="150" r="3.5"/><circle cx="110" cy="142" r="3.5"/><circle cx="160" cy="134" r="3.5"/><circle cx="260" cy="120" r="3.5"/><circle cx="310" cy="110" r="3.5"/><circle cx="410" cy="92" r="3.5"/><circle cx="460" cy="78" r="3.5"/><circle cx="510" cy="60" r="3.5"/><circle cx="560" cy="52" r="3.5"/><circle cx="620" cy="36" r="3.5"/></g>
+        <g fill="var(--surface)" stroke="var(--accent)" stroke-width="1.5"><circle cx="210" cy="134" r="3.5"/><circle cx="360" cy="110" r="3.5"/></g>
+        <g fill="var(--muted)" font-size="10" text-anchor="middle"><text x="60" y="206">Nov '25</text><text x="160" y="206">Jan</text><text x="260" y="206">Mar</text><text x="360" y="206">May</text><text x="460" y="206">Jul</text><text x="560" y="206">Sep</text></g>
+      </svg>
+    </div>
+    <div class="legend"><span><i style="background:var(--accent)"></i>Filled dot = month you updated, using its earliest update date</span><span><i style="background:var(--accent);opacity:.5"></i>Hollow dot = no update that month, last value carried forward</span></div>
+  </div>
+</section>
+
+<!-- 3 INDIA DETAIL -->
+<section class="mock" id="m3">
+  <div class="panel">
+    <div class="p-head"><div class="title">🇮🇳 India <span class="cur">INR ₹</span></div>
+      <div class="upd"><label>Update date <input type="date" value="2026-10-20" /></label><button class="btn primary">Save update</button></div></div>
+    <div class="kpis">
+      <div class="kpi"><small>Net worth</small><b class="pos">₹ 1,12,40,000</b></div>
+      <div class="kpi"><small>Assets</small><b>₹ 1,38,00,000</b></div>
+      <div class="kpi"><small>Liabilities</small><b class="neg">₹ 25,60,000</b></div>
+    </div>
+    <div class="cols" style="border-top:1px solid var(--line)">
+      <div class="col"><h3 class="a"><span>Assets</span><span>₹ 1,38,00,000</span></h3>
+        <div class="row"><span>Savings<small>HDFC</small></span><span class="v">₹ 6,50,000</span></div>
+        <div class="row"><span>Mutual funds<small>Zerodha</small></span><span class="v">₹ 41,50,000</span></div>
+        <div class="row"><span>PPF / EPF<small>Retirement</small></span><span class="v">₹ 30,00,000</span></div>
+        <div class="row"><span>Apartment<small>Pune</small></span><span class="v">₹ 60,00,000</span></div>
+        <button class="add">+ Add asset</button></div>
+      <div class="col"><h3 class="l"><span>Liabilities</span><span>₹ 25,60,000</span></h3>
+        <div class="row"><span>Home loan<small>SBI</small></span><span class="v">₹ 24,00,000</span></div>
+        <div class="row"><span>Credit card<small>ICICI</small></span><span class="v">₹ 1,60,000</span></div>
+        <button class="add">+ Add liability</button></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="p-head"><div class="title">Month by month · India</div>
+      <div class="seg"><button class="on">Net worth</button><button>Assets &amp; liabilities</button></div></div>
+    <div class="chart">
+      <svg viewBox="0 0 640 220" role="img" aria-label="India month by month">
+        <g stroke="var(--line)"><line x1="48" y1="20" x2="630" y2="20"/><line x1="48" y1="70" x2="630" y2="70"/><line x1="48" y1="120" x2="630" y2="120"/><line x1="48" y1="170" x2="630" y2="170"/></g>
+        <g fill="var(--muted)" font-size="10"><text x="4" y="24">₹ 1.2 Cr</text><text x="4" y="74">₹ 1.0 Cr</text><text x="4" y="124">₹ 0.8 Cr</text><text x="4" y="174">₹ 0.6 Cr</text></g>
+        <polyline fill="none" stroke="var(--accent)" stroke-width="2.5" points="60,158 110,150 160,146 210,146 260,130 310,124 360,124 410,104 460,90 510,76 560,62 620,44"/>
+        <g fill="var(--accent)"><circle cx="60" cy="158" r="3.5"/><circle cx="110" cy="150" r="3.5"/><circle cx="160" cy="146" r="3.5"/><circle cx="260" cy="130" r="3.5"/><circle cx="310" cy="124" r="3.5"/><circle cx="410" cy="104" r="3.5"/><circle cx="460" cy="90" r="3.5"/><circle cx="510" cy="76" r="3.5"/><circle cx="560" cy="62" r="3.5"/><circle cx="620" cy="44" r="3.5"/></g>
+        <g fill="var(--surface)" stroke="var(--accent)" stroke-width="1.5"><circle cx="210" cy="146" r="3.5"/><circle cx="360" cy="124" r="3.5"/></g>
+        <g fill="var(--muted)" font-size="10" text-anchor="middle"><text x="60" y="206">Nov '25</text><text x="160" y="206">Jan</text><text x="260" y="206">Mar</text><text x="360" y="206">May</text><text x="460" y="206">Jul</text><text x="560" y="206">Sep</text></g>
+      </svg>
+    </div>
+    <div class="legend"><span><i style="background:var(--accent)"></i>Filled dot = updated that month</span><span><i style="background:var(--accent);opacity:.5"></i>Hollow dot = carried forward</span></div>
+  </div>
+</section>
+
+<!-- 4 FIRST RUN -->
+<section class="mock" id="m4">
+  <div class="panel center">
+    <h2>Where is your data?</h2>
+    <p class="note">Your balances live in an Excel file you own. Nothing is uploaded to a server.</p>
+    <div class="choice">
+      <button class="primary">Open an existing Excel file<small>Pick your WealthTracker file. Chrome/Edge can save back to it directly.</small></button>
+      <button>Create a new Excel file<small>Starts empty with Items, Balances and Rates sheets.</small></button>
+      <button disabled>Save to Google Drive<small>Coming in a later step.</small></button>
+    </div>
+  </div>
+</section>
+
+<!-- 5 SETTINGS -->
+<section class="mock" id="m5">
+  <div class="panel">
+    <div class="p-head"><div class="title">Settings</div></div>
+    <div class="col">
+      <div class="row"><span>Country 1</span><span><select><option>USA</option><option>India</option><option>UK</option><option>Australia</option><option>Switzerland</option></select></span></div>
+      <div class="row"><span>Country 2</span><span><select><option>India</option><option>USA</option><option>UK</option><option>Australia</option><option>Switzerland</option></select></span></div>
+      <div class="row"><span>Data file<small>WealthTracker.xlsx</small></span><span><button class="btn" style="color:var(--text)">Change file</button> <button class="btn" style="color:var(--text)">Download copy</button></span></div>
+      <div class="row"><span>Exchange rate<small>Live from a free FX service; the rate used is saved with each update</small></span><span class="v">Auto</span></div>
+    </div>
+  </div>
+</section>
+</main>
+<script>
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.mock').forEach(s=>s.classList.toggle('on',s.id===b.dataset.m));
+});
+</script>
+</body>
+</html>

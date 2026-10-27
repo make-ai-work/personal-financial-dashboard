@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Property mockup</title>
+<style>
+/* Tokens from pmo-hub public/theme.css (Warm Paper / Midnight) */
+:root{color-scheme:light;--font:'Segoe UI',system-ui,-apple-system,sans-serif;--r:12px;--r-sm:8px;
+--bg:#f7f4ee;--surface:#fffdf9;--surface-2:#f1ece2;--text:#2b2722;--muted:#7a7266;--line:#e6dfd2;
+--accent:#0f6e6e;--accent-text:#fff;--head:#0f4c4c;--head-text:#fff;--shadow:0 8px 30px rgba(60,40,10,.18);
+--purple:#8b6cf0;--red:#c8402f;--amber:#d98e04;--green:#3f8f55;--blue:#4a7fb0;--grey:#a39a8b;--on-status:#fff}
+:root[data-theme="dark"]{--purple:#a58bff;color-scheme:dark;--r:6px;--r-sm:5px;--bg:#0f1420;--surface:#181f2e;--surface-2:#212a3d;
+--text:#e7ebf3;--muted:#9aa5ba;--line:#2a3347;--accent:#6ea8ff;--accent-text:#0b1220;--head:#0a0e17;--head-text:#e7ebf3;
+--shadow:0 8px 30px rgba(0,0,0,.6);--red:#ff6b6b;--amber:#ffc233;--green:#3ddc84;--blue:#5cb3ff;--grey:#74809a;--on-status:#0b1220}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--purple:#a58bff;color-scheme:dark;--r:6px;--r-sm:5px;--bg:#0f1420;--surface:#181f2e;--surface-2:#212a3d;
+--text:#e7ebf3;--muted:#9aa5ba;--line:#2a3347;--accent:#6ea8ff;--accent-text:#0b1220;--head:#0a0e17;--head-text:#e7ebf3;
+--shadow:0 8px 30px rgba(0,0,0,.6);--red:#ff6b6b;--amber:#ffc233;--green:#3ddc84;--blue:#5cb3ff;--grey:#74809a;--on-status:#0b1220}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font)}
+header{background:var(--head);color:var(--head-text);padding:10px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{font-size:1.05rem;margin:0}
+.file{font-size:.8rem;opacity:.85}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px}
+button{font:inherit;cursor:pointer}
+.btn{background:transparent;border:1px solid currentColor;color:inherit;border-radius:var(--r-sm);padding:5px 12px;font-size:.85rem}
+.btn.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+nav{background:var(--surface);border-bottom:1px solid var(--line);padding:0 24px;display:flex;gap:4px;overflow-x:auto}
+nav button{background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:12px 14px;white-space:nowrap}
+nav button.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+main{max-width:1180px;margin:0 auto;padding:22px 16px 60px}
+.mock{display:none}.mock.on{display:block}
+.note{color:var(--muted);font-size:.85rem;margin:0 0 16px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.p-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);gap:8px;flex-wrap:wrap}
+.title{display:flex;align-items:center;gap:10px;font-weight:600}
+.cur{font-size:.75rem;background:var(--surface-2);color:var(--muted);padding:2px 8px;border-radius:99px}
+.pos{color:var(--green)}.neg{color:var(--red)}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 18px}
+@media(max-width:560px){.kpis{grid-template-columns:1fr}}
+.kpi small{display:block;color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em}
+.kpi b{font-size:1.3rem;font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th,td{padding:10px 18px;text-align:right;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--surface-2)}
+tr.total td{font-weight:700;background:var(--surface-2)}
+td small{display:block;color:var(--muted);font-size:.72rem}
+.fx{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;background:var(--surface-2);font-size:.82rem;color:var(--muted);gap:8px;flex-wrap:wrap}
+.fx b{color:var(--text)}
+.tag{font-size:.65rem;padding:1px 7px;border-radius:99px;color:var(--on-status);background:var(--blue);margin-left:6px}
+.cols{display:grid;grid-template-columns:1fr 1fr}
+@media(max-width:700px){.cols{grid-template-columns:1fr}}
+.col{padding:14px 18px}.col+.col{border-left:1px solid var(--line)}
+@media(max-width:700px){.col+.col{border-left:0;border-top:1px solid var(--line)}}
+.col h3{margin:0 0 8px;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;display:flex;justify-content:space-between}
+.col h3.a{color:var(--green)}.col h3.l{color:var(--red)}
+.row{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:.92rem}
+.row small{display:block;color:var(--muted);font-size:.72rem}
+.row .v{font-variant-numeric:tabular-nums;white-space:nowrap}
+.add{margin-top:10px;width:100%;background:transparent;border:1px dashed var(--line);color:var(--muted);border-radius:var(--r-sm);padding:6px}
+.chart{padding:10px 18px 16px}
+.chart svg{width:100%;height:auto;display:block}
+.legend{display:flex;gap:16px;font-size:.78rem;color:var(--muted);padding:0 18px 12px;flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:3px;margin-right:6px;vertical-align:middle;border-radius:2px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden}
+.seg button{background:var(--surface);border:0;color:var(--muted);padding:4px 10px;font-size:.8rem}
+.seg button.on{background:var(--accent);color:var(--accent-text)}
+.upd{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.upd input{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:4px 8px;font:inherit;font-size:.85rem}
+.center{max-width:520px;margin:30px auto;text-align:center;padding:28px 24px}
+.center h2{margin:0 0 6px}
+.choice{display:grid;gap:10px;margin:20px 0 6px;text-align:left}
+.choice button{background:var(--surface-2);border:1px solid var(--line);color:var(--text);border-radius:var(--r-sm);padding:12px 14px;text-align:left}
+.choice button small{display:block;color:var(--muted);margin-top:2px}
+.choice button.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+.choice button.primary small{color:inherit;opacity:.85}
+.choice button[disabled]{opacity:.55;cursor:not-allowed}
+
+.chip{font-size:.65rem;padding:1px 8px;border-radius:99px;color:var(--on-status);margin-left:6px;vertical-align:middle;font-weight:600}
+.c-mine{background:var(--accent);color:var(--accent-text)}.c-joint{background:var(--amber)}.c-parent{background:var(--purple)}
+.radios{display:flex;gap:8px;margin-top:6px}
+.radios label{flex:1;border:1px solid var(--line);border-radius:var(--r-sm);padding:8px;text-align:center;background:var(--bg);color:var(--text);font-size:.85rem;margin:0}
+.radios label.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.radios small{display:block;color:var(--muted);font-size:.7rem}
+.field{display:block;margin:12px 0;font-size:.8rem;color:var(--muted)}
+.field input{display:block;width:100%;margin-top:4px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 8px;font:inherit}
+.bar2{padding:10px 24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.8rem;color:var(--muted)}
+
+.tblw{overflow-x:auto}
+.tblw table{min-width:900px;font-size:.84rem}
+.tblw th,.tblw td{padding:9px 10px;white-space:nowrap}
+.t-a td:nth-child(-n+4),.t-a th:nth-child(-n+4),.t-a td:nth-child(6),.t-a th:nth-child(6),.t-a td:nth-child(7),.t-a th:nth-child(7),
+.t-l td:nth-child(-n+4),.t-l th:nth-child(-n+4),
+.t-p td:nth-child(-n+4),.t-p th:nth-child(-n+4),.t-p td:nth-child(6),.t-p th:nth-child(6){text-align:left}
+.tblw td.w{white-space:normal}
+.mix{display:flex;height:9px;border-radius:99px;overflow:hidden;min-width:110px;background:var(--surface-2)}
+.mix i{display:block}
+.m-eq{background:var(--blue)}.m-cash{background:var(--green)}.m-pm{background:var(--amber)}.m-bd{background:var(--purple)}
+.mixtxt{font-size:.68rem;color:var(--muted);margin-top:3px}
+.soon{background:var(--amber)}
+.mixleg{display:flex;gap:14px;flex-wrap:wrap;padding:8px 12px;font-size:.75rem;color:var(--muted);border-top:1px solid var(--line)}
+.mixleg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.sub{font-size:.78rem;color:var(--muted);font-weight:400}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.four{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(max-width:560px){.two{grid-template-columns:1fr}.four{grid-template-columns:1fr 1fr}}
+.field select{display:block;width:100%;margin-top:4px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 8px;font:inherit}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+
+.pw{display:block;width:100%;margin-top:4px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 10px;font:inherit}
+.meter{display:flex;gap:4px;margin-top:6px}.meter i{flex:1;height:5px;border-radius:99px;background:var(--surface-2)}.meter i.on{background:var(--green)}
+.err{color:var(--red);font-size:.82rem;margin-top:8px}
+.warn{background:var(--surface-2);border-left:3px solid var(--amber);padding:10px 12px;border-radius:var(--r-sm);font-size:.82rem;text-align:left;margin:14px 0}
+.steps{display:flex;gap:8px;justify-content:center;font-size:.75rem;color:var(--muted);margin-bottom:14px}
+.steps b{color:var(--accent)}
+.lock{font-size:2.2rem}
+
+.page{max-width:1180px;margin:0 auto;padding:18px 16px 60px}
+.pg{display:none}.pg.on{display:block}
+td.l,th.l{text-align:left}
+.pcard{display:grid;grid-template-columns:1.4fr repeat(4,1fr);gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);align-items:center;cursor:pointer}
+.pcard:hover{background:var(--surface-2)}
+@media(max-width:900px){.pcard{grid-template-columns:1fr 1fr}}
+.pcard small,.kv small{display:block;color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em}
+.pcard b{font-variant-numeric:tabular-nums}
+.pcard .nm{font-weight:600}.pcard .nm span{display:block;color:var(--muted);font-weight:400;font-size:.8rem}
+.kv{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:14px 18px}
+@media(max-width:800px){.kv{grid-template-columns:1fr 1fr}}
+.kv b{font-weight:600}
+.src{font-size:.68rem;background:var(--surface-2);color:var(--muted);border-radius:99px;padding:1px 8px;margin-left:4px}
+.field{display:block;margin:10px 0;font-size:.8rem;color:var(--muted)}
+.field input,.field select,.field textarea{display:block;width:100%;margin-top:4px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 8px;font:inherit}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.f3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:600px){.f2,.f3{grid-template-columns:1fr}}
+.mw{max-width:600px;margin:0 auto 16px}
+.pad{padding:14px 18px}.sub{font-size:.78rem;color:var(--muted);font-weight:400}
+.foot2{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--line)}
+.chart{padding:10px 18px 6px}.chart svg{width:100%;height:auto;display:block}
+.legend{display:flex;gap:16px;font-size:.78rem;color:var(--muted);padding:2px 18px 12px;flex-wrap:wrap}.legend i{display:inline-block;width:12px;height:3px;margin-right:6px;vertical-align:middle;border-radius:2px}
+.fx{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;background:var(--surface-2);font-size:.82rem;color:var(--muted);gap:8px;flex-wrap:wrap}.fx b{color:var(--text)}
+.tag{font-size:.65rem;padding:1px 7px;border-radius:99px;color:var(--on-status);background:var(--blue);margin-left:6px}
+.ltv{height:7px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin-top:4px;width:100%}.ltv i{display:block;height:100%;background:var(--accent)}
+</style>
+</head>
+<body>
+<header><h1>My Dashboard</h1><span><button class="btn" onclick="var r=document.documentElement;r.dataset.theme=(r.dataset.theme==='dark'?'light':'dark')">Light / dark</button></span></header>
+<nav id="tabs"><button>Home</button><button>Finance Dashboard</button><button>🐾 Pets</button><button class="on">🏠 Property</button></nav>
+<nav id="sub" style="background:transparent;padding:0 24px">
+ <button class="on" data-m="ov">Overview</button><button data-m="us">🇺🇸 USA</button><button data-m="in">🇮🇳 India</button><button data-m="det">Property page</button><button data-m="addp">+ Add property</button><button data-m="addv">+ Add valuation</button><button data-m="addm">+ Record mortgage update</button>
+</nav>
+<div class="page">
+<p class="note">MOCKUP ONLY — made-up properties, values and loans. Click the sub-tabs to move around.</p>
+
+<!-- OVERVIEW -->
+<section class="pg on" id="ov">
+ <div class="panel">
+  <div class="p-head"><div class="title">Property summary</div><div class="seg"><button class="on">All</button><button>Mine</button><button>Joint</button><button>Parent</button></div></div>
+  <div class="tblw"><table><tr><th class="l">Country</th><th>Properties</th><th>Value</th><th>Mortgage balance</th><th>Equity</th></tr>
+   <tr><td class="l">🇺🇸 USA <span class="cur">USD</span></td><td>1</td><td>$ 410,000</td><td class="neg">$ 218,400</td><td class="pos">$ 191,600</td></tr>
+   <tr><td class="l">🇮🇳 India <span class="cur">INR</span></td><td>1</td><td>₹ 60,00,000</td><td class="neg">₹ 23,10,000</td><td class="pos">₹ 36,90,000</td></tr>
+   <tr class="total"><td class="l">Total in USD</td><td>2</td><td>$ 481,429</td><td>$ 245,900</td><td>$ 235,529</td></tr>
+   <tr class="total"><td class="l">Total in INR</td><td>2</td><td>₹ 4,04,40,000</td><td>₹ 2,06,55,600</td><td>₹ 1,97,84,400</td></tr></table></div>
+  <div class="fx"><span>Exchange rate: <b>1 USD = ₹ 84</b><span class="tag">live</span></span><span>Property is not counted in the Finance Dashboard totals.</span></div>
+ </div>
+ <div class="panel">
+  <div class="p-head"><div class="title">All properties</div></div>
+  <div class="pcard" onclick="go('det')"><div class="nm">🏠 Maple Street home<span>🇺🇸 14 Maple St, Austin TX · Primary home</span></div><div><small>Owner</small><span class="chip c-joint">Joint</span></div><div><small>Value</small><b>$ 410,000</b><br><span class="src">Zestimate · 12 Oct</span></div><div><small>Mortgage</small><b class="neg">$ 218,400</b></div><div><small>Equity · LTV</small><b class="pos">$ 191,600</b> <span class="sub">53%</span><div class="ltv"><i style="width:53%"></i></div></div></div>
+  <div class="pcard" onclick="go('det')"><div class="nm">🏢 Pune apartment<span>🇮🇳 Baner, Pune · Investment</span></div><div><small>Owner</small><span class="chip c-mine">Mine</span></div><div><small>Value</small><b>₹ 60,00,000</b><br><span class="src">Own estimate · 1 Aug</span></div><div><small>Mortgage</small><b class="neg">₹ 23,10,000</b></div><div><small>Equity · LTV</small><b class="pos">₹ 36,90,000</b> <span class="sub">39%</span><div class="ltv"><i style="width:39%"></i></div></div></div>
+ </div>
+ <div class="panel"><div class="p-head"><div class="title">Coming up</div></div>
+  <div class="rem" style="display:flex;justify-content:space-between;padding:9px 18px;border-bottom:1px dashed var(--line)"><span>🏠 Maple Street · Mortgage payment<small style="display:block;color:var(--muted)">$ 1,820 monthly, due on the 1st</small></span><span class="chip" style="background:var(--amber)">due in 5 days</span></div>
+  <div class="rem" style="display:flex;justify-content:space-between;padding:9px 18px"><span>🏠 Maple Street · Property tax<small style="display:block;color:var(--muted)">$ 7,200 per year, due 31 Jan</small></span><span class="chip" style="background:var(--green)">due 31 Jan 2027</span></div></div>
+</section>
+
+<!-- COUNTRY -->
+<section class="pg" id="us">
+ <div class="panel"><div class="p-head"><div class="title">🇺🇸 USA <span class="cur">USD</span></div><button class="btn primary" onclick="go('addp')">+ Add property</button></div>
+  <div class="kv"><div><small>Total value</small><b>$ 410,000</b></div><div><small>Mortgages</small><b class="neg">$ 218,400</b></div><div><small>Equity</small><b class="pos">$ 191,600</b></div><div><small>Monthly payments</small><b>$ 1,820</b></div></div>
+  <div class="pcard" onclick="go('det')"><div class="nm">🏠 Maple Street home<span>14 Maple St, Austin TX · Primary home</span></div><div><small>Owner</small><span class="chip c-joint">Joint</span></div><div><small>Value</small><b>$ 410,000</b></div><div><small>Mortgage</small><b class="neg">$ 218,400</b></div><div><small>Equity · LTV</small><b class="pos">$ 191,600</b> <span class="sub">53%</span></div></div>
+ </div>
+ <div class="panel"><div class="p-head"><div class="title">Equity by month <span class="sub">value − mortgage balance</span></div></div>
+  <div class="chart"><svg viewBox="0 0 640 190"><g stroke="var(--line)"><line x1="56" y1="20" x2="630" y2="20"/><line x1="56" y1="65" x2="630" y2="65"/><line x1="56" y1="110" x2="630" y2="110"/><line x1="56" y1="155" x2="630" y2="155"/></g>
+  <g fill="var(--muted)" font-size="10" text-anchor="end"><text x="48" y="24">$ 200K</text><text x="48" y="69">$ 150K</text><text x="48" y="114">$ 100K</text><text x="48" y="159">$ 50K</text></g>
+  <polyline fill="none" stroke="var(--accent)" stroke-width="2.5" points="70,140 150,126 230,112 310,100 390,82 470,60 550,44 620,28"/><g fill="var(--accent)"><circle cx="70" cy="140" r="3.5"/><circle cx="150" cy="126" r="3.5"/><circle cx="230" cy="112" r="3.5"/><circle cx="310" cy="100" r="3.5"/><circle cx="390" cy="82" r="3.5"/><circle cx="470" cy="60" r="3.5"/><circle cx="550" cy="44" r="3.5"/><circle cx="620" cy="28" r="3.5"/></g>
+  <g fill="var(--muted)" font-size="10" text-anchor="middle"><text x="70" y="180">Jan '25</text><text x="230" y="180">Jul</text><text x="390" y="180">Jan '26</text><text x="550" y="180">Jul</text></g></svg></div></div>
+</section>
+<section class="pg" id="in"><div class="panel"><div class="p-head"><div class="title">🇮🇳 India <span class="cur">INR</span></div><button class="btn primary">+ Add property</button></div><div class="pad sub">Same layout as USA: totals, a row per property, and an equity chart. Values and loans are in rupees with Indian digit grouping.</div></div></section>
+
+<!-- DETAIL -->
+<section class="pg" id="det">
+ <div class="panel">
+  <div class="p-head"><div class="title">🏠 Maple Street home <span class="cur">Primary home</span> <span class="chip c-joint">Joint</span></div><div style="display:flex;gap:8px"><button class="btn">Edit property</button><button class="btn" style="color:var(--red)">Delete</button></div></div>
+  <div class="kv">
+   <div class="kv-i"><small>Address</small><b>14 Maple St, Austin TX 78701</b></div>
+   <div class="kv-i"><small>Bought</small><b>3 Jun 2019</b><br><span class="sub">for $ 320,000</span></div>
+   <div class="kv-i"><small>Size</small><b>3 bd · 2 ba · 1,850 sq ft</b></div>
+   <div class="kv-i"><small>Gain since purchase</small><b class="pos">+ $ 90,000 (28%)</b></div>
+   <div class="kv-i"><small>Property tax</small><b>$ 7,200 / yr</b></div>
+   <div class="kv-i"><small>Home insurance</small><b>$ 1,640 / yr</b></div>
+   <div class="kv-i"><small>HOA</small><b>$ 0</b></div>
+   <div class="kv-i"><small>Notes</small><b>—</b></div>
+  </div>
+ </div>
+ <div class="panel">
+  <div class="p-head"><div class="title">Value <span class="sub">newest first · you enter these; nothing is fetched automatically</span></div>
+   <div style="display:flex;gap:8px"><a class="btn" href="#" onclick="return false">Open on Zillow ↗</a><button class="btn primary" onclick="go('addv')">+ Add valuation</button></div></div>
+  <div class="kv"><div><small>Current value</small><b style="font-size:1.3rem">$ 410,000</b><br><span class="src">Zestimate · 12 Oct 2026</span></div><div><small>Change, last 12 months</small><b class="pos">+ $ 18,000 (4.6%)</b></div><div><small>Range on file</small><b>$ 320,000 – $ 410,000</b></div><div><small>Last updated</small><b>15 days ago</b></div></div>
+  <div class="tblw"><table><tr><th class="l">Date</th><th class="l">Source</th><th>Value</th><th class="l">Notes</th><th></th></tr>
+   <tr><td class="l">12 Oct 2026</td><td class="l">Zillow Zestimate</td><td>$ 410,000</td><td class="l">—</td><td><button class="link">Edit</button><button class="link danger">Delete</button></td></tr>
+   <tr><td class="l">8 Apr 2026</td><td class="l">Zillow Zestimate</td><td>$ 402,000</td><td class="l">—</td><td><button class="link">Edit</button><button class="link danger">Delete</button></td></tr>
+   <tr><td class="l">20 Oct 2025</td><td class="l">Bank appraisal</td><td>$ 392,000</td><td class="l">Refinance appraisal</td><td><button class="link">Edit</button><button class="link danger">Delete</button></td></tr>
+   <tr><td class="l">3 Jun 2019</td><td class="l">Purchase price</td><td>$ 320,000</td><td class="l">—</td><td></td></tr></table></div>
+ </div>
+ <div class="panel">
+  <div class="p-head"><div class="title">Mortgage <span class="sub">recorded by you</span></div><div style="display:flex;gap:8px"><button class="btn">Edit loan</button><button class="btn primary" onclick="go('addm')">+ Record update</button></div></div>
+  <div class="kv">
+   <div><small>Lender</small><b>Wells Fargo</b></div><div><small>Loan number</small><b class="mono">3300918823</b></div>
+   <div><small>Original loan</small><b>$ 256,000</b><br><span class="sub">30 yr fixed · from Jun 2019</span></div><div><small>Interest rate</small><b>3.25%</b></div>
+   <div><small>Monthly payment</small><b>$ 1,820</b><br><span class="sub">incl. escrow $ 640</span></div><div><small>Current balance</small><b class="neg" style="font-size:1.2rem">$ 218,400</b><br><span class="sub">recorded 1 Oct 2026</span></div>
+   <div><small>Scheduled payoff</small><b>Jun 2049</b><br><span class="sub">from rate &amp; term</span></div><div><small>Equity</small><b class="pos">$ 191,600</b> <span class="sub">LTV 53%</span></div>
+  </div>
+  <div class="tblw"><table><tr><th class="l">Date</th><th>Balance after</th><th>Principal paid</th><th>Interest paid</th><th>Escrow paid</th><th class="l">Notes</th><th></th></tr>
+   <tr><td class="l">1 Oct 2026</td><td>$ 218,400</td><td>$ 530</td><td>$ 650</td><td>$ 640</td><td class="l">—</td><td><button class="link">Edit</button><button class="link danger">Delete</button></td></tr>
+   <tr><td class="l">1 Sep 2026</td><td>$ 218,930</td><td>$ 528</td><td>$ 652</td><td>$ 640</td><td class="l">—</td><td><button class="link">Edit</button><button class="link danger">Delete</button></td></tr>
+   <tr><td class="l">1 Aug 2026</td><td>$ 219,458</td><td>$ 526</td><td>$ 654</td><td>$ 640</td><td class="l">Extra $ 500 to principal</td><td><button class="link">Edit</button><button class="link danger">Delete</button></td></tr></table></div>
+ </div>
+ <div class="panel"><div class="p-head"><div class="title">Value, mortgage and equity</div></div>
+  <div class="chart"><svg viewBox="0 0 640 200"><g stroke="var(--line)"><line x1="56" y1="20" x2="630" y2="20"/><line x1="56" y1="70" x2="630" y2="70"/><line x1="56" y1="120" x2="630" y2="120"/><line x1="56" y1="170" x2="630" y2="170"/></g>
+   <g fill="var(--muted)" font-size="10" text-anchor="end"><text x="48" y="24">$ 450K</text><text x="48" y="74">$ 300K</text><text x="48" y="124">$ 150K</text><text x="48" y="174">$ 0</text></g>
+   <polyline fill="none" stroke="var(--blue)" stroke-width="2.5" points="70,63.3 230,55.0 390,45.0 550,39.3 620,33.3"/><polyline fill="none" stroke="var(--red)" stroke-width="2.5" points="70,84.7 230,89.3 390,93.3 550,96.0 620,97.2"/><polyline fill="none" stroke="var(--green)" stroke-width="2.5" points="70,148.7 230,135.7 390,121.7 550,113.3 620,106.1"/>
+   <g fill="var(--muted)" font-size="10" text-anchor="middle"><text x="70" y="190">2019</text><text x="230" y="190">2021</text><text x="390" y="190">2023</text><text x="550" y="190">2025</text><text x="620" y="190">Now</text></g></svg></div>
+  <div class="legend"><span><i style="background:var(--blue)"></i>Value</span><span><i style="background:var(--red)"></i>Mortgage balance</span><span><i style="background:var(--green)"></i>Equity</span></div></div>
+</section>
+
+<!-- FORMS -->
+<section class="pg" id="addp"><div class="panel mw"><div class="p-head"><div class="title">Add property</div></div><div class="pad">
+ <div class="f2"><label class="field">Name<input value="Maple Street home"></label><label class="field">Country<select><option>🇺🇸 USA</option><option>🇮🇳 India</option></select></label></div>
+ <label class="field">Address<input value="14 Maple St, Austin TX 78701"></label>
+ <div class="f3"><label class="field">Type<select><option>Primary home</option><option>Rental</option><option>Investment</option><option>Vacation home</option><option>Land</option><option>Other</option></select></label><label class="field">Purchase date<input type="date" value="2019-06-03"></label><label class="field">Purchase price (USD)<input value="320,000"></label></div>
+ <div class="f3"><label class="field">Bedrooms (optional)<input value="3"></label><label class="field">Bathrooms (optional)<input value="2"></label><label class="field">Size, sq ft (optional)<input value="1,850"></label></div>
+ <div class="f3"><label class="field">Property tax / year (optional)<input value="7,200"></label><label class="field">Insurance / year (optional)<input value="1,640"></label><label class="field">HOA / month (optional)<input value="0"></label></div>
+ <div class="field">Who owns it?<div class="radios"><label>Mine<small>Only me</small></label><label class="on">Joint<small>Me + parent</small></label><label>Parent<small>Only parent</small></label></div></div>
+ <label class="field">Current value (USD) <span class="sub">— first entry in the value history</span><input value="410,000"></label>
+</div><div class="foot2"><button class="btn">Cancel</button><button class="btn primary">Save property</button></div></div></section>
+
+<section class="pg" id="addv"><div class="panel mw"><div class="p-head"><div class="title">Add valuation · 🏠 Maple Street home</div></div><div class="pad">
+ <p class="note">Open the property on <a href="#" onclick="return false" style="color:var(--accent)">Zillow ↗</a> in a new tab, then type or paste the number it shows here.</p>
+ <div class="f2"><label class="field">Date<input type="date" value="2026-10-27"></label><label class="field">Value (USD)<input value="410,000"></label></div>
+ <div class="f2"><label class="field">Source<select><option>Zillow Zestimate</option><option>Appraisal</option><option>Agent / broker estimate</option><option>Own estimate</option><option>Purchase price</option><option>Other</option></select></label><label class="field">Notes (optional)<input></label></div>
+</div><div class="foot2"><button class="btn">Cancel</button><button class="btn primary">Save valuation</button></div></div></section>
+
+<section class="pg" id="addm"><div class="panel mw"><div class="p-head"><div class="title">Record mortgage update · Wells Fargo</div></div><div class="pad">
+ <div class="f2"><label class="field">Date<input type="date" value="2026-11-01"></label><label class="field">Balance after this payment (USD)<input value="217,872"></label></div>
+ <div class="f3"><label class="field">Principal paid (optional)<input value="532"></label><label class="field">Interest paid (optional)<input value="648"></label><label class="field">Escrow paid (optional)<input value="640"></label></div>
+ <label class="field">Notes (optional)<input placeholder="e.g. extra payment, rate change"></label>
+ <label style="font-size:.85rem"><input type="checkbox"> The interest rate or monthly payment changed — update the loan details too</label>
+</div><div class="foot2"><button class="btn">Cancel</button><button class="btn primary">Save update</button></div></section>
+</div>
+<script>
+function go(id){document.querySelectorAll('.pg').forEach(s=>s.classList.toggle('on',s.id===id));document.querySelectorAll('#sub button').forEach(b=>b.classList.toggle('on',b.dataset.m===id));window.scrollTo(0,0)}
+document.querySelectorAll('#sub button').forEach(b=>b.onclick=()=>go(b.dataset.m));
+</script></body></html>
