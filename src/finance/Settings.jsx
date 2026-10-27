@@ -41,7 +41,7 @@ export default function Settings() {
         <CountriesPicker
           value={data.settings.countries}
           onChange={(countries) => setSettings({ countries })}
-          noun="accounts and policies"
+          noun={['item', 'items']}
           describe={(code) => {
             const a = data.accounts.filter((x) => x.country === code).length
             const p = data.policies.filter((x) => x.country === code).length

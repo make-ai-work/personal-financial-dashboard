@@ -77,7 +77,7 @@ try {
   step('hiding a country that has data warns, hides, never deletes')
   await subtab('Settings').click()
   await page.getByRole('checkbox', { name: 'Show India' }).click()
-  assert.match(await page.locator('.warn').first().innerText(), /will hide 1 accounts? and policies\. Nothing is deleted/)
+  assert.match(await page.locator('.warn').first().innerText(), /will hide 1 item\. Nothing is deleted/)
   await page.getByRole('button', { name: 'Hide India' }).click()
   assert.equal(await page.locator('.subtabs button', { hasText: 'India' }).count(), 0)
   t = await summaryText()

@@ -51,12 +51,12 @@ export default function Chart({ points, lines, format, compact, label, note = DE
           </g>
         ))}
         {points.map((p, i) => i % every === 0 && (
-          <text key={p.key ?? p.month} x={x(i)} y={H - 8} textAnchor="middle" fontSize="10" fill="var(--muted)">{monthLabel(p.month, i === 0)}</text>
+          <text key={p.key ?? p.month} x={x(i)} y={H - 8} textAnchor="middle" fontSize="10" fill="var(--muted)">{monthLabel(p.month, i === 0 || points.length > 12)}</text>
         ))}
         {lines.map((l) => (
           <g key={l.key}>
             <polyline fill="none" stroke={l.color} strokeWidth="2.5" points={points.map((p, i) => `${x(i)},${y(p[l.key])}`).join(' ')} />
-            {points.map((p, i) => (
+            {points.map((p, i) => (points.length <= 24 || !p.carried) && (
               <circle key={p.key ?? p.month} cx={x(i)} cy={y(p[l.key])} r="3.5" stroke={l.color} strokeWidth="1.5" fill={p.carried ? 'var(--surface)' : l.color}>
                 <title>{`${l.label} · ${p.carried ? p.month + ' (carried forward)' : p.date}: ${format(p[l.key])}`}</title>
               </circle>

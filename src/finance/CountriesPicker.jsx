@@ -4,7 +4,7 @@ import { moveCountry, toggleCountry } from '../lib/countries.js'
 
 // Choose which countries a section shows (1-5), in order. The first is the reporting currency.
 // Unticking only hides a country: its data stays in the file.
-// describe(code) -> { count, text } for the line under each country.
+// describe(code) -> { count, text } for the line under each country. noun = [singular, plural].
 export default function CountriesPicker({ value, onChange, describe, noun }) {
   const [pending, setPending] = useState(null)
   const order = [...value, ...COUNTRY_CODES.filter((c) => !value.includes(c))]
@@ -54,7 +54,7 @@ export default function CountriesPicker({ value, onChange, describe, noun }) {
       {pending && (
         <div className="pad" style={{ borderTop: '1px solid var(--line)' }}>
           <div className="warn" style={{ margin: 0 }}>
-            Unticking <b>{COUNTRIES[pending].name}</b> will hide {describe(pending).count} {noun}. Nothing is deleted.{' '}
+            Unticking <b>{COUNTRIES[pending].name}</b> will hide {describe(pending).count} {describe(pending).count === 1 ? noun[0] : noun[1]}. Nothing is deleted.{' '}
             <button className="btn" onClick={confirmHide}>Hide {COUNTRIES[pending].name}</button>{' '}
             <button className="btn" onClick={() => setPending(null)}>Cancel</button>
           </div>

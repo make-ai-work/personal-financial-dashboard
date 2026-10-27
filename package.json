@@ -10,7 +10,8 @@
     "test": "node --test test/*.test.js",
     "test:e2e": "node test/e2e/finance.e2e.mjs",
     "test:e2e:pets": "node test/e2e/pets.e2e.mjs",
-    "test:e2e:countries": "node test/e2e/countries.e2e.mjs"
+    "test:e2e:countries": "node test/e2e/countries.e2e.mjs",
+    "test:e2e:property": "node test/e2e/property.e2e.mjs"
   },
   "dependencies": {
     "exceljs": "^4.4.0",
