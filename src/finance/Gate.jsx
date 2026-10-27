@@ -102,3 +102,12 @@ export function Unlock() {
     </div>
   )
 }
+
+// Shows the first-run or unlock screen until the vault is open, then renders the section.
+export function VaultGate({ children }) {
+  const { phase } = useVault()
+  if (phase === 'loading') return null
+  if (phase === 'start') return <FirstRun />
+  if (phase === 'locked') return <Unlock />
+  return children
+}

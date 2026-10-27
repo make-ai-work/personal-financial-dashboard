@@ -5,8 +5,7 @@ import { useFx } from './useFx.js'
 import Summary from './Summary.jsx'
 import CountryView from './CountryView.jsx'
 import Settings from './Settings.jsx'
-
-const SAVE_TEXT = { saved: 'saved', saving: 'saving…', unsaved: 'unsaved changes', error: 'save failed' }
+import StatusBar from './StatusBar.jsx'
 
 export default function Dashboard() {
   const v = useVault()
@@ -21,12 +20,7 @@ export default function Dashboard() {
 
   return (
     <>
-      <div className="statusbar">
-        <span className={`dot ${v.saveState}`} />
-        <span>🔒 {v.fileName} · encrypted · {SAVE_TEXT[v.saveState]}</span>
-        {!v.canWrite && v.saveState !== 'saved' && <button className="btn sm" onClick={v.downloadNow}>Download to save</button>}
-        <button className="btn sm" onClick={v.lock}>Lock now</button>
-      </div>
+      <StatusBar />
       <nav className="subtabs">
         <button className={active === 'summary' ? 'on' : ''} onClick={() => setTab('summary')}>Summary</button>
         {[c1, c2].map((c) => (

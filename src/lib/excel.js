@@ -2,6 +2,7 @@
 // The export is NOT encrypted. Loaded lazily because exceljs is large.
 import { COUNTRIES, OWNERS, MIX } from './format.js'
 import { emptyData, uid } from './model.js'
+import { SPECIES } from './pets.js'
 
 const load = async () => {
   const mod = await import('exceljs')
@@ -10,6 +11,9 @@ const load = async () => {
 
 const ITEMS = ['ID', 'Country', 'Type', 'Name', 'Account number', 'Institution', 'Owner', 'Current balance',
   ...MIX.map((m) => `${m.label} %`), 'Maturity date', 'Value at maturity']
+const PETS = ['ID', 'Name', 'Species', 'Breed', 'Sex', 'Neutered', 'Birth date', 'Icon', 'Microchip', 'Vet', 'Vet phone',
+  'Insurance', 'Insurance renews', 'Food', 'Allergies', 'Notes']
+const PET_RECORDS = ['ID', 'Pet ID', 'Type', 'Name / reason', 'Date', 'Dose', 'Repeat', 'Next due', 'Ends on', 'Last given', 'Vet', 'Cost', 'Weight kg', 'Notes']
 const INSURANCE = ['ID', 'Country', 'Policy', 'Policy number', 'Policy company', 'Owner', 'Death benefit', 'Maturity date', 'Value on maturity']
 
 function sheet(wb, name, headers, rows) {
@@ -32,10 +36,21 @@ export async function exportWorkbook(data) {
   ]))
   sheet(wb, 'Balances', ['Date', 'Account ID', 'Amount'], data.balances.map((b) => [b.date, b.accountId, b.amount]))
   sheet(wb, 'Rates', ['Date', 'From', 'To', 'Rate'], data.rates.map((r) => [r.date, r.from, r.to, r.rate]))
+  sheet(wb, 'Pets', PETS, data.pets.map((p) => [
+    p.id, p.name, p.species, p.breed || '', p.sex || '', p.neutered || '', p.birthDate || '', p.icon || '', p.microchip || '',
+    p.vet || '', p.vetPhone || '', p.insurance || '', p.insuranceRenews || '', p.food || '', p.allergies || '', p.notes || '',
+  ]))
+  sheet(wb, 'PetRecords', PET_RECORDS, data.petRecords.map((r) => [
+    r.id, r.petId, r.type, r.name || '', r.date || '', r.dose || '', r.repeat || '', r.nextDue || '', r.endDate || '',
+    r.lastGiven || '', r.vet || '', r.cost ?? null, r.weightKg ?? null, r.notes || '',
+  ]))
   sheet(wb, 'Settings', ['Key', 'Value'], [
     ['countries', data.settings.countries.join(',')],
     ['parentLabel', data.settings.parentLabel],
     ['autoLockMin', data.settings.autoLockMin],
+    ['petSoonDays', data.settings.petSoonDays],
+    ['petCurrency', data.settings.petCurrency],
+    ['weightUnit', data.settings.weightUnit],
   ])
   return new Uint8Array(await wb.xlsx.writeBuffer())
 }
@@ -111,6 +126,33 @@ export async function importWorkbook(buffer) {
   for (const r of readRows(wb.getWorksheet('Rates'))) {
     if (r.Date && r.From && r.To && num(r.Rate) > 0) data.rates.push({ date: String(r.Date), from: r.From, to: r.To, rate: num(r.Rate) })
   }
+  const petIds = new Set()
+  const speciesKeys = SPECIES.map((x) => x.key)
+  for (const r of readRows(wb.getWorksheet('Pets'))) {
+    if (!r.Name) {
+      warnings.push('Skipped a pet row with no name.')
+      continue
+    }
+    const id = r.ID && !petIds.has(String(r.ID)) ? String(r.ID) : uid()
+    petIds.add(id)
+    data.pets.push({
+      id, name: String(r.Name), species: speciesKeys.includes(r.Species) ? r.Species : 'other', breed: String(r.Breed ?? ''),
+      sex: String(r.Sex ?? ''), neutered: String(r.Neutered ?? ''), birthDate: String(r['Birth date'] ?? ''), icon: String(r.Icon ?? ''),
+      microchip: String(r.Microchip ?? ''), vet: String(r.Vet ?? ''), vetPhone: String(r['Vet phone'] ?? ''), insurance: String(r.Insurance ?? ''),
+      insuranceRenews: String(r['Insurance renews'] ?? ''), food: String(r.Food ?? ''), allergies: String(r.Allergies ?? ''), notes: String(r.Notes ?? ''),
+    })
+  }
+  for (const r of readRows(wb.getWorksheet('PetRecords'))) {
+    if (!petIds.has(String(r['Pet ID'])) || !['vaccine', 'medication', 'visit', 'weight'].includes(r.Type)) {
+      warnings.push(`Skipped pet record "${r['Name / reason'] || r.Type || '(blank)'}": unknown pet or type.`)
+      continue
+    }
+    data.petRecords.push({
+      id: r.ID ? String(r.ID) : uid(), petId: String(r['Pet ID']), type: r.Type, name: String(r['Name / reason'] ?? ''), date: String(r.Date ?? ''),
+      dose: String(r.Dose ?? ''), repeat: String(r.Repeat ?? ''), nextDue: String(r['Next due'] ?? ''), endDate: String(r['Ends on'] ?? ''),
+      lastGiven: String(r['Last given'] ?? ''), vet: String(r.Vet ?? ''), cost: num(r.Cost), weightKg: num(r['Weight kg']), notes: String(r.Notes ?? ''),
+    })
+  }
   for (const r of readRows(wb.getWorksheet('Settings'))) {
     if (r.Key === 'countries') {
       const c = String(r.Value).split(',').map((x) => x.trim())
@@ -118,6 +160,9 @@ export async function importWorkbook(buffer) {
     }
     if (r.Key === 'parentLabel' && r.Value) data.settings.parentLabel = String(r.Value)
     if (r.Key === 'autoLockMin' && num(r.Value) != null) data.settings.autoLockMin = num(r.Value)
+    if (r.Key === 'petSoonDays' && num(r.Value) > 0) data.settings.petSoonDays = num(r.Value)
+    if (r.Key === 'petCurrency' && COUNTRIES[r.Value]) data.settings.petCurrency = r.Value
+    if (r.Key === 'weightUnit' && ['kg', 'lb'].includes(r.Value)) data.settings.weightUnit = r.Value
   }
   return { data, warnings }
 }

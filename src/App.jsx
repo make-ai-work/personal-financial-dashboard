@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { VaultProvider } from './finance/VaultContext.jsx'
 import Finance from './finance/Finance.jsx'
+import Pets from './pets/Pets.jsx'
 import ClockWidget from './components/ClockWidget.jsx'
 
 // Add future sections here: each entry becomes a top-level tab.
 const TABS = [
   { id: 'home', label: 'Home', render: () => <div className="grid"><ClockWidget /></div> },
   { id: 'finance', label: 'Finance Dashboard', render: () => <Finance /> },
+  { id: 'pets', label: '🐾 Pets', render: () => <Pets /> },
 ]
 
 const read = (k, fallback) => {

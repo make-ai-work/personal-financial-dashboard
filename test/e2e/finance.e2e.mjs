@@ -22,6 +22,7 @@ const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, a
 await ctx.addInitScript(() => { delete window.showSaveFilePicker; delete window.showOpenFilePicker })
 await ctx.route('**/api.frankfurter.dev/**', (r) => r.fulfill({ json: { base: 'USD', date: '2026-10-27', rates: { INR: 84 } } }))
 const page = await ctx.newPage()
+await page.clock.setFixedTime(new Date('2026-10-27T12:00:00')) // 'today' must not drift
 const errors = []
 page.on('pageerror', (e) => errors.push(e.message))
 page.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
@@ -140,7 +141,7 @@ await xl.saveAs(`${OUT}/export.xlsx`)
 const ExcelJS = require('exceljs')
 const wb = new ExcelJS.Workbook()
 await wb.xlsx.readFile(`${OUT}/export.xlsx`)
-assert.deepEqual(wb.worksheets.map((w) => w.name), ['Items', 'Insurance', 'Balances', 'Rates', 'Settings'])
+assert.deepEqual(wb.worksheets.map((w) => w.name), ['Items', 'Insurance', 'Balances', 'Rates', 'Pets', 'PetRecords', 'Settings'])
 assert.ok(JSON.stringify(wb.getWorksheet('Items').getSheetValues()).includes('000123456821'))
 await page.screenshot({ path: `${OUT}/settings.png`, fullPage: true })
 

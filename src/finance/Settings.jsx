@@ -43,7 +43,7 @@ export default function Settings() {
           {[['Country 1', c1, 0, c2], ['Country 2', c2, 1, c1]].map(([label, val, idx, other]) => (
             <div className="row" key={label}>
               <span>{label}</span>
-              <select className="pw sm" value={val} onChange={(e) => {
+              <select className="pw sm" aria-label={label} value={val} onChange={(e) => {
                 const next = [...data.settings.countries]
                 next[idx] = e.target.value
                 setSettings({ countries: next })
@@ -55,7 +55,7 @@ export default function Settings() {
           <p className="note">Changing a country only changes what is shown. Data for the other countries stays in your file.</p>
           <div className="row">
             <span>“Parent” label<small>Rename to e.g. “Mom” or “Dad”</small></span>
-            <input className="pw sm" value={data.settings.parentLabel} maxLength={20} onChange={(e) => setSettings({ parentLabel: e.target.value })} onBlur={(e) => !e.target.value.trim() && setSettings({ parentLabel: 'Parent' })} />
+            <input className="pw sm" aria-label="Parent label" value={data.settings.parentLabel} maxLength={20} onChange={(e) => setSettings({ parentLabel: e.target.value })} onBlur={(e) => !e.target.value.trim() && setSettings({ parentLabel: 'Parent' })} />
           </div>
         </div>
       </div>
@@ -83,7 +83,7 @@ export default function Settings() {
           {changing && <div className="inline-form"><PassphraseForm submitLabel="Change passphrase" onSubmit={changePass} busy={busy} /></div>}
           <div className="row">
             <span>Auto-lock after<small>Idle time before the app locks itself</small></span>
-            <select className="pw sm" value={data.settings.autoLockMin} onChange={(e) => setSettings({ autoLockMin: Number(e.target.value) })}>
+            <select className="pw sm" aria-label="Auto-lock after" value={data.settings.autoLockMin} onChange={(e) => setSettings({ autoLockMin: Number(e.target.value) })}>
               <option value={5}>5 min</option><option value={10}>10 min</option><option value={30}>30 min</option><option value={0}>Never</option>
             </select>
           </div>

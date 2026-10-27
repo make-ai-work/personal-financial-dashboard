@@ -22,7 +22,9 @@ const monthLabel = (m, first) => {
   return first || mo === 1 ? `${MONTHS[mo - 1]} '${String(y).slice(2)}` : MONTHS[mo - 1]
 }
 
-export default function Chart({ points, lines, format, compact, label }) {
+const DEFAULT_NOTE = 'Filled dot = updated that month (earliest update date) · Hollow dot = carried forward'
+
+export default function Chart({ points, lines, format, compact, label, note = DEFAULT_NOTE }) {
   if (!points.length) {
     return <div className="empty">No history yet. Add accounts, then press “Save update” to record this month.</div>
   }
@@ -30,7 +32,13 @@ export default function Chart({ points, lines, format, compact, label }) {
   const ticks = niceTicks(Math.min(...vals), Math.max(...vals))
   const lo = ticks[0]
   const hi = ticks[ticks.length - 1]
-  const x = (i) => (points.length === 1 ? (M.l + W - M.r) / 2 : M.l + (i * (W - M.l - M.r)) / (points.length - 1))
+  const timed = points.length > 1 && points[0].t != null && points[points.length - 1].t > points[0].t // position by real date
+  const t0 = points[0].t
+  const span = points[points.length - 1].t - t0
+  const x = (i) =>
+    points.length === 1 ? (M.l + W - M.r) / 2
+      : timed ? M.l + ((points[i].t - t0) / span) * (W - M.l - M.r)
+        : M.l + (i * (W - M.l - M.r)) / (points.length - 1)
   const y = (v) => M.t + (1 - (v - lo) / (hi - lo)) * (H - M.t - M.b)
   const every = Math.ceil(points.length / 8)
   return (
@@ -43,13 +51,13 @@ export default function Chart({ points, lines, format, compact, label }) {
           </g>
         ))}
         {points.map((p, i) => i % every === 0 && (
-          <text key={p.month} x={x(i)} y={H - 8} textAnchor="middle" fontSize="10" fill="var(--muted)">{monthLabel(p.month, i === 0)}</text>
+          <text key={p.key ?? p.month} x={x(i)} y={H - 8} textAnchor="middle" fontSize="10" fill="var(--muted)">{monthLabel(p.month, i === 0)}</text>
         ))}
         {lines.map((l) => (
           <g key={l.key}>
             <polyline fill="none" stroke={l.color} strokeWidth="2.5" points={points.map((p, i) => `${x(i)},${y(p[l.key])}`).join(' ')} />
             {points.map((p, i) => (
-              <circle key={p.month} cx={x(i)} cy={y(p[l.key])} r="3.5" stroke={l.color} strokeWidth="1.5" fill={p.carried ? 'var(--surface)' : l.color}>
+              <circle key={p.key ?? p.month} cx={x(i)} cy={y(p[l.key])} r="3.5" stroke={l.color} strokeWidth="1.5" fill={p.carried ? 'var(--surface)' : l.color}>
                 <title>{`${l.label} · ${p.carried ? p.month + ' (carried forward)' : p.date}: ${format(p[l.key])}`}</title>
               </circle>
             ))}
@@ -58,7 +66,7 @@ export default function Chart({ points, lines, format, compact, label }) {
       </svg>
       <div className="legend">
         {lines.map((l) => <span key={l.key}><i style={{ background: l.color }} />{l.label}</span>)}
-        <span>Filled dot = updated that month (earliest update date) · Hollow dot = carried forward</span>
+        <span>{note}</span>
       </div>
     </div>
   )

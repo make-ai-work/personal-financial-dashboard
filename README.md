@@ -9,17 +9,19 @@ A personal dashboard built step by step with React + Vite. Each section is a top
 npm install
 npm run dev          # http://localhost:5173
 npm test             # unit tests (encryption + data model)
-npm run build && npm run test:e2e   # end-to-end browser test (needs Playwright + Chromium)
+npm run build && npm run test:e2e && npm run test:e2e:pets   # end-to-end browser tests (need Playwright + Chromium)
 ```
 
 ## Tabs
 
 - **Home** – clock and greeting.
+- **Pets** – a page per pet with profile, vaccinations, medication, vet visits and weight, plus an
+  overview of what is due or overdue and yearly spending. Stored in the same encrypted file as Finance.
 - **Finance Dashboard** – assets, liabilities and insurance for two countries (USA, India, UK,
   Australia or Switzerland), with a summary page, owner filter (Mine / Joint / Parent) and a
   month-by-month chart per country.
 
-## Finance Dashboard: how your data is stored
+## How your data is stored (Finance and Pets)
 
 - Everything lives in one encrypted file (`*.wvault`), created and opened from the app. Nothing is
   sent to a server. Full account and policy numbers are stored in it.
@@ -28,7 +30,7 @@ npm run build && npm run test:e2e   # end-to-end browser test (needs Playwright 
 - Chrome/Edge save straight back to the file. Other browsers open via a file picker and save by
   downloading the encrypted file.
 - Settings → *Export decrypted Excel copy* writes a plain, **unencrypted** workbook
-  (`Items`, `Insurance`, `Balances`, `Rates`, `Settings` sheets). Settings → *Import from Excel*
+  (`Items`, `Insurance`, `Balances`, `Rates`, `Pets`, `PetRecords`, `Settings` sheets). Settings → *Import from Excel*
   reads that same layout.
 - The exchange rate is fetched live from the Frankfurter API (ECB rates); only the two currency
   codes are sent. The rate in use is saved with each update.
@@ -38,4 +40,5 @@ npm run build && npm run test:e2e   # end-to-end browser test (needs Playwright 
 
 - [x] Step 1: project scaffold, grid layout, clock + greeting widget
 - [x] Step 2: Finance Dashboard (encrypted file, accounts, insurance, summary, charts)
+- [x] Step 3: Pets tab (profiles, vaccinations, medication, visits, weight, reminders)
 - [ ] Later: Google Drive storage

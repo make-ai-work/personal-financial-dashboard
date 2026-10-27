@@ -5,16 +5,19 @@
 // policy:   { id, country, name, number, company, owner, deathBenefit, maturityDate, maturityValue }
 // balance:  { date: 'YYYY-MM-DD', accountId, amount }   one row per account per saved update
 // rate:     { date, from, to, rate }                    1 `from` = `rate` `to`, saved with each update
+// pets / petRecords live in ./pets.js
 
 export const uid = () => crypto.randomUUID()
 
 export const emptyData = () => ({
   version: 1,
-  settings: { countries: ['us', 'in'], parentLabel: 'Parent', autoLockMin: 10 },
+  settings: { countries: ['us', 'in'], parentLabel: 'Parent', autoLockMin: 10, petSoonDays: 30, petCurrency: 'us', weightUnit: 'kg' },
   accounts: [],
   policies: [],
   balances: [],
   rates: [],
+  pets: [],
+  petRecords: [],
 })
 
 export function normalizeData(d) {
@@ -26,6 +29,8 @@ export function normalizeData(d) {
     policies: d?.policies || [],
     balances: d?.balances || [],
     rates: d?.rates || [],
+    pets: d?.pets || [],
+    petRecords: d?.petRecords || [],
   }
 }
 
