@@ -38,4 +38,4 @@ npm run build && npm run test:e2e   # end-to-end browser test (needs Playwright 
 
 - [x] Step 1: project scaffold, grid layout, clock + greeting widget
 - [x] Step 2: Finance Dashboard (encrypted file, accounts, insurance, summary, charts)
-- [ ] Later: Google Drive storage, WealthTracker.xlsx import mapping
+- [ ] Later: Google Drive storage
