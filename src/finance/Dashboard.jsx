@@ -10,20 +10,20 @@ import StatusBar from './StatusBar.jsx'
 export default function Dashboard() {
   const v = useVault()
   const { data } = v
-  const [c1, c2] = data.settings.countries
+  const codes = data.settings.countries
   const [tab, setTab] = useState('summary')
   const [owner, setOwner] = useState('all')
   const [reveal, setReveal] = useState(false)
-  const fx = useFx(c1, c2, data.rates)
+  const fx = useFx(codes, data.rates)
   const parentLabel = data.settings.parentLabel
-  const active = [c1, c2, 'summary', 'settings'].includes(tab) ? tab : 'summary'
+  const active = [...codes, 'summary', 'settings'].includes(tab) ? tab : 'summary'
 
   return (
     <>
       <StatusBar />
       <nav className="subtabs">
         <button className={active === 'summary' ? 'on' : ''} onClick={() => setTab('summary')}>Summary</button>
-        {[c1, c2].map((c) => (
+        {codes.map((c) => (
           <button key={c} className={active === c ? 'on' : ''} onClick={() => setTab(c)}>{COUNTRIES[c].flag} {COUNTRIES[c].name}</button>
         ))}
         <button className={active === 'settings' ? 'on' : ''} onClick={() => setTab('settings')}>Settings</button>
@@ -41,7 +41,7 @@ export default function Dashboard() {
       )}
       {active === 'summary' && <Summary owner={owner} fx={fx} />}
       {active === 'settings' && <Settings />}
-      {(active === c1 || active === c2) && <CountryView key={active} code={active} owner={owner} reveal={reveal} fx={fx} />}
+      {codes.includes(active) && <CountryView key={active} code={active} owner={owner} reveal={reveal} fx={fx} />}
     </>
   )
 }

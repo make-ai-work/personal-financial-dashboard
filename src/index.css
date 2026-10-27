@@ -160,3 +160,13 @@ td.act { text-align: right !important; padding-right: 12px; }
 .rec-types button { flex: 1; }
 details summary { cursor: pointer; color: var(--accent); font-size: .85rem; padding: 10px 18px; }
 textarea { background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 7px 8px; font: inherit; width: 100%; margin-top: 4px; display: block; }
+
+/* Countries picker */
+.cl { padding: 6px 18px; }
+.crow { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px dashed var(--line); }
+.crow .fl { font-size: 1.3rem; } .crow .nm { flex: 1; } .crow .nm small { display: block; color: var(--muted); font-size: .72rem; }
+.crow.off { opacity: .65; }
+.mv { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-sm); color: var(--text); padding: 2px 8px; }
+.base { font-size: .66rem; background: var(--accent); color: var(--accent-text); border-radius: 99px; padding: 1px 8px; margin-left: 6px; }
+.hid { font-size: .66rem; background: var(--surface-2); color: var(--muted); border-radius: 99px; padding: 1px 8px; }
+.fx-note { color: var(--muted); }

@@ -7,30 +7,44 @@
 // rate:     { date, from, to, rate }                    1 `from` = `rate` `to`, saved with each update
 // pets / petRecords live in ./pets.js
 
+import { sanitizeCountries } from './countries.js'
+
 export const uid = () => crypto.randomUUID()
 
 export const emptyData = () => ({
   version: 1,
-  settings: { countries: ['us', 'in'], parentLabel: 'Parent', autoLockMin: 10, petSoonDays: 30, petCurrency: 'us', weightUnit: 'kg' },
+  settings: { countries: ['us', 'in'], propertyCountries: ['us', 'in'], parentLabel: 'Parent', autoLockMin: 10, petSoonDays: 30, petCurrency: 'us', weightUnit: 'kg' },
   accounts: [],
   policies: [],
   balances: [],
   rates: [],
   pets: [],
   petRecords: [],
+  properties: [],
+  propertyValues: [],
+  loans: [],
+  loanUpdates: [],
 })
 
 export function normalizeData(d) {
   const base = emptyData()
+  const settings = { ...base.settings, ...(d?.settings || {}) }
+  settings.countries = sanitizeCountries(settings.countries, base.settings.countries)
+  // Property keeps its own list; a vault from before that existed starts from the Finance list.
+  settings.propertyCountries = sanitizeCountries(d?.settings?.propertyCountries || settings.countries)
   return {
     version: 1,
-    settings: { ...base.settings, ...(d?.settings || {}) },
+    settings,
     accounts: d?.accounts || [],
     policies: d?.policies || [],
     balances: d?.balances || [],
     rates: d?.rates || [],
     pets: d?.pets || [],
     petRecords: d?.petRecords || [],
+    properties: d?.properties || [],
+    propertyValues: d?.propertyValues || [],
+    loans: d?.loans || [],
+    loanUpdates: d?.loanUpdates || [],
   }
 }
 
@@ -66,15 +80,17 @@ export const updatePolicy = (d, id, patch) => ({
 export const removePolicy = (d, id) => ({ ...d, policies: d.policies.filter((p) => p.id !== id) })
 
 // Record today's balances for every account in a country as a dated snapshot.
-// Saving twice on the same date replaces that date's snapshot.
+// Saving twice on the same date replaces that date's snapshot. `fx` = { base, rates: { INR: 84 } }
+// (1 base = rate quote); each rate is saved with the update so history keeps the rate used.
 export function saveUpdate(d, country, date, fx) {
   const ids = new Set(inCountry(d.accounts, country).map((a) => a.id))
   const balances = d.balances.filter((b) => !(b.date === date && ids.has(b.accountId)))
   for (const a of inCountry(d.accounts, country)) balances.push({ date, accountId: a.id, amount: a.balance || 0 })
   let rates = d.rates
-  if (fx && fx.rate > 0) {
-    rates = rates.filter((r) => !(r.date === date && r.from === fx.from && r.to === fx.to))
-    rates = [...rates, { date, from: fx.from, to: fx.to, rate: fx.rate }]
+  for (const [to, rate] of Object.entries(fx?.rates || {})) {
+    if (!(rate > 0)) continue
+    rates = rates.filter((r) => !(r.date === date && r.from === fx.base && r.to === to))
+    rates = [...rates, { date, from: fx.base, to, rate }]
   }
   return { ...d, balances, rates }
 }
@@ -138,11 +154,14 @@ export function monthSeries(d, country, owner, today = new Date()) {
   return out
 }
 
-// Convert between the two selected currencies. fx = { base, quote, rate } meaning 1 base = rate quote.
+// Convert between currencies through the reporting (base) currency.
+// fx = { base, rates: { INR: 84, GBP: 0.78 } } meaning 1 base = rate quote. NaN when a rate is missing.
 export function convert(amount, from, to, fx) {
   if (from === to) return amount
-  if (!fx || !(fx.rate > 0)) return NaN
-  if (from === fx.base && to === fx.quote) return amount * fx.rate
-  if (from === fx.quote && to === fx.base) return amount / fx.rate
-  return NaN
+  if (!fx) return NaN
+  const rateOf = (cur) => (cur === fx.base ? 1 : fx.rates?.[cur])
+  const rf = rateOf(from)
+  const rt = rateOf(to)
+  if (!(rf > 0) || !(rt > 0)) return NaN
+  return (amount / rf) * rt
 }

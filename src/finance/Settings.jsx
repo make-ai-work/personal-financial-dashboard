@@ -1,13 +1,12 @@
 import { useState } from 'react'
 import { useVault } from './VaultContext.jsx'
-import { COUNTRIES, COUNTRY_CODES } from '../lib/format.js'
+import CountriesPicker from './CountriesPicker.jsx'
 import { PassphraseForm } from './ui.jsx'
 import { download, isAbort, pickExcel } from '../lib/fileio.js'
 
 export default function Settings() {
   const v = useVault()
   const { data, update } = v
-  const [c1, c2] = data.settings.countries
   const [changing, setChanging] = useState(false)
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
@@ -38,21 +37,18 @@ export default function Settings() {
   return (
     <>
       <div className="panel">
-        <div className="p-head"><div className="title">Settings</div></div>
+        <div className="p-head"><div className="title">Finance · Countries shown</div></div>
+        <CountriesPicker
+          value={data.settings.countries}
+          onChange={(countries) => setSettings({ countries })}
+          noun="accounts and policies"
+          describe={(code) => {
+            const a = data.accounts.filter((x) => x.country === code).length
+            const p = data.policies.filter((x) => x.country === code).length
+            return { count: a + p, text: a + p ? `${a} account${a === 1 ? '' : 's'}${p ? ` · ${p} polic${p === 1 ? 'y' : 'ies'}` : ''}` : 'No data yet' }
+          }}
+        />
         <div className="col">
-          {[['Country 1', c1, 0, c2], ['Country 2', c2, 1, c1]].map(([label, val, idx, other]) => (
-            <div className="row" key={label}>
-              <span>{label}</span>
-              <select className="pw sm" aria-label={label} value={val} onChange={(e) => {
-                const next = [...data.settings.countries]
-                next[idx] = e.target.value
-                setSettings({ countries: next })
-              }}>
-                {COUNTRY_CODES.filter((k) => k !== other).map((k) => <option key={k} value={k}>{COUNTRIES[k].flag} {COUNTRIES[k].name} ({COUNTRIES[k].currency})</option>)}
-              </select>
-            </div>
-          ))}
-          <p className="note">Changing a country only changes what is shown. Data for the other countries stays in your file.</p>
           <div className="row">
             <span>“Parent” label<small>Rename to e.g. “Mom” or “Dad”</small></span>
             <input className="pw sm" aria-label="Parent label" value={data.settings.parentLabel} maxLength={20} onChange={(e) => setSettings({ parentLabel: e.target.value })} onBlur={(e) => !e.target.value.trim() && setSettings({ parentLabel: 'Parent' })} />

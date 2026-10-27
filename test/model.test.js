@@ -26,11 +26,11 @@ test('owner filter', () => {
 
 test('saveUpdate replaces a same-day snapshot and records the rate once', () => {
   let d = setup()
-  d = saveUpdate(d, 'us', '2026-03-10', { from: 'USD', to: 'INR', rate: 84 })
-  d = saveUpdate(d, 'us', '2026-03-10', { from: 'USD', to: 'INR', rate: 85 })
+  d = saveUpdate(d, 'us', '2026-03-10', { base: 'USD', rates: { INR: 84 } })
+  d = saveUpdate(d, 'us', '2026-03-10', { base: 'USD', rates: { INR: 85, GBP: 0.8 } })
   assert.equal(d.balances.length, 3)
-  assert.equal(d.rates.length, 1)
-  assert.equal(d.rates[0].rate, 85)
+  assert.equal(d.rates.length, 2) // INR replaced, GBP added
+  assert.equal(d.rates.find((r) => r.to === 'INR').rate, 85)
 })
 
 test('unsaved balance detection', () => {
@@ -77,9 +77,11 @@ test('removing an account removes its history', () => {
 })
 
 test('currency conversion', () => {
-  const fx = { base: 'USD', quote: 'INR', rate: 84 }
+  const fx = { base: 'USD', rates: { INR: 84, GBP: 0.8 } }
   assert.equal(convert(10, 'USD', 'INR', fx), 840)
   assert.equal(convert(840, 'INR', 'USD', fx), 10)
   assert.equal(convert(5, 'USD', 'USD', fx), 5)
+  assert.equal(convert(840, 'INR', 'GBP', fx), 8) // cross rate goes through the base currency
   assert.ok(Number.isNaN(convert(5, 'USD', 'INR', null)))
+  assert.ok(Number.isNaN(convert(5, 'USD', 'CHF', fx))) // no rate for CHF
 })

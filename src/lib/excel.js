@@ -2,6 +2,7 @@
 // The export is NOT encrypted. Loaded lazily because exceljs is large.
 import { COUNTRIES, OWNERS, MIX } from './format.js'
 import { emptyData, uid } from './model.js'
+import { sanitizeCountries } from './countries.js'
 import { SPECIES } from './pets.js'
 
 const load = async () => {
@@ -46,6 +47,7 @@ export async function exportWorkbook(data) {
   ]))
   sheet(wb, 'Settings', ['Key', 'Value'], [
     ['countries', data.settings.countries.join(',')],
+    ['propertyCountries', data.settings.propertyCountries.join(',')],
     ['parentLabel', data.settings.parentLabel],
     ['autoLockMin', data.settings.autoLockMin],
     ['petSoonDays', data.settings.petSoonDays],
@@ -154,10 +156,8 @@ export async function importWorkbook(buffer) {
     })
   }
   for (const r of readRows(wb.getWorksheet('Settings'))) {
-    if (r.Key === 'countries') {
-      const c = String(r.Value).split(',').map((x) => x.trim())
-      if (c.length === 2 && c.every((x) => COUNTRIES[x]) && c[0] !== c[1]) data.settings.countries = c
-    }
+    if (r.Key === 'countries') data.settings.countries = sanitizeCountries(String(r.Value).split(',').map((x) => x.trim()), data.settings.countries)
+    if (r.Key === 'propertyCountries') data.settings.propertyCountries = sanitizeCountries(String(r.Value).split(',').map((x) => x.trim()), data.settings.countries)
     if (r.Key === 'parentLabel' && r.Value) data.settings.parentLabel = String(r.Value)
     if (r.Key === 'autoLockMin' && num(r.Value) != null) data.settings.autoLockMin = num(r.Value)
     if (r.Key === 'petSoonDays' && num(r.Value) > 0) data.settings.petSoonDays = num(r.Value)

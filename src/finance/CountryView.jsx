@@ -43,7 +43,7 @@ export default function CountryView({ code, owner, reveal, fx }) {
       : `Delete policy “${item.name}”?`
     if (window.confirm(msg)) update((d) => (kind === 'account' ? removeAccount(d, item.id) : removePolicy(d, item.id)))
   }
-  const doSaveUpdate = () => update((d) => saveUpdate(d, code, date, fx.rate ? { from: fx.base, to: fx.quote, rate: fx.rate } : null))
+  const doSaveUpdate = () => update((d) => saveUpdate(d, code, date, fx.quotes.length && Object.keys(fx.rates).length ? { base: fx.base, rates: fx.rates } : null))
 
   const Actions = ({ kind, item }) => (
     <td className="act">
