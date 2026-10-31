@@ -278,9 +278,9 @@ function staleTag(d){const n=Math.round((TODAY-new Date(d))/864e5);return n>30?`
 const TOT=sum(H);document.getElementById('k-val').textContent=usd(TOT);
 document.getElementById('pfs').innerHTML=Object.keys(PF).map(p=>{const hs=H.filter(h=>h.p===p),t=sum(hs);
  return `<div class="panel"><div class="p-head"><div class="title">${PF[p]} <span class="chiplink">📈 linked to Finance: ${LINK[p]}</span></div><div style="display:flex;gap:8px"><button class="btn" onclick="go('addh')">+ Add holding</button></div></div>
- <div class="tblw"><table class="t-left"><tr><th class="l">Holding</th><th class="l">Class</th><th class="l">Sector</th><th class="l">Geography</th><th>Units</th><th>Price</th><th class="l">Priced</th><th>Value</th><th>% of portfolio</th><th></th></tr>
- ${hs.map(h=>`<tr><td class="l"><b>${h.n}</b> <span class="sub">${h.t} · ${h.type}</span></td><td class="l">${h.cls}</td><td class="l">${h.sec}</td><td class="l">${h.geo}</td><td>${h.q.toLocaleString()}</td><td>$ ${h.pr.toFixed(2)}</td><td class="l">${staleTag(h.d)}</td><td><b>${usd(val(h))}</b></td><td>${pct(val(h),t).toFixed(1)}%</td><td><button class="link">Edit</button><button class="link danger">Delete</button></td></tr>`).join('')}
- <tr class="total"><td class="l">Total → Finance “${LINK[p]}”</td><td colspan="6"></td><td>${usd(t)}</td><td>100%</td><td></td></tr></table></div></div>`}).join('');
+ <div class="tblw"><table class="t-left"><tr><th class="l">Holding</th><th class="l">Class</th><th class="l">Sector</th><th class="l">Geography</th><th>Units</th><th>Price · date</th><th>Value</th><th>% of portfolio</th><th></th></tr>
+ ${hs.map(h=>`<tr><td class="l"><b>${h.n}</b> <span class="sub">${h.t} · ${h.type}</span></td><td class="l">${h.cls}</td><td class="l">${h.sec}</td><td class="l">${h.geo}</td><td>${h.q.toLocaleString()}</td><td>$ ${h.pr.toFixed(2)}<br>${staleTag(h.d)}</td><td><b>${usd(val(h))}</b></td><td>${pct(val(h),t).toFixed(1)}%</td><td><button class="link">Edit</button><button class="link danger">Delete</button></td></tr>`).join('')}
+ <tr class="total"><td class="l">Total → Finance “${LINK[p]}”</td><td colspan="4"></td><td>${usd(t)}</td><td>100%</td><td></td></tr></table></div></div>`}).join('');
 let usv='cls';
 function usAlloc(){const f={cls:'cls',sector:'sec',geo:'geo',acct:h=>PF[h.p]}[usv];const rows=group(H,usv==='cls'?'cls':f);
  document.getElementById('usalloc').innerHTML=bar(rows,TOT,usv==='cls'?(k=>COL[k]):null);
