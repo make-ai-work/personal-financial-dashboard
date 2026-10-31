@@ -5,6 +5,7 @@ import { emptyData, uid } from './model.js'
 import { sanitizeCountries } from './countries.js'
 import { SPECIES } from './pets.js'
 import { PROPERTY_TYPES, VALUE_SOURCES } from './property.js'
+import { CLASSES as PF_CLASSES } from './portfolio.js'
 
 const load = async () => {
   const mod = await import('exceljs')
@@ -21,6 +22,9 @@ const PROPERTY = ['ID', 'Name', 'Country', 'Address', 'Type', 'Owner', 'Purchase
 const PROPERTY_VALUES = ['ID', 'Property ID', 'Date', 'Value', 'Source', 'Notes']
 const LOANS = ['ID', 'Property ID', 'Lender', 'Loan number', 'Original amount', 'Start date', 'Term years', 'Rate %', 'Rate type', 'Monthly payment', 'Escrow', 'Payment day', 'Notes']
 const LOAN_UPDATES = ['ID', 'Loan ID', 'Date', 'Balance', 'Principal', 'Interest', 'Escrow', 'Notes']
+const PORTFOLIOS = ['ID', 'Name', 'Finance account ID', 'Reconciled', 'Opening balance', 'Target equities %', 'Target bonds %', 'Target cash %', 'Target metals %']
+const HOLDINGS = ['ID', 'Portfolio ID', 'Name', 'Ticker', 'Type', 'Class', 'Split equities %', 'Split cash %', 'Split metals %', 'Split bonds %',
+  'Sector', 'Geography', 'Track by', 'Units', 'Price', 'Value', 'Price date', 'Notes']
 const INSURANCE = ['ID', 'Country', 'Policy', 'Policy number', 'Policy company', 'Owner', 'Death benefit', 'Maturity date', 'Value on maturity']
 
 function sheet(wb, name, headers, rows) {
@@ -61,9 +65,21 @@ export async function exportWorkbook(data) {
     l.monthlyPayment ?? null, l.escrow ?? null, l.paymentDay ?? null, l.notes || '',
   ]))
   sheet(wb, 'LoanUpdates', LOAN_UPDATES, data.loanUpdates.map((u) => [u.id, u.loanId, u.date, u.balance, u.principal ?? null, u.interest ?? null, u.escrow ?? null, u.notes || '']))
+  sheet(wb, 'Portfolios', PORTFOLIOS, data.portfolios.map((p) => [
+    p.id, p.name, p.accountId, p.reconciled ? 'yes' : 'no', p.openingBalance ?? null,
+    p.targets?.equities ?? null, p.targets?.bonds ?? null, p.targets?.cash ?? null, p.targets?.metals ?? null,
+  ]))
+  sheet(wb, 'Holdings', HOLDINGS, data.holdings.map((h) => [
+    h.id, h.portfolioId, h.name, h.ticker || '', h.type, h.cls, ...(h.mix || [null, null, null, null]), h.sector || '', h.geo || '', h.trackBy,
+    h.units ?? null, h.price ?? null, h.value ?? null, h.priceDate || '', h.notes || '',
+  ]))
   sheet(wb, 'Settings', ['Key', 'Value'], [
     ['countries', data.settings.countries.join(',')],
     ['propertyCountries', data.settings.propertyCountries.join(',')],
+    ['portfolioCountries', data.settings.portfolioCountries.join(',')],
+    ['concentrationLimit', data.settings.concentrationLimit],
+    ['rebalanceTol', data.settings.rebalanceTol],
+    ['priceStaleDays', data.settings.priceStaleDays],
     ['parentLabel', data.settings.parentLabel],
     ['autoLockMin', data.settings.autoLockMin],
     ['petSoonDays', data.settings.petSoonDays],
@@ -212,9 +228,42 @@ export async function importWorkbook(buffer) {
       data.loanUpdates.push({ id: r.ID ? String(r.ID) : uid(), loanId: String(r['Loan ID']), date: String(r.Date), balance: num(r.Balance), principal: num(r.Principal), interest: num(r.Interest), escrow: num(r.Escrow), notes: String(r.Notes ?? '') })
     } else warnings.push('Skipped a loan update row: unknown loan, missing date or no balance.')
   }
+  const pfIds = new Set()
+  const accountIds = new Set(data.accounts.map((a) => a.id))
+  const clsKeys = [...PF_CLASSES.map((c) => c.key), 'mixed', 'unallocated']
+  for (const r of readRows(wb.getWorksheet('Portfolios'))) {
+    if (!r.Name || !accountIds.has(String(r['Finance account ID'])) || data.portfolios.some((p) => p.accountId === String(r['Finance account ID']))) {
+      warnings.push(`Skipped portfolio "${r.Name || '(no name)'}": unknown or already-linked Finance account.`)
+      continue
+    }
+    const id = r.ID && !pfIds.has(String(r.ID)) ? String(r.ID) : uid()
+    pfIds.add(id)
+    const t = { equities: num(r['Target equities %']), bonds: num(r['Target bonds %']), cash: num(r['Target cash %']), metals: num(r['Target metals %']) }
+    data.portfolios.push({
+      id, name: String(r.Name), accountId: String(r['Finance account ID']), reconciled: r.Reconciled === 'yes', openingBalance: num(r['Opening balance']) ?? 0,
+      targets: Object.values(t).some((x) => x != null) ? Object.fromEntries(Object.entries(t).map(([k, v]) => [k, v ?? 0])) : null,
+    })
+  }
+  for (const r of readRows(wb.getWorksheet('Holdings'))) {
+    if (!pfIds.has(String(r['Portfolio ID'])) || !r.Name) {
+      warnings.push(`Skipped holding "${r.Name || '(no name)'}": unknown portfolio.`)
+      continue
+    }
+    const split = [r['Split equities %'], r['Split cash %'], r['Split metals %'], r['Split bonds %']].map(num)
+    data.holdings.push({
+      id: r.ID ? String(r.ID) : uid(), portfolioId: String(r['Portfolio ID']), name: String(r.Name), ticker: String(r.Ticker ?? ''), type: String(r.Type || 'other'),
+      cls: clsKeys.includes(r.Class) ? r.Class : 'unallocated', mix: split.some((x) => x != null) ? split.map((x) => x ?? 0) : null, sector: String(r.Sector ?? ''),
+      geo: String(r.Geography ?? ''), trackBy: r['Track by'] === 'value' ? 'value' : 'units', units: num(r.Units), price: num(r.Price), value: num(r.Value),
+      priceDate: String(r['Price date'] ?? ''), notes: String(r.Notes ?? ''),
+    })
+  }
   for (const r of readRows(wb.getWorksheet('Settings'))) {
     if (r.Key === 'countries') data.settings.countries = sanitizeCountries(String(r.Value).split(',').map((x) => x.trim()), data.settings.countries)
     if (r.Key === 'propertyCountries') data.settings.propertyCountries = sanitizeCountries(String(r.Value).split(',').map((x) => x.trim()), data.settings.countries)
+    if (r.Key === 'portfolioCountries') data.settings.portfolioCountries = sanitizeCountries(String(r.Value).split(',').map((x) => x.trim()), data.settings.countries)
+    if (r.Key === 'concentrationLimit' && num(r.Value) > 0) data.settings.concentrationLimit = num(r.Value)
+    if (r.Key === 'rebalanceTol' && num(r.Value) > 0) data.settings.rebalanceTol = num(r.Value)
+    if (r.Key === 'priceStaleDays' && num(r.Value) > 0) data.settings.priceStaleDays = num(r.Value)
     if (r.Key === 'parentLabel' && r.Value) data.settings.parentLabel = String(r.Value)
     if (r.Key === 'autoLockMin' && num(r.Value) != null) data.settings.autoLockMin = num(r.Value)
     if (r.Key === 'petSoonDays' && num(r.Value) > 0) data.settings.petSoonDays = num(r.Value)

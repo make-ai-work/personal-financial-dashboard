@@ -3,6 +3,8 @@ import { VaultProvider } from './finance/VaultContext.jsx'
 import Finance from './finance/Finance.jsx'
 import Pets from './pets/Pets.jsx'
 import Property from './property/Property.jsx'
+import Portfolio from './portfolio/Portfolio.jsx'
+import { NavContext } from './nav.jsx'
 import ClockWidget from './components/ClockWidget.jsx'
 
 // Add future sections here: each entry becomes a top-level tab.
@@ -11,6 +13,7 @@ const TABS = [
   { id: 'finance', label: 'Finance Dashboard', render: () => <Finance /> },
   { id: 'pets', label: '🐾 Pets', render: () => <Pets /> },
   { id: 'property', label: '🏠 Property', render: () => <Property /> },
+  { id: 'portfolio', label: '📈 Portfolio', render: () => <Portfolio /> },
 ]
 
 const read = (k, fallback) => {
@@ -23,6 +26,8 @@ const write = (k, v) => {
 export default function App() {
   const [tab, setTab] = useState(() => read('tab', 'finance'))
   const [theme, setTheme] = useState(() => read('theme', ''))
+  const [focus, setFocus] = useState(null)
+  const nav = { focus, clearFocus: () => setFocus(null), go: (id, params) => { setTab(id); setFocus(params || null) } }
   const current = TABS.find((t) => t.id === tab) || TABS[0]
 
   useEffect(() => {
@@ -36,6 +41,7 @@ export default function App() {
 
   return (
     <VaultProvider>
+      <NavContext.Provider value={nav}>
       <header className="topbar">
         <h1>My Dashboard</h1>
         <button className="btn" onClick={() => setTheme(dark ? 'light' : 'dark')}>{dark ? 'Light mode' : 'Dark mode'}</button>
@@ -46,6 +52,7 @@ export default function App() {
         ))}
       </nav>
       <main className="page">{current.render()}</main>
+      </NavContext.Provider>
     </VaultProvider>
   )
 }

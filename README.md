@@ -9,7 +9,7 @@ A personal dashboard built step by step with React + Vite. Each section is a top
 npm install
 npm run dev          # http://localhost:5173
 npm test             # unit tests (encryption + data model)
-npm run build && npm run test:e2e && npm run test:e2e:pets && npm run test:e2e:countries && npm run test:e2e:property
+npm run build && npm run test:e2e && npm run test:e2e:pets && npm run test:e2e:countries && npm run test:e2e:property && npm run test:e2e:portfolio
                      # end-to-end browser tests (need Playwright + Chromium)
 ```
 
@@ -22,6 +22,12 @@ npm run build && npm run test:e2e && npm run test:e2e:pets && npm run test:e2e:c
   looking up the Zestimate yourself), manually recorded mortgages (balance, principal, interest, escrow),
   equity and loan-to-value, reminders for mortgage payments and property tax, and monthly charts.
   Not counted in the Finance totals. Zillow has no public API and forbids scraping, so values are typed in.
+- **Portfolio** – holdings per portfolio (stocks, ETFs, funds, bonds, cash) with prices you type in, linked to
+  one of your Finance asset accounts: that account's balance and asset-mix bar are then calculated from the
+  holdings. Allocation by asset class, sector, geography and portfolio, a single-stock concentration warning,
+  stale-price flags, a bulk "Update prices" screen, and class-level rebalancing with a buy-only plan for new money.
+  When you link an account, a difference between its typed balance and your holdings is added as an
+  "unallocated" holding by default (or you accept the new total).
 - **Finance Dashboard** – assets, liabilities and insurance for two countries (USA, India, UK,
   Australia or Switzerland; choose one to five, and Finance and Property each keep their own list), with a summary page, owner filter (Mine / Joint / Parent) and a
   month-by-month chart per country.
@@ -35,7 +41,7 @@ npm run build && npm run test:e2e && npm run test:e2e:pets && npm run test:e2e:c
 - Chrome/Edge save straight back to the file. Other browsers open via a file picker and save by
   downloading the encrypted file.
 - Settings → *Export decrypted Excel copy* writes a plain, **unencrypted** workbook
-  (`Items`, `Insurance`, `Balances`, `Rates`, `Pets`, `PetRecords`, `Property`, `PropertyValues`, `Loans`, `LoanUpdates`, `Settings` sheets). Settings → *Import from Excel*
+  (`Items`, `Insurance`, `Balances`, `Rates`, `Pets`, `PetRecords`, `Property`, `PropertyValues`, `Loans`, `LoanUpdates`, `Portfolios`, `Holdings`, `Settings` sheets). Settings → *Import from Excel*
   reads that same layout.
 - The exchange rate is fetched live from the Frankfurter API (ECB rates); only the two currency
   codes are sent. The rate in use is saved with each update.
@@ -47,4 +53,5 @@ npm run build && npm run test:e2e && npm run test:e2e:pets && npm run test:e2e:c
 - [x] Step 2: Finance Dashboard (encrypted file, accounts, insurance, summary, charts)
 - [x] Step 3: Pets tab (profiles, vaccinations, medication, visits, weight, reminders)
 - [x] Step 4: generic country lists (1-5 per section) and the Property tab
+- [x] Step 5: Portfolio tab (holdings, allocation, rebalancing), linked to Finance accounts
 - [ ] Later: Google Drive storage

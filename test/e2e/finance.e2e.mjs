@@ -141,7 +141,7 @@ await xl.saveAs(`${OUT}/export.xlsx`)
 const ExcelJS = require('exceljs')
 const wb = new ExcelJS.Workbook()
 await wb.xlsx.readFile(`${OUT}/export.xlsx`)
-assert.deepEqual(wb.worksheets.map((w) => w.name), ['Items', 'Insurance', 'Balances', 'Rates', 'Pets', 'PetRecords', 'Property', 'PropertyValues', 'Loans', 'LoanUpdates', 'Settings'])
+assert.deepEqual(wb.worksheets.map((w) => w.name), ['Items', 'Insurance', 'Balances', 'Rates', 'Pets', 'PetRecords', 'Property', 'PropertyValues', 'Loans', 'LoanUpdates', 'Portfolios', 'Holdings', 'Settings'])
 assert.ok(JSON.stringify(wb.getWorksheet('Items').getSheetValues()).includes('000123456821'))
 await page.screenshot({ path: `${OUT}/settings.png`, fullPage: true })
 

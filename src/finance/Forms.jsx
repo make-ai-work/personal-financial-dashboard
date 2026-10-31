@@ -4,7 +4,7 @@ import { Modal, OwnerPicker } from './ui.jsx'
 
 const str = (v) => (v == null ? '' : String(v))
 
-export function AccountModal({ type, country, initial, parentLabel, onSave, onClose }) {
+export function AccountModal({ type, country, initial, locked, parentLabel, onSave, onClose }) {
   const cur = COUNTRIES[country].currency
   const isAsset = type === 'asset'
   const [f, setF] = useState({
@@ -24,15 +24,15 @@ export function AccountModal({ type, country, initial, parentLabel, onSave, onCl
 
   const submit = (e) => {
     e.preventDefault()
-    const balance = parseAmount(f.balance)
+    const balance = locked ? initial.balance : parseAmount(f.balance)
     if (!f.name.trim()) return setErr('Account name is required.')
-    if (Number.isNaN(balance) || f.balance === '') return setErr('Enter the current balance as a number.')
-    if (isAsset && mixUsed && Math.abs(mixTotal - 100) > 0.01) return setErr(`Asset mix must total 100% (now ${mixTotal}%).`)
+    if (!locked && (Number.isNaN(balance) || f.balance === '')) return setErr('Enter the current balance as a number.')
+    if (!locked && isAsset && mixUsed && Math.abs(mixTotal - 100) > 0.01) return setErr(`Asset mix must total 100% (now ${mixTotal}%).`)
     const mv = parseAmount(f.maturityValue)
     onSave({
       country, type,
       name: f.name.trim(), number: f.number.trim(), institution: f.institution.trim(), owner: f.owner, balance,
-      mix: isAsset && mixUsed ? f.mix.map((v) => parseAmount(v) || 0) : null,
+      mix: locked ? initial.mix : isAsset && mixUsed ? f.mix.map((v) => parseAmount(v) || 0) : null,
       maturityDate: isAsset ? f.maturityDate : '',
       maturityValue: isAsset && f.maturityValue !== '' && !Number.isNaN(mv) ? mv : null,
     })
@@ -51,10 +51,10 @@ export function AccountModal({ type, country, initial, parentLabel, onSave, onCl
         </div>
         <div className="two">
           <label className="field">{isAsset ? 'Bank / holding company' : 'Lender'}<input value={f.institution} onChange={set('institution')} /></label>
-          <label className="field">Current balance ({cur})<input inputMode="decimal" value={f.balance} onChange={set('balance')} /></label>
+          <label className="field">Current balance ({cur})<input inputMode="decimal" value={f.balance} onChange={set('balance')} disabled={locked} />{locked && <small>Comes from the linked portfolio. Change holdings or prices in Portfolio.</small>}</label>
         </div>
         <div className="field">Who owns it?<OwnerPicker value={f.owner} onChange={(owner) => setF({ ...f, owner })} parentLabel={parentLabel} /></div>
-        {isAsset && (
+        {isAsset && !locked && (
           <>
             <div className="field">
               Asset mix (%, optional — must total 100)

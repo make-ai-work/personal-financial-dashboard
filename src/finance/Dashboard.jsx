@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useNav } from '../nav.jsx'
 import { useVault } from './VaultContext.jsx'
 import { COUNTRIES, OWNERS, ownerLabel } from '../lib/format.js'
 import { useFx } from './useFx.js'
@@ -15,6 +16,13 @@ export default function Dashboard() {
   const [owner, setOwner] = useState('all')
   const [reveal, setReveal] = useState(false)
   const fx = useFx(codes, data.rates)
+  const { focus, clearFocus } = useNav()
+  useEffect(() => {
+    if (focus?.country) {
+      setTab(focus.country)
+      clearFocus()
+    }
+  }, [focus]) // eslint-disable-line react-hooks/exhaustive-deps
   const parentLabel = data.settings.parentLabel
   const active = [...codes, 'summary', 'settings'].includes(tab) ? tab : 'summary'
 

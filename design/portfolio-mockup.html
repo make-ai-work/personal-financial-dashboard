@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Portfolio mockup</title>
+<style>
+/* Tokens from pmo-hub public/theme.css (Warm Paper / Midnight) */
+:root{color-scheme:light;--font:'Segoe UI',system-ui,-apple-system,sans-serif;--r:12px;--r-sm:8px;
+--bg:#f7f4ee;--surface:#fffdf9;--surface-2:#f1ece2;--text:#2b2722;--muted:#7a7266;--line:#e6dfd2;
+--accent:#0f6e6e;--accent-text:#fff;--head:#0f4c4c;--head-text:#fff;--shadow:0 8px 30px rgba(60,40,10,.18);
+--purple:#8b6cf0;--red:#c8402f;--amber:#d98e04;--green:#3f8f55;--blue:#4a7fb0;--grey:#a39a8b;--on-status:#fff}
+:root[data-theme="dark"]{--purple:#a58bff;color-scheme:dark;--r:6px;--r-sm:5px;--bg:#0f1420;--surface:#181f2e;--surface-2:#212a3d;
+--text:#e7ebf3;--muted:#9aa5ba;--line:#2a3347;--accent:#6ea8ff;--accent-text:#0b1220;--head:#0a0e17;--head-text:#e7ebf3;
+--shadow:0 8px 30px rgba(0,0,0,.6);--red:#ff6b6b;--amber:#ffc233;--green:#3ddc84;--blue:#5cb3ff;--grey:#74809a;--on-status:#0b1220}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--purple:#a58bff;color-scheme:dark;--r:6px;--r-sm:5px;--bg:#0f1420;--surface:#181f2e;--surface-2:#212a3d;
+--text:#e7ebf3;--muted:#9aa5ba;--line:#2a3347;--accent:#6ea8ff;--accent-text:#0b1220;--head:#0a0e17;--head-text:#e7ebf3;
+--shadow:0 8px 30px rgba(0,0,0,.6);--red:#ff6b6b;--amber:#ffc233;--green:#3ddc84;--blue:#5cb3ff;--grey:#74809a;--on-status:#0b1220}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font)}
+header{background:var(--head);color:var(--head-text);padding:10px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{font-size:1.05rem;margin:0}
+.file{font-size:.8rem;opacity:.85}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px}
+button{font:inherit;cursor:pointer}
+.btn{background:transparent;border:1px solid currentColor;color:inherit;border-radius:var(--r-sm);padding:5px 12px;font-size:.85rem}
+.btn.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+nav{background:var(--surface);border-bottom:1px solid var(--line);padding:0 24px;display:flex;gap:4px;overflow-x:auto}
+nav button{background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:12px 14px;white-space:nowrap}
+nav button.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+main{max-width:1180px;margin:0 auto;padding:22px 16px 60px}
+.mock{display:none}.mock.on{display:block}
+.note{color:var(--muted);font-size:.85rem;margin:0 0 16px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.p-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);gap:8px;flex-wrap:wrap}
+.title{display:flex;align-items:center;gap:10px;font-weight:600}
+.cur{font-size:.75rem;background:var(--surface-2);color:var(--muted);padding:2px 8px;border-radius:99px}
+.pos{color:var(--green)}.neg{color:var(--red)}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 18px}
+@media(max-width:560px){.kpis{grid-template-columns:1fr}}
+.kpi small{display:block;color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em}
+.kpi b{font-size:1.3rem;font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th,td{padding:10px 18px;text-align:right;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--surface-2)}
+tr.total td{font-weight:700;background:var(--surface-2)}
+td small{display:block;color:var(--muted);font-size:.72rem}
+.fx{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;background:var(--surface-2);font-size:.82rem;color:var(--muted);gap:8px;flex-wrap:wrap}
+.fx b{color:var(--text)}
+.tag{font-size:.65rem;padding:1px 7px;border-radius:99px;color:var(--on-status);background:var(--blue);margin-left:6px}
+.cols{display:grid;grid-template-columns:1fr 1fr}
+@media(max-width:700px){.cols{grid-template-columns:1fr}}
+.col{padding:14px 18px}.col+.col{border-left:1px solid var(--line)}
+@media(max-width:700px){.col+.col{border-left:0;border-top:1px solid var(--line)}}
+.col h3{margin:0 0 8px;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;display:flex;justify-content:space-between}
+.col h3.a{color:var(--green)}.col h3.l{color:var(--red)}
+.row{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:.92rem}
+.row small{display:block;color:var(--muted);font-size:.72rem}
+.row .v{font-variant-numeric:tabular-nums;white-space:nowrap}
+.add{margin-top:10px;width:100%;background:transparent;border:1px dashed var(--line);color:var(--muted);border-radius:var(--r-sm);padding:6px}
+.chart{padding:10px 18px 16px}
+.chart svg{width:100%;height:auto;display:block}
+.legend{display:flex;gap:16px;font-size:.78rem;color:var(--muted);padding:0 18px 12px;flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:3px;margin-right:6px;vertical-align:middle;border-radius:2px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden}
+.seg button{background:var(--surface);border:0;color:var(--muted);padding:4px 10px;font-size:.8rem}
+.seg button.on{background:var(--accent);color:var(--accent-text)}
+.upd{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.upd input{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:4px 8px;font:inherit;font-size:.85rem}
+.center{max-width:520px;margin:30px auto;text-align:center;padding:28px 24px}
+.center h2{margin:0 0 6px}
+.choice{display:grid;gap:10px;margin:20px 0 6px;text-align:left}
+.choice button{background:var(--surface-2);border:1px solid var(--line);color:var(--text);border-radius:var(--r-sm);padding:12px 14px;text-align:left}
+.choice button small{display:block;color:var(--muted);margin-top:2px}
+.choice button.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+.choice button.primary small{color:inherit;opacity:.85}
+.choice button[disabled]{opacity:.55;cursor:not-allowed}
+
+.chip{font-size:.65rem;padding:1px 8px;border-radius:99px;color:var(--on-status);margin-left:6px;vertical-align:middle;font-weight:600}
+.c-mine{background:var(--accent);color:var(--accent-text)}.c-joint{background:var(--amber)}.c-parent{background:var(--purple)}
+.radios{display:flex;gap:8px;margin-top:6px}
+.radios label{flex:1;border:1px solid var(--line);border-radius:var(--r-sm);padding:8px;text-align:center;background:var(--bg);color:var(--text);font-size:.85rem;margin:0}
+.radios label.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.radios small{display:block;color:var(--muted);font-size:.7rem}
+.field{display:block;margin:12px 0;font-size:.8rem;color:var(--muted)}
+.field input{display:block;width:100%;margin-top:4px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 8px;font:inherit}
+.bar2{padding:10px 24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.8rem;color:var(--muted)}
+
+.tblw{overflow-x:auto}
+.tblw table{min-width:900px;font-size:.84rem}
+.tblw th,.tblw td{padding:9px 10px;white-space:nowrap}
+.t-a td:nth-child(-n+4),.t-a th:nth-child(-n+4),.t-a td:nth-child(6),.t-a th:nth-child(6),.t-a td:nth-child(7),.t-a th:nth-child(7),
+.t-l td:nth-child(-n+4),.t-l th:nth-child(-n+4),
+.t-p td:nth-child(-n+4),.t-p th:nth-child(-n+4),.t-p td:nth-child(6),.t-p th:nth-child(6){text-align:left}
+.tblw td.w{white-space:normal}
+.mix{display:flex;height:9px;border-radius:99px;overflow:hidden;min-width:110px;background:var(--surface-2)}
+.mix i{display:block}
+.m-eq{background:var(--blue)}.m-cash{background:var(--green)}.m-pm{background:var(--amber)}.m-bd{background:var(--purple)}
+.mixtxt{font-size:.68rem;color:var(--muted);margin-top:3px}
+.soon{background:var(--amber)}
+.mixleg{display:flex;gap:14px;flex-wrap:wrap;padding:8px 12px;font-size:.75rem;color:var(--muted);border-top:1px solid var(--line)}
+.mixleg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.sub{font-size:.78rem;color:var(--muted);font-weight:400}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.four{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(max-width:560px){.two{grid-template-columns:1fr}.four{grid-template-columns:1fr 1fr}}
+.field select{display:block;width:100%;margin-top:4px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 8px;font:inherit}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+
+.pw{display:block;width:100%;margin-top:4px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 10px;font:inherit}
+.meter{display:flex;gap:4px;margin-top:6px}.meter i{flex:1;height:5px;border-radius:99px;background:var(--surface-2)}.meter i.on{background:var(--green)}
+.err{color:var(--red);font-size:.82rem;margin-top:8px}
+.warn{background:var(--surface-2);border-left:3px solid var(--amber);padding:10px 12px;border-radius:var(--r-sm);font-size:.82rem;text-align:left;margin:14px 0}
+.steps{display:flex;gap:8px;justify-content:center;font-size:.75rem;color:var(--muted);margin-bottom:14px}
+.steps b{color:var(--accent)}
+.lock{font-size:2.2rem}
+
+.page{max-width:1180px;margin:0 auto;padding:18px 16px 60px}
+.pg{display:none}.pg.on{display:block}
+td.l,th.l{text-align:left}
+.pcard{display:grid;grid-template-columns:1.4fr repeat(4,1fr);gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);align-items:center;cursor:pointer}
+.pcard:hover{background:var(--surface-2)}
+@media(max-width:900px){.pcard{grid-template-columns:1fr 1fr}}
+.pcard small,.kv small{display:block;color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em}
+.pcard b{font-variant-numeric:tabular-nums}
+.pcard .nm{font-weight:600}.pcard .nm span{display:block;color:var(--muted);font-weight:400;font-size:.8rem}
+.kv{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:14px 18px}
+@media(max-width:800px){.kv{grid-template-columns:1fr 1fr}}
+.kv b{font-weight:600}
+.src{font-size:.68rem;background:var(--surface-2);color:var(--muted);border-radius:99px;padding:1px 8px;margin-left:4px}
+.field{display:block;margin:10px 0;font-size:.8rem;color:var(--muted)}
+.field input,.field select,.field textarea{display:block;width:100%;margin-top:4px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 8px;font:inherit}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.f3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:600px){.f2,.f3{grid-template-columns:1fr}}
+.mw{max-width:600px;margin:0 auto 16px}
+.pad{padding:14px 18px}.sub{font-size:.78rem;color:var(--muted);font-weight:400}
+.foot2{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--line)}
+.chart{padding:10px 18px 6px}.chart svg{width:100%;height:auto;display:block}
+.legend{display:flex;gap:16px;font-size:.78rem;color:var(--muted);padding:2px 18px 12px;flex-wrap:wrap}.legend i{display:inline-block;width:12px;height:3px;margin-right:6px;vertical-align:middle;border-radius:2px}
+.fx{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;background:var(--surface-2);font-size:.82rem;color:var(--muted);gap:8px;flex-wrap:wrap}.fx b{color:var(--text)}
+.tag{font-size:.65rem;padding:1px 7px;border-radius:99px;color:var(--on-status);background:var(--blue);margin-left:6px}
+.ltv{height:7px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin-top:4px;width:100%}.ltv i{display:block;height:100%;background:var(--accent)}
+
+.bar{display:flex;height:22px;border-radius:99px;overflow:hidden;background:var(--surface-2);margin:6px 0 10px}
+.bar i{display:block;height:100%}
+.alloc{padding:14px 18px}
+.leg{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.82rem}
+.leg span{display:flex;align-items:center;gap:6px}.leg i{display:inline-block;width:10px;height:10px;border-radius:2px}
+.leg b{font-variant-numeric:tabular-nums}
+.warnrow{background:var(--surface-2);border-left:3px solid var(--amber);padding:9px 14px;font-size:.84rem;margin:8px 18px}
+.okrow{border-left:3px solid var(--green);background:var(--surface-2);padding:9px 14px;font-size:.84rem;margin:8px 18px}
+.drift-bar{position:relative;height:8px;background:var(--surface-2);border-radius:99px;min-width:140px}
+.drift-bar .tg{position:absolute;top:-3px;width:2px;height:14px;background:var(--text)}
+.drift-bar .cu{position:absolute;top:0;height:8px;border-radius:99px;background:var(--accent)}
+.st{font-size:.68rem;padding:1px 8px;border-radius:99px;color:var(--on-status);font-weight:600;white-space:nowrap}
+.s-over{background:var(--red)}.s-soon{background:var(--amber)}.s-ok{background:var(--green)}.s-na{background:var(--grey)}
+.chiplink{font-size:.7rem;background:var(--surface-2);color:var(--muted);border-radius:99px;padding:2px 10px;border:1px solid var(--line)}
+.tbl-in input{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:4px 6px;font:inherit;width:110px;text-align:right}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:900px){.two{grid-template-columns:1fr}}
+.mix{display:flex;height:9px;border-radius:99px;overflow:hidden;min-width:110px;background:var(--surface-2)}.mix i{display:block}
+.m-equities{background:var(--blue)}.m-cash{background:var(--green)}.m-metals{background:var(--amber)}.m-bonds{background:var(--purple)}
+.mixtxt{font-size:.68rem;color:var(--muted);margin-top:3px}
+.sw{font-size:.82rem;color:var(--muted)}
+select.s,input.s{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:4px 8px;font:inherit}
+</style>
+</head>
+<body>
+<header><h1>My Dashboard</h1><span><button class="btn" onclick="var r=document.documentElement;r.dataset.theme=(r.dataset.theme==='dark'?'light':'dark')">Light / dark</button></span></header>
+<nav id="tabs"><button>Home</button><button id="tf" onclick="topTab('fin')">Finance Dashboard</button><button>🐾 Pets</button><button>🏠 Property</button><button class="on" id="tp" onclick="topTab('pf')">📈 Portfolio</button></nav>
+<nav id="sub" style="background:transparent;padding:0 24px"></nav>
+<div class="page">
+<p class="note">MOCKUP ONLY — made-up holdings and prices; every number below is calculated from the sample data. Switch between Portfolio and Finance above to see how they connect.</p>
+
+<!-- OVERVIEW -->
+<section class="pg on" id="ov">
+ <div class="panel"><div class="p-head"><div class="title">Portfolio summary</div></div>
+  <div class="tblw"><table><tr><th class="l">Country</th><th>Portfolios</th><th>Holdings</th><th>Value</th><th class="l">Linked Finance accounts</th></tr>
+   <tr><td class="l">🇺🇸 USA <span class="cur">USD</span></td><td>2</td><td>10</td><td>$ 280,000</td><td class="l"><span class="chiplink">Brokerage · Schwab</span> <span class="chiplink">401(k) · Fidelity</span></td></tr>
+   <tr><td class="l">🇮🇳 India <span class="cur">INR</span></td><td>1</td><td>4</td><td>₹ 41,50,000</td><td class="l"><span class="chiplink">Mutual funds · Zerodha</span></td></tr>
+   <tr class="total"><td class="l">Total in USD</td><td>3</td><td>14</td><td>$ 329,405</td><td></td></tr>
+   <tr class="total"><td class="l">Total in INR</td><td>3</td><td>14</td><td>₹ 2,76,70,000</td><td></td></tr></table></div>
+  <div class="fx"><span>Exchange rate: <b>1 USD = ₹ 84</b><span class="tag">live</span></span><span>These totals are already inside your Finance totals, through the linked accounts.</span></div>
+ </div>
+ <div class="panel"><div class="p-head"><div class="title">Combined allocation <span class="sub">all countries, in USD at today's rate</span></div><div class="seg" id="ovseg"><button class="on" data-v="cls">Asset class</button><button data-v="geo">Geography</button><button data-v="ccy">Currency</button></div></div>
+  <div class="alloc" id="ovalloc"></div></div>
+ <div class="panel"><div class="p-head"><div class="title">Needs attention</div></div>
+  <div class="warnrow">🇺🇸 <b>Schwab Brokerage</b> is off target: Equities +7.1 pts, Bonds −7.5 pts (tolerance ±5). <a href="#" onclick="go('us');return false" style="color:var(--accent)">Open rebalancing</a></div>
+  <div class="warnrow">🇺🇸 <b>Apple</b> is 9.4% of Schwab Brokerage and <b>Microsoft</b> 7.3% — above your 7% single-stock limit.</div>
+  <div class="warnrow">🇺🇸 <b>Gold ETF (GLD)</b> price is 73 days old. <a href="#" onclick="go('upd');return false" style="color:var(--accent)">Update prices</a></div>
+ </div>
+</section>
+
+<!-- COUNTRY -->
+<section class="pg" id="us">
+ <div class="panel"><div class="p-head"><div class="title">🇺🇸 USA <span class="cur">USD</span></div><div style="display:flex;gap:8px"><button class="btn" onclick="go('upd')">Update prices</button><button class="btn" onclick="go('addp')">+ Add portfolio</button></div></div>
+  <div class="kpis"><div class="kpi"><small>Portfolio value</small><b id="k-val"></b></div><div class="kpi"><small>Holdings</small><b>10</b></div><div class="kpi"><small>Portfolios</small><b>2</b></div></div></div>
+ <div id="pfs"></div>
+ <div class="panel"><div class="p-head"><div class="title">Allocation <span class="sub">all USA portfolios</span></div><div class="seg" id="usseg"><button class="on" data-v="cls">Asset class</button><button data-v="sector">Sector</button><button data-v="geo">Geography</button><button data-v="acct">Portfolio</button></div></div>
+  <div class="alloc" id="usalloc"></div><div id="conc"></div></div>
+ <div class="panel"><div class="p-head"><div class="title">Rebalancing</div><div style="display:flex;gap:8px;align-items:center"><select class="s" id="rbsel"><option value="schwab">Schwab Brokerage</option><option value="fid">Fidelity 401(k)</option></select><button class="btn">Edit targets</button></div></div>
+  <div class="tblw"><table id="rbtable"></table></div>
+  <div class="pad" id="rbnote"></div>
+  <div class="pad" style="border-top:1px solid var(--line)"><label class="field" style="margin:0;max-width:340px">New money to invest (optional)<input id="newmoney" class="s" style="width:100%;margin-top:4px" value="5000"></label><div id="buyonly" style="margin-top:10px"></div></div>
+ </div>
+</section>
+
+<!-- UPDATE PRICES -->
+<section class="pg" id="upd">
+ <div class="panel"><div class="p-head"><div class="title">Update prices · 🇺🇸 USA</div><label class="sw">Prices as of <input class="s" type="date" value="2026-10-31"></label></div>
+  <div class="pad sub">One screen for the monthly refresh. Type the new price per unit, or the new total for holdings you track by value only. Rows you leave blank keep their old price.</div>
+  <div class="tblw tbl-in"><table id="updt"></table></div>
+  <div class="foot2"><button class="btn">Cancel</button><button class="btn primary">Save prices</button></div>
+ </div>
+</section>
+
+<!-- ADD HOLDING -->
+<section class="pg" id="addh"><div class="panel mw"><div class="p-head"><div class="title">Add holding · Schwab Brokerage</div></div><div class="pad">
+ <div class="f2"><label class="field">Name<input value="Vanguard Total Stock Market ETF"></label><label class="field">Ticker / symbol (optional)<input value="VTI"></label></div>
+ <div class="f3"><label class="field">Type<select><option>ETF</option><option>Stock</option><option>Mutual fund</option><option>Bond</option><option>Cash</option><option>Other</option></select></label>
+  <label class="field">Asset class<select><option>Equities</option><option>Bonds</option><option>Cash equivalents</option><option>Precious metals</option><option>Mixed (set split)…</option></select></label>
+  <label class="field">Sector (optional)<input value="Broad market"></label></div>
+ <div class="f2"><label class="field">Geography<select><option>US</option><option>International</option><option>Emerging markets</option><option>Global</option><option>India</option><option>Other</option></select></label><label class="field">Currency<input value="USD (from the portfolio's country)" disabled></label></div>
+ <div class="field">How do you track its value?<div class="radios"><label class="on">Units × price<small>shares, price per share</small></label><label>Total value only<small>for funds you just check monthly</small></label></div></div>
+ <div class="f3"><label class="field">Units<input value="160"></label><label class="field">Price per unit (USD)<input value="250.00"></label><label class="field">Price date<input type="date" value="2026-10-31"></label></div>
+ <div class="sub">Value: <b>$ 40,000</b> · adding it raises the linked Finance account “Brokerage · Schwab” by the same amount.</div>
+</div><div class="foot2"><button class="btn">Cancel</button><button class="btn primary">Save holding</button></div></div></section>
+
+<!-- ADD PORTFOLIO -->
+<section class="pg" id="addp"><div class="panel mw"><div class="p-head"><div class="title">Add portfolio · 🇺🇸 USA</div></div><div class="pad">
+ <label class="field">Name<input value="Schwab Brokerage"></label>
+ <label class="field">Link to a Finance asset account<select><option>Brokerage · Schwab (Joint) — $ 96,000</option><option>401(k) · Fidelity (Mine) — $ 184,000</option><option>Checking · Chase (Mine) — $ 8,200</option><option>+ Create a new Finance account…</option></select></label>
+ <div class="warn" style="margin:0 0 10px">After linking, that account's balance is calculated from this portfolio's holdings, and its asset-mix bar fills in automatically. Its current balance (<b>$ 96,000</b>) is used to start you off: you'll be asked to add holdings that add up to it, or to accept the difference.</div>
+ <div class="sub">Each Finance account can be linked to one portfolio. You can unlink later and the balance goes back to being typed in by hand.</div>
+</div><div class="foot2"><button class="btn">Cancel</button><button class="btn primary">Create portfolio</button></div></div></section>
+
+<!-- FINANCE PREVIEW -->
+<section class="pg" id="fin"><div class="panel"><div class="p-head"><div class="title">🇺🇸 USA <span class="cur">USD</span> <span class="sub">Finance Dashboard › Assets (preview of the change)</span></div></div>
+ <div class="tblw"><table class="t-left"><tr><th class="l">Account name</th><th class="l">Bank</th><th class="l">Owner</th><th>Current balance</th><th class="l">Asset mix</th><th></th></tr>
+  <tr><td class="l"><b>Checking</b></td><td class="l">Chase</td><td class="l"><span class="chip c-mine">Mine</span></td><td><b>$ 8,200</b></td><td class="l"><div class="mix"><i class="m-cash" style="width:100%"></i></div><div class="mixtxt">Cash 100</div></td><td><button class="link">Edit</button></td></tr>
+  <tr><td class="l"><b>Brokerage</b> <span class="chiplink">📈 from portfolio</span></td><td class="l">Schwab</td><td class="l"><span class="chip c-joint">Joint</span></td><td><b>$ 96,000</b></td><td class="l"><div class="mix"><i class="m-equities" style="width:77.1%"></i><i class="m-cash" style="width:5.2%"></i><i class="m-metals" style="width:5.2%"></i><i class="m-bonds" style="width:12.5%"></i></div><div class="mixtxt">Eq 77.1 · Cash 5.2 · Metals 5.2 · Bonds 12.5 <span class="sub">(from holdings)</span></div></td><td><button class="link">Open portfolio</button></td></tr>
+  <tr><td class="l"><b>401(k)</b> <span class="chiplink">📈 from portfolio</span></td><td class="l">Fidelity</td><td class="l"><span class="chip c-mine">Mine</span></td><td><b>$ 184,000</b></td><td class="l"><div class="mix"><i class="m-equities" style="width:78.3%"></i><i class="m-bonds" style="width:21.7%"></i></div><div class="mixtxt">Eq 78.3 · Bonds 21.7 <span class="sub">(from holdings)</span></div></td><td><button class="link">Open portfolio</button></td></tr>
+ </table></div>
+ <div class="pad sub">Linked accounts show their balance and asset mix from the Portfolio tab and can't be edited here: the balance field is locked with a note “Comes from Portfolio › Schwab Brokerage”. Finance's “Save update” records these balances like any other, so the month-by-month charts keep working. Unlinking returns the account to manual entry.</div></div></section>
+
+<!-- SETTINGS -->
+<section class="pg" id="set"><div class="panel mw"><div class="p-head"><div class="title">Portfolio settings</div></div><div class="pad">
+ <div class="rem" style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--line)"><span>Countries shown<small style="display:block;color:var(--muted)">Own list, like Finance and Property</small></span><span>🇺🇸 USA · 🇮🇳 India <button class="btn">Change…</button></span></div>
+ <div class="rem" style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--line)"><span>Single-stock limit<small style="display:block;color:var(--muted)">Warn when one stock is more than this share of a portfolio. Funds and ETFs are exempt.</small></span><select class="s"><option>5%</option><option>7%</option><option selected>10%</option><option>15%</option></select></div>
+ <div class="rem" style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--line)"><span>Rebalance tolerance<small style="display:block;color:var(--muted)">Flag an asset class this many percentage points from target</small></span><select class="s"><option>2 pts</option><option selected>5 pts</option><option>10 pts</option></select></div>
+ <div class="rem" style="display:flex;justify-content:space-between;padding:9px 0"><span>Price is old after<small style="display:block;color:var(--muted)">Flag holdings whose price date is older than this</small></span><select class="s"><option>14 days</option><option selected>30 days</option><option>60 days</option></select></div>
+</div></div></section>
+</div>
+<script>
+const TODAY=new Date('2026-10-31'), FX=84;
+const H=[
+ {p:'schwab',n:'Vanguard Total Stock Market ETF',t:'VTI',type:'ETF',cls:'Equities',sec:'Broad market',geo:'US',q:160,pr:250,d:'2026-10-27'},
+ {p:'schwab',n:'Vanguard Total International ETF',t:'VXUS',type:'ETF',cls:'Equities',sec:'Broad market',geo:'International',q:300,pr:60,d:'2026-10-27'},
+ {p:'schwab',n:'Apple',t:'AAPL',type:'Stock',cls:'Equities',sec:'Technology',geo:'US',q:40,pr:225,d:'2026-10-27'},
+ {p:'schwab',n:'Microsoft',t:'MSFT',type:'Stock',cls:'Equities',sec:'Technology',geo:'US',q:14,pr:500,d:'2026-10-27'},
+ {p:'schwab',n:'Vanguard Total Bond ETF',t:'BND',type:'ETF',cls:'Bonds',sec:'Bonds',geo:'US',q:160,pr:75,d:'2026-10-27'},
+ {p:'schwab',n:'iShares 0-3 Month Treasury ETF',t:'SGOV',type:'ETF',cls:'Cash equivalents',sec:'Cash',geo:'US',q:50,pr:100,d:'2026-10-27'},
+ {p:'schwab',n:'SPDR Gold Shares',t:'GLD',type:'ETF',cls:'Precious metals',sec:'Commodities',geo:'Global',q:20,pr:250,d:'2026-08-19'},
+ {p:'fid',n:'Fidelity 500 Index Fund',t:'FXAIX',type:'Mutual fund',cls:'Equities',sec:'Broad market',geo:'US',q:500,pr:220,d:'2026-10-27'},
+ {p:'fid',n:'Fidelity Intl Index Fund',t:'FSPSX',type:'Mutual fund',cls:'Equities',sec:'Broad market',geo:'International',q:400,pr:85,d:'2026-10-27'},
+ {p:'fid',n:'Fidelity US Bond Index Fund',t:'FXNAX',type:'Mutual fund',cls:'Bonds',sec:'Bonds',geo:'US',q:3200,pr:12.5,d:'2026-10-27'}];
+const PF={schwab:'Schwab Brokerage',fid:'Fidelity 401(k)'}, LINK={schwab:'Brokerage · Schwab',fid:'401(k) · Fidelity'};
+const TG={schwab:{Equities:70,Bonds:20,'Cash equivalents':5,'Precious metals':5},fid:{Equities:80,Bonds:20,'Cash equivalents':0,'Precious metals':0}};
+const CLS=['Equities','Bonds','Cash equivalents','Precious metals'], COL={Equities:'var(--blue)',Bonds:'var(--purple)','Cash equivalents':'var(--green)','Precious metals':'var(--amber)'};
+const PAL=['var(--blue)','var(--green)','var(--amber)','var(--purple)','var(--pink)','var(--grey)'];
+const val=h=>h.q*h.pr, usd=n=>'$ '+Math.round(n).toLocaleString('en-US'), pct=(a,b)=>(100*a/b);
+const sum=a=>a.reduce((s,h)=>s+val(h),0);
+function group(arr,key){const m={};arr.forEach(h=>{const k=typeof key==='function'?key(h):h[key];m[k]=(m[k]||0)+val(h)});return Object.entries(m).sort((a,b)=>b[1]-a[1])}
+function bar(rows,total,colorOf){let i=0;const seg=rows.map(([k,v])=>{const c=colorOf?colorOf(k):PAL[i++%PAL.length];return{k,v,c}});
+ return `<div class="bar">${seg.map(s=>`<i style="width:${pct(s.v,total)}%;background:${s.c}" title="${s.k}"></i>`).join('')}</div><div class="leg">${seg.map(s=>`<span><i style="background:${s.c}"></i>${s.k} <b>${pct(s.v,total).toFixed(1)}%</b> <span class="sub">${usd(s.v)}</span></span>`).join('')}</div>`}
+function staleTag(d){const n=Math.round((TODAY-new Date(d))/864e5);return n>30?`<span class="st s-soon">${n} days old</span>`:`<span class="sub">${d.slice(5).replace('-','/')}</span>`}
+// ---- country tab
+const TOT=sum(H);document.getElementById('k-val').textContent=usd(TOT);
+document.getElementById('pfs').innerHTML=Object.keys(PF).map(p=>{const hs=H.filter(h=>h.p===p),t=sum(hs);
+ return `<div class="panel"><div class="p-head"><div class="title">${PF[p]} <span class="chiplink">📈 linked to Finance: ${LINK[p]}</span></div><div style="display:flex;gap:8px"><button class="btn" onclick="go('addh')">+ Add holding</button></div></div>
+ <div class="tblw"><table class="t-left"><tr><th class="l">Holding</th><th class="l">Class</th><th class="l">Sector</th><th class="l">Geography</th><th>Units</th><th>Price · date</th><th>Value</th><th>% of portfolio</th><th></th></tr>
+ ${hs.map(h=>`<tr><td class="l"><b>${h.n}</b> <span class="sub">${h.t} · ${h.type}</span></td><td class="l">${h.cls}</td><td class="l">${h.sec}</td><td class="l">${h.geo}</td><td>${h.q.toLocaleString()}</td><td>$ ${h.pr.toFixed(2)}<br>${staleTag(h.d)}</td><td><b>${usd(val(h))}</b></td><td>${pct(val(h),t).toFixed(1)}%</td><td><button class="link">Edit</button><button class="link danger">Delete</button></td></tr>`).join('')}
+ <tr class="total"><td class="l">Total → Finance “${LINK[p]}”</td><td colspan="4"></td><td>${usd(t)}</td><td>100%</td><td></td></tr></table></div></div>`}).join('');
+let usv='cls';
+function usAlloc(){const f={cls:'cls',sector:'sec',geo:'geo',acct:h=>PF[h.p]}[usv];const rows=group(H,usv==='cls'?'cls':f);
+ document.getElementById('usalloc').innerHTML=bar(rows,TOT,usv==='cls'?(k=>COL[k]):null);
+ // concentration: single stocks over the limit, per portfolio
+ const lim=7,w=[];Object.keys(PF).forEach(p=>{const t=sum(H.filter(h=>h.p===p));H.filter(h=>h.p===p&&h.type==='Stock').forEach(h=>{const s=pct(val(h),t);if(s>lim)w.push(`<b>${h.n}</b> is ${s.toFixed(1)}% of ${PF[p]}`)})});
+ document.getElementById('conc').innerHTML=w.length?`<div class="warnrow">⚠ Above your ${lim}% single-stock limit: ${w.join(' · ')}</div>`:'<div class="okrow">No single stock is above your limit.</div>'}
+document.querySelectorAll('#usseg button').forEach(b=>b.onclick=()=>{usv=b.dataset.v;document.querySelectorAll('#usseg button').forEach(x=>x.classList.toggle('on',x===b));usAlloc()});usAlloc();
+// ---- rebalancing
+function rb(){const p=document.getElementById('rbsel').value,hs=H.filter(h=>h.p===p),t=sum(hs),cur=Object.fromEntries(group(hs,'cls')),tg=TG[p],tol=5;
+ let flagged=0;
+ document.getElementById('rbtable').innerHTML='<tr><th class="l">Asset class</th><th>Now</th><th>Target</th><th class="l">Drift</th><th>To reach target</th><th class="l"></th></tr>'+CLS.map(c=>{
+  const v=cur[c]||0,now=pct(v,t),drift=now-tg[c],amt=tg[c]/100*t-v,out=Math.abs(drift)>tol;if(out)flagged++;
+  return `<tr><td class="l"><b style="color:${COL[c]}">■</b> ${c}</td><td>${now.toFixed(1)}% <span class="sub">${usd(v)}</span></td><td>${tg[c]}%</td><td class="l"><div class="drift-bar"><div class="cu" style="left:0;width:${Math.min(100,now)}%;background:${COL[c]}"></div><div class="tg" style="left:${tg[c]}%"></div></div> <span class="sub">${drift>=0?'+':'−'}${Math.abs(drift).toFixed(1)} pts</span></td><td>${Math.abs(amt)<1?'—':(amt>0?'<span class="pos">Buy ':'<span class="neg">Sell ')+usd(Math.abs(amt))+'</span>'}</td><td class="l">${out?'<span class="st s-soon">off target</span>':'<span class="st s-ok">on target</span>'}</td></tr>`}).join('');
+ document.getElementById('rbnote').innerHTML=flagged?`<span class="sub">Targets are percentages of ${PF[p]} (${usd(t)}). Class-level only: the app shows how much to move between classes, not which fund to pick. Tolerance ±${tol} pts.</span>`:`<div class="okrow" style="margin:0">All asset classes are within ±${tol} points of target.</div>`;
+ const nm=Math.max(0,Number(String(document.getElementById('newmoney').value).replace(/[^0-9.]/g,''))||0);
+ if(!nm){document.getElementById('buyonly').innerHTML='';return}
+ const tot2=t+nm,short=CLS.map(c=>Math.max(0,tg[c]/100*tot2-(cur[c]||0))),ss=short.reduce((a,b)=>a+b,0);
+ const alloc=CLS.map((c,i)=>ss>=nm?short[i]*nm/ss:short[i]+(nm-ss)*tg[c]/100);
+ document.getElementById('buyonly').innerHTML=`<b>Buy-only plan for ${usd(nm)} of new money</b> <span class="sub">(no selling)</span><div class="leg" style="margin-top:6px">${CLS.map((c,i)=>alloc[i]>=1?`<span><i style="background:${COL[c]}"></i>${c}: buy <b>${usd(alloc[i])}</b> → ${pct((cur[c]||0)+alloc[i],tot2).toFixed(1)}% <span class="sub">(target ${tg[c]}%)</span></span>`:'').join('')}</div>`}
+document.getElementById('rbsel').onchange=rb;document.getElementById('newmoney').oninput=rb;rb();
+// ---- overview allocation (USD at today's rate; India holdings from a small fixed sample)
+const IN=[{cls:'Equities',geo:'India',v:2500000},{cls:'Equities',geo:'India',v:1000000},{cls:'Cash equivalents',geo:'India',v:350000},{cls:'Precious metals',geo:'India',v:300000}];
+function ovAlloc(v){const all=H.map(h=>({cls:h.cls,geo:h.geo==='US'?'US':h.geo,ccy:'USD',v:val(h)})).concat(IN.map(h=>({cls:h.cls,geo:h.geo,ccy:'INR',v:h.v/FX})));
+ const m={};all.forEach(x=>{m[x[v]]=(m[x[v]]||0)+x.v});const rows=Object.entries(m).sort((a,b)=>b[1]-a[1]),t=rows.reduce((s,r)=>s+r[1],0);
+ document.getElementById('ovalloc').innerHTML=bar(rows,t,v==='cls'?(k=>COL[k]):null)}
+document.querySelectorAll('#ovseg button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#ovseg button').forEach(x=>x.classList.toggle('on',x===b));ovAlloc(b.dataset.v)});ovAlloc('cls');
+// ---- update prices
+document.getElementById('updt').innerHTML='<tr><th class="l">Holding</th><th>Units</th><th>Old price</th><th class="l">Priced</th><th>New price (USD)</th><th>New value</th></tr>'+H.map((h,i)=>`<tr><td class="l"><b>${h.n}</b> <span class="sub">${h.t}</span></td><td>${h.q.toLocaleString()}</td><td>$ ${h.pr.toFixed(2)}</td><td class="l">${staleTag(h.d)}</td><td><input placeholder="${h.pr.toFixed(2)}" ${i===6?'value="262.40"':''}></td><td>${i===6?usd(20*262.4):'—'}</td></tr>`).join('');
+// ---- navigation
+const SUBS={pf:[['ov','Overview'],['us','🇺🇸 USA'],['in','🇮🇳 India'],['upd','Update prices'],['addh','+ Add holding'],['addp','+ Add portfolio'],['set','Settings']],fin:[['fin','USA · Assets (preview)']]};
+function go(id){document.querySelectorAll('.pg').forEach(s=>s.classList.toggle('on',s.id===id));document.querySelectorAll('#sub button').forEach(b=>b.classList.toggle('on',b.dataset.m===id));window.scrollTo(0,0)}
+function topTab(k){document.getElementById('tp').classList.toggle('on',k==='pf');document.getElementById('tf').classList.toggle('on',k==='fin');
+ const n=document.getElementById('sub');n.innerHTML=SUBS[k].map(([id,l])=>`<button data-m="${id}">${l}</button>`).join('');
+ n.querySelectorAll('button').forEach(b=>b.onclick=()=>b.dataset.m==='in'?alert('India tab: same layout as USA'):go(b.dataset.m));go(SUBS[k][0][0])}
+topTab('pf');
+</script></body></html>

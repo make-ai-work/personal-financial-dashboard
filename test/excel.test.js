@@ -4,6 +4,8 @@ import { emptyData } from '../src/lib/model.js'
 import { exportWorkbook, importWorkbook } from '../src/lib/excel.js'
 import { addProperty, addValuation, addLoan, addLoanUpdate } from '../src/lib/property.js'
 import { addPet, addRecord } from '../src/lib/pets.js'
+import { addAccount } from '../src/lib/model.js'
+import { addPortfolio, addHolding, finishLinking, updatePortfolio } from '../src/lib/portfolio.js'
 
 // Round trip: everything exported must come back identical (the Excel file is the backup format).
 test('export then import restores property, pets and settings', async () => {
@@ -37,5 +39,33 @@ test('import skips orphaned rows and reports them', async () => {
   const { data: back, warnings } = await importWorkbook((await exportWorkbook(d)).buffer)
   assert.equal(back.propertyValues.length, 0)
   assert.equal(back.loans.length, 0)
+  assert.equal(warnings.length, 2)
+})
+
+test('portfolios, holdings (incl. a mixed fund and an unallocated line), targets and settings round-trip', async () => {
+  let d = emptyData()
+  d = { ...d, settings: { ...d.settings, portfolioCountries: ['uk', 'us'], concentrationLimit: 7, rebalanceTol: 2, priceStaleDays: 14 } }
+  d = addAccount(d, { id: 'acc', country: 'us', type: 'asset', name: 'Brokerage', number: '', institution: 'Schwab', owner: 'joint', balance: 100, mix: null, maturityDate: '', maturityValue: null })
+  d = addPortfolio(d, { id: 'pf', name: 'Schwab', accountId: 'acc' })
+  d = addHolding(d, { portfolioId: 'pf', name: 'VTI', ticker: 'VTI', type: 'etf', cls: 'equities', sector: 'Broad market', geo: 'US', trackBy: 'units', units: 0.5, price: 150.25, priceDate: '2026-10-27', notes: 'n' })
+  d = addHolding(d, { portfolioId: 'pf', name: 'Balanced fund', type: 'fund', cls: 'mixed', mix: [60, 0, 0, 40], trackBy: 'value', value: 10, priceDate: '2026-10-27' })
+  d = finishLinking(d, 'pf', 'unallocated', '2026-10-31') // adds the unallocated line, balance stays 100
+  d = updatePortfolio(d, 'pf', { targets: { equities: 70, bonds: 20, cash: 5, metals: 5 } })
+
+  const { data: back, warnings } = await importWorkbook((await exportWorkbook(d)).buffer)
+  assert.deepEqual(warnings, [])
+  assert.deepEqual(back.portfolios, d.portfolios)
+  assert.deepEqual(back.holdings, d.holdings)
+  assert.equal(back.accounts[0].balance, 100)
+  assert.deepEqual([back.settings.portfolioCountries, back.settings.concentrationLimit, back.settings.rebalanceTol, back.settings.priceStaleDays], [['uk', 'us'], 7, 2, 14])
+})
+
+test('a portfolio pointing at a missing or already-linked account is skipped with a warning', async () => {
+  let d = emptyData()
+  d = addAccount(d, { id: 'acc', country: 'us', type: 'asset', name: 'B', number: '', institution: '', owner: 'mine', balance: 1, mix: null, maturityDate: '', maturityValue: null })
+  d = addPortfolio(d, { id: 'a', name: 'A', accountId: 'acc' })
+  d = { ...d, portfolios: [...d.portfolios, { id: 'b', name: 'Second link', accountId: 'acc', reconciled: false, openingBalance: 0, targets: null }, { id: 'c', name: 'Ghost', accountId: 'nope', reconciled: false, openingBalance: 0, targets: null }] }
+  const { data: back, warnings } = await importWorkbook((await exportWorkbook(d)).buffer)
+  assert.deepEqual(back.portfolios.map((p) => p.name), ['A'])
   assert.equal(warnings.length, 2)
 })
