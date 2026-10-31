@@ -5,7 +5,7 @@
 // policy:   { id, country, name, number, company, owner, deathBenefit, maturityDate, maturityValue }
 // balance:  { date: 'YYYY-MM-DD', accountId, amount }   one row per account per saved update
 // rate:     { date, from, to, rate }                    1 `from` = `rate` `to`, saved with each update
-// pets / petRecords live in ./pets.js
+// pets / petRecords live in ./pets.js; property data in ./property.js; portfolios / holdings in ./portfolio.js
 
 import { sanitizeCountries } from './countries.js'
 
@@ -13,7 +13,7 @@ export const uid = () => crypto.randomUUID()
 
 export const emptyData = () => ({
   version: 1,
-  settings: { countries: ['us', 'in'], propertyCountries: ['us', 'in'], parentLabel: 'Parent', autoLockMin: 10, petSoonDays: 30, petCurrency: 'us', weightUnit: 'kg' },
+  settings: { countries: ['us', 'in'], propertyCountries: ['us', 'in'], portfolioCountries: ['us', 'in'], concentrationLimit: 10, rebalanceTol: 5, priceStaleDays: 30, parentLabel: 'Parent', autoLockMin: 10, petSoonDays: 30, petCurrency: 'us', weightUnit: 'kg' },
   accounts: [],
   policies: [],
   balances: [],
@@ -24,6 +24,8 @@ export const emptyData = () => ({
   propertyValues: [],
   loans: [],
   loanUpdates: [],
+  portfolios: [],
+  holdings: [],
 })
 
 export function normalizeData(d) {
@@ -32,6 +34,7 @@ export function normalizeData(d) {
   settings.countries = sanitizeCountries(settings.countries, base.settings.countries)
   // Property keeps its own list; a vault from before that existed starts from the Finance list.
   settings.propertyCountries = sanitizeCountries(d?.settings?.propertyCountries || settings.countries)
+  settings.portfolioCountries = sanitizeCountries(d?.settings?.portfolioCountries || settings.countries)
   return {
     version: 1,
     settings,
@@ -45,6 +48,8 @@ export function normalizeData(d) {
     propertyValues: d?.propertyValues || [],
     loans: d?.loans || [],
     loanUpdates: d?.loanUpdates || [],
+    portfolios: d?.portfolios || [],
+    holdings: d?.holdings || [],
   }
 }
 
@@ -66,11 +71,16 @@ export const updateAccount = (d, id, patch) => ({
   ...d,
   accounts: d.accounts.map((a) => (a.id === id ? { ...a, ...patch } : a)),
 })
-export const removeAccount = (d, id) => ({
-  ...d,
-  accounts: d.accounts.filter((a) => a.id !== id),
-  balances: d.balances.filter((b) => b.accountId !== id),
-})
+export function removeAccount(d, id) {
+  const gone = new Set(d.portfolios.filter((p) => p.accountId === id).map((p) => p.id)) // a linked portfolio goes with it
+  return {
+    ...d,
+    accounts: d.accounts.filter((a) => a.id !== id),
+    balances: d.balances.filter((b) => b.accountId !== id),
+    portfolios: d.portfolios.filter((p) => !gone.has(p.id)),
+    holdings: d.holdings.filter((h) => !gone.has(h.portfolioId)),
+  }
+}
 
 export const addPolicy = (d, p) => ({ ...d, policies: [...d.policies, { id: uid(), ...p }] })
 export const updatePolicy = (d, id, patch) => ({
