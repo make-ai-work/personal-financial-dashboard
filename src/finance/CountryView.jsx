@@ -8,9 +8,12 @@ import { COUNTRIES, fmtDate, maskNumber, maturesSoon, money, ownerLabel, MIX, to
 import { AccountModal, PolicyModal } from './Forms.jsx'
 import { MixBar, OwnerChip } from './ui.jsx'
 import Chart from './Chart.jsx'
+import { portfolioFor } from '../lib/portfolio.js'
+import { useNav } from '../nav.jsx'
 
 export default function CountryView({ code, owner, reveal, fx }) {
   const { data, update } = useVault()
+  const { go } = useNav()
   const c = COUNTRIES[code]
   const parentLabel = data.settings.parentLabel
   const [modal, setModal] = useState(null) // { kind: 'account'|'policy', type?, item? }
@@ -38,8 +41,9 @@ export default function CountryView({ code, owner, reveal, fx }) {
     setModal(null)
   }
   const del = (kind, item) => {
+    const linked = kind === 'account' && portfolioFor(data, item.id)
     const msg = kind === 'account'
-      ? `Delete “${item.name}”? Its balance history is removed too, so past chart points change. This cannot be undone.`
+      ? `Delete “${item.name}”? Its balance history is removed too, so past chart points change.${linked ? ` The linked portfolio “${linked.name}” and its holdings are deleted as well.` : ''} This cannot be undone.`
       : `Delete policy “${item.name}”?`
     if (window.confirm(msg)) update((d) => (kind === 'account' ? removeAccount(d, item.id) : removePolicy(d, item.id)))
   }
@@ -47,6 +51,7 @@ export default function CountryView({ code, owner, reveal, fx }) {
 
   const Actions = ({ kind, item }) => (
     <td className="act">
+      {kind === 'account' && portfolioFor(data, item.id) && <button className="link" onClick={() => go('portfolio', { portfolioId: portfolioFor(data, item.id).id })}>Open portfolio</button>}
       <button className="link" onClick={() => setModal({ kind, type: item.type, item })}>Edit</button>
       <button className="link danger" onClick={() => del(kind, item)}>Delete</button>
     </td>
@@ -82,7 +87,7 @@ export default function CountryView({ code, owner, reveal, fx }) {
               {assets.length === 0 && <tr><td colSpan="9" className="none">No assets{owner !== 'all' ? ' in this category' : ' yet'}.</td></tr>}
               {assets.map((a) => (
                 <tr key={a.id}>
-                  <td><b>{a.name}</b></td>
+                  <td><b>{a.name}</b> {portfolioFor(data, a.id) && <span className="chiplink" title="Balance and asset mix are calculated from the portfolio's holdings">📈 from portfolio</span>}</td>
                   <td className="mono">{num(a.number)}</td>
                   <td>{a.institution || '—'}</td>
                   <td><OwnerChip owner={a.owner} parentLabel={parentLabel} /></td>
@@ -171,7 +176,7 @@ export default function CountryView({ code, owner, reveal, fx }) {
       </div>
 
       {modal?.kind === 'account' && (
-        <AccountModal type={modal.type} country={code} initial={modal.item} parentLabel={parentLabel} onSave={onSave} onClose={() => setModal(null)} />
+        <AccountModal type={modal.type} country={code} initial={modal.item} locked={!!(modal.item && portfolioFor(data, modal.item.id))} parentLabel={parentLabel} onSave={onSave} onClose={() => setModal(null)} />
       )}
       {modal?.kind === 'policy' && (
         <PolicyModal country={code} initial={modal.item} parentLabel={parentLabel} onSave={onSave} onClose={() => setModal(null)} />

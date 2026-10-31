@@ -125,7 +125,7 @@ export function accountMix(holdings) {
   return mix.map((x) => Math.round(x * 10) / 10)
 }
 
-// Allocation rows for any grouping. by: 'class' | 'sector' | 'geo' | 'portfolio'. `names` maps portfolio ids to names.
+// Allocation rows for any grouping. by: 'class' | 'sector' | 'geo' | 'portfolio' | 'ccy' (uses h.ccy). `names` maps portfolio ids to names.
 export function allocation(holdings, by, names = {}) {
   const m = new Map()
   const add = (key, label, color, v) => {
@@ -138,6 +138,7 @@ export function allocation(holdings, by, names = {}) {
     if (by === 'class') {
       for (const [k, w] of Object.entries(weights(h))) if (w > 0) add(k, classLabel(k), classColor(k), v * w)
     } else if (by === 'portfolio') add(h.portfolioId, names[h.portfolioId] || 'Portfolio', null, v)
+    else if (by === 'ccy') add(h.ccy || 'Other', h.ccy || 'Other', null, v)
     else {
       const raw = (by === 'sector' ? h.sector : h.geo)?.trim()
       add(raw || 'Unspecified', raw || 'Unspecified', raw ? null : 'var(--grey)', v)

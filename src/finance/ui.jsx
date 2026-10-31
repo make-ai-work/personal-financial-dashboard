@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { passphraseStrength } from '../lib/vault.js'
 import { MIX, ownerLabel } from '../lib/format.js'
 
-export function Modal({ title, onClose, children, footer }) {
+export function Modal({ title, onClose, children, footer, wide }) {
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
@@ -10,7 +10,7 @@ export function Modal({ title, onClose, children, footer }) {
   }, [onClose])
   return (
     <div className="modal-back" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="panel modal" role="dialog" aria-modal="true" aria-label={title}>
+      <div className={`panel modal${wide ? ' wide' : ''}`} role="dialog" aria-modal="true" aria-label={title}>
         <div className="p-head">
           <div className="title">{title}</div>
           <button className="x" onClick={onClose} aria-label="Close">✕</button>
