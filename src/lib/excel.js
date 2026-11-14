@@ -1,9 +1,8 @@
-// Plain Excel export/import in the flat layout: Items, Insurance, Balances, Rates, Settings.
+// Plain Excel export/import in the flat layout. The Pets / PetRecords sheets are legacy data from the retired Pets tab, kept so backups round-trip.
 // The export is NOT encrypted. Loaded lazily because exceljs is large.
 import { COUNTRIES, OWNERS, MIX } from './format.js'
 import { emptyData, uid } from './model.js'
 import { sanitizeCountries } from './countries.js'
-import { SPECIES } from './pets.js'
 import { PROPERTY_TYPES, VALUE_SOURCES } from './property.js'
 import { CLASSES as PF_CLASSES } from './portfolio.js'
 
@@ -82,9 +81,9 @@ export async function exportWorkbook(data) {
     ['priceStaleDays', data.settings.priceStaleDays],
     ['parentLabel', data.settings.parentLabel],
     ['autoLockMin', data.settings.autoLockMin],
-    ['petSoonDays', data.settings.petSoonDays],
-    ['petCurrency', data.settings.petCurrency],
-    ['weightUnit', data.settings.weightUnit],
+    ['dueSoonDays', data.settings.dueSoonDays],
+    ['petCurrency', data.settings.petCurrency ?? ''],
+    ['weightUnit', data.settings.weightUnit ?? ''],
   ])
   return new Uint8Array(await wb.xlsx.writeBuffer())
 }
@@ -161,7 +160,6 @@ export async function importWorkbook(buffer) {
     if (r.Date && r.From && r.To && num(r.Rate) > 0) data.rates.push({ date: String(r.Date), from: r.From, to: r.To, rate: num(r.Rate) })
   }
   const petIds = new Set()
-  const speciesKeys = SPECIES.map((x) => x.key)
   for (const r of readRows(wb.getWorksheet('Pets'))) {
     if (!r.Name) {
       warnings.push('Skipped a pet row with no name.')
@@ -170,7 +168,7 @@ export async function importWorkbook(buffer) {
     const id = r.ID && !petIds.has(String(r.ID)) ? String(r.ID) : uid()
     petIds.add(id)
     data.pets.push({
-      id, name: String(r.Name), species: speciesKeys.includes(r.Species) ? r.Species : 'other', breed: String(r.Breed ?? ''),
+      id, name: String(r.Name), species: String(r.Species || 'other'), breed: String(r.Breed ?? ''),
       sex: String(r.Sex ?? ''), neutered: String(r.Neutered ?? ''), birthDate: String(r['Birth date'] ?? ''), icon: String(r.Icon ?? ''),
       microchip: String(r.Microchip ?? ''), vet: String(r.Vet ?? ''), vetPhone: String(r['Vet phone'] ?? ''), insurance: String(r.Insurance ?? ''),
       insuranceRenews: String(r['Insurance renews'] ?? ''), food: String(r.Food ?? ''), allergies: String(r.Allergies ?? ''), notes: String(r.Notes ?? ''),
@@ -266,8 +264,8 @@ export async function importWorkbook(buffer) {
     if (r.Key === 'priceStaleDays' && num(r.Value) > 0) data.settings.priceStaleDays = num(r.Value)
     if (r.Key === 'parentLabel' && r.Value) data.settings.parentLabel = String(r.Value)
     if (r.Key === 'autoLockMin' && num(r.Value) != null) data.settings.autoLockMin = num(r.Value)
-    if (r.Key === 'petSoonDays' && num(r.Value) > 0) data.settings.petSoonDays = num(r.Value)
-    if (r.Key === 'petCurrency' && COUNTRIES[r.Value]) data.settings.petCurrency = r.Value
+    if ((r.Key === 'dueSoonDays' || r.Key === 'petSoonDays') && num(r.Value) > 0) data.settings.dueSoonDays = num(r.Value) // petSoonDays: older exports
+    if (r.Key === 'petCurrency' && COUNTRIES[r.Value]) data.settings.petCurrency = r.Value // legacy Pets settings, kept
     if (r.Key === 'weightUnit' && ['kg', 'lb'].includes(r.Value)) data.settings.weightUnit = r.Value
   }
   return { data, warnings }

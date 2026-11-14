@@ -5,7 +5,7 @@
 // policy:   { id, country, name, number, company, owner, deathBenefit, maturityDate, maturityValue }
 // balance:  { date: 'YYYY-MM-DD', accountId, amount }   one row per account per saved update
 // rate:     { date, from, to, rate }                    1 `from` = `rate` `to`, saved with each update
-// pets / petRecords live in ./pets.js; property data in ./property.js; portfolios / holdings in ./portfolio.js
+// property data in ./property.js; portfolios / holdings in ./portfolio.js
 
 import { sanitizeCountries } from './countries.js'
 
@@ -13,12 +13,12 @@ export const uid = () => crypto.randomUUID()
 
 export const emptyData = () => ({
   version: 1,
-  settings: { countries: ['us', 'in'], propertyCountries: ['us', 'in'], portfolioCountries: ['us', 'in'], concentrationLimit: 10, rebalanceTol: 5, priceStaleDays: 30, parentLabel: 'Parent', autoLockMin: 10, petSoonDays: 30, petCurrency: 'us', weightUnit: 'kg' },
+  settings: { countries: ['us', 'in'], propertyCountries: ['us', 'in'], portfolioCountries: ['us', 'in'], concentrationLimit: 10, rebalanceTol: 5, priceStaleDays: 30, parentLabel: 'Parent', autoLockMin: 10, dueSoonDays: 30 },
   accounts: [],
   policies: [],
   balances: [],
   rates: [],
-  pets: [],
+  pets: [], // legacy: data from the retired Pets tab is kept, not shown (code lives on branch archive/pets-tab)
   petRecords: [],
   properties: [],
   propertyValues: [],
@@ -35,6 +35,8 @@ export function normalizeData(d) {
   // Property keeps its own list; a vault from before that existed starts from the Finance list.
   settings.propertyCountries = sanitizeCountries(d?.settings?.propertyCountries || settings.countries)
   settings.portfolioCountries = sanitizeCountries(d?.settings?.portfolioCountries || settings.countries)
+  // The reminder window used to be a Pets setting; carry a saved value over.
+  settings.dueSoonDays = d?.settings?.dueSoonDays ?? d?.settings?.petSoonDays ?? base.settings.dueSoonDays
   return {
     version: 1,
     settings,

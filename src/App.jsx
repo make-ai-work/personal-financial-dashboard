@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { VaultProvider } from './finance/VaultContext.jsx'
 import Finance from './finance/Finance.jsx'
-import Pets from './pets/Pets.jsx'
 import Property from './property/Property.jsx'
 import Portfolio from './portfolio/Portfolio.jsx'
 import { NavContext } from './nav.jsx'
@@ -11,7 +10,6 @@ import ClockWidget from './components/ClockWidget.jsx'
 const TABS = [
   { id: 'home', label: 'Home', render: () => <div className="grid"><ClockWidget /></div> },
   { id: 'finance', label: 'Finance Dashboard', render: () => <Finance /> },
-  { id: 'pets', label: '🐾 Pets', render: () => <Pets /> },
   { id: 'property', label: '🏠 Property', render: () => <Property /> },
   { id: 'portfolio', label: '📈 Portfolio', render: () => <Portfolio /> },
 ]
