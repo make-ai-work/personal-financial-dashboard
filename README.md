@@ -9,15 +9,13 @@ A personal dashboard built step by step with React + Vite. Each section is a top
 npm install
 npm run dev          # http://localhost:5173
 npm test             # unit tests (encryption + data model)
-npm run build && npm run test:e2e && npm run test:e2e:pets && npm run test:e2e:countries && npm run test:e2e:property && npm run test:e2e:portfolio
+npm run build && npm run test:e2e && npm run test:e2e:countries && npm run test:e2e:property && npm run test:e2e:portfolio
                      # end-to-end browser tests (need Playwright + Chromium)
 ```
 
 ## Tabs
 
 - **Home** – clock and greeting.
-- **Pets** – a page per pet with profile, vaccinations, medication, vet visits and weight, plus an
-  overview of what is due or overdue and yearly spending. Stored in the same encrypted file as Finance.
 - **Property** – properties by country with a value history you enter (USA has an "Open on Zillow" link for
   looking up the Zestimate yourself), manually recorded mortgages (balance, principal, interest, escrow),
   equity and loan-to-value, reminders for mortgage payments and property tax, and monthly charts.
@@ -32,7 +30,7 @@ npm run build && npm run test:e2e && npm run test:e2e:pets && npm run test:e2e:c
   Australia or Switzerland; choose one to five, and Finance and Property each keep their own list), with a summary page, owner filter (Mine / Joint / Parent) and a
   month-by-month chart per country.
 
-## How your data is stored (Finance, Pets and Property)
+## How your data is stored (Finance, Property and Portfolio)
 
 - Everything lives in one encrypted file (`*.wvault`), created and opened from the app. Nothing is
   sent to a server. Full account and policy numbers are stored in it.
@@ -41,7 +39,7 @@ npm run build && npm run test:e2e && npm run test:e2e:pets && npm run test:e2e:c
 - Chrome/Edge save straight back to the file. Other browsers open via a file picker and save by
   downloading the encrypted file.
 - Settings → *Export decrypted Excel copy* writes a plain, **unencrypted** workbook
-  (`Items`, `Insurance`, `Balances`, `Rates`, `Pets`, `PetRecords`, `Property`, `PropertyValues`, `Loans`, `LoanUpdates`, `Portfolios`, `Holdings`, `Settings` sheets). Settings → *Import from Excel*
+  (`Items`, `Insurance`, `Balances`, `Rates`, `Pets`, `PetRecords` (legacy, see below), `Property`, `PropertyValues`, `Loans`, `LoanUpdates`, `Portfolios`, `Holdings`, `Settings` sheets). Settings → *Import from Excel*
   reads that same layout.
 - The exchange rate is fetched live from the Frankfurter API (ECB rates); only the two currency
   codes are sent. The rate in use is saved with each update.
@@ -51,7 +49,17 @@ npm run build && npm run test:e2e && npm run test:e2e:pets && npm run test:e2e:c
 
 - [x] Step 1: project scaffold, grid layout, clock + greeting widget
 - [x] Step 2: Finance Dashboard (encrypted file, accounts, insurance, summary, charts)
-- [x] Step 3: Pets tab (profiles, vaccinations, medication, visits, weight, reminders)
+- [x] Step 3: Pets tab (later retired, see below)
 - [x] Step 4: generic country lists (1-5 per section) and the Property tab
 - [x] Step 5: Portfolio tab (holdings, allocation, rebalancing), linked to Finance accounts
 - [ ] Later: Google Drive storage
+
+## Retired: Pets tab
+
+The Pets tab (profiles, vaccinations, medication, vet visits, weight, reminders) was removed from the app because it
+did not fit a finance dashboard. The complete working code, with its tests and mockup, is kept on the protected
+branch **`archive/pets-tab`** (a snapshot of `main` before removal). To bring it back, restore `src/pets/`,
+`src/lib/pets.js` and the tab entry in `src/App.jsx` from that branch.
+
+Pet data already saved in an encrypted file or Excel backup is kept untouched (just not shown), so restoring the tab
+shows it again.

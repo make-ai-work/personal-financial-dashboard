@@ -1,6 +1,6 @@
 import { useVault } from '../finance/VaultContext.jsx'
 import FxBar from '../finance/FxBar.jsx'
-import StatusChip from '../pets/StatusChip.jsx'
+import StatusChip from '../components/StatusChip.jsx'
 import PropertyList from './PropertyList.jsx'
 import { byOwner, convert } from '../lib/model.js'
 import { COUNTRIES, moneyCurrency, money, todayISO } from '../lib/format.js'
@@ -19,7 +19,7 @@ export default function Overview({ owner, fx, onOpen }) {
   const sumIn = (currency, key) => per.reduce((s, p) => s + convert(p.t[key], cur(p.c), currency, fx), 0)
   const fmtc = (currency, n) => (Number.isNaN(n) ? '—' : moneyCurrency(currency, n))
   const rows = visible.map((p) => ({ property: p, snap: snapshot(data, p, today) })).sort((a, b) => b.snap.value - a.snap.value)
-  const due = dueItems(data, today, data.settings.petSoonDays, visible).filter((i) => i.days <= WINDOW_DAYS)
+  const due = dueItems(data, today, data.settings.dueSoonDays, visible).filter((i) => i.days <= WINDOW_DAYS)
 
   return (
     <>
