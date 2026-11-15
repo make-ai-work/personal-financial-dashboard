@@ -8,6 +8,8 @@ import { NavContext } from './nav.jsx'
 import ClockWidget from './components/ClockWidget.jsx'
 import { AuthProvider, useAuth } from './auth/AuthContext.jsx'
 import { MfaStep, SignIn } from './auth/SignIn.jsx'
+import { ClientIdForm, Setup } from './auth/Setup.jsx'
+import { shortId } from './lib/google.js'
 import { Modal } from './finance/ui.jsx'
 import { PHASE } from './lib/auth.js'
 
@@ -32,6 +34,7 @@ function Account() {
   const auth = useAuth()
   const vault = useVault()
   const [open, setOpen] = useState(false)
+  const [editId, setEditId] = useState(false)
   const signOut = async () => {
     if (vault.phase === 'unlocked') await vault.lock()
     auth.signOut()
@@ -44,10 +47,19 @@ function Account() {
       {open && (
         <Modal title="Account" onClose={() => setOpen(false)} footer={<><button className="btn" onClick={() => setOpen(false)}>Close</button><button className="btn primary" onClick={signOut}>Sign out</button></>}>
           <p className="note">Signed in as <b>{auth.user.name}</b> ({auth.user.email}). This is a demo sign-in, not a real Google account.</p>
+          <div className="acctrow">
+            <div><b>Google connection</b><div className="hint">{auth.clientId ? <>Client ID <code>{shortId(auth.clientId)}</code></> : 'Not set up (demo sign-in)'}</div></div>
+            <button className="btn sm" onClick={() => setEditId(true)}>{auth.clientId ? 'Change' : 'Set up'}</button>
+          </div>
           <label className="check">
             <input type="checkbox" checked={auth.mfaRequired} onChange={(e) => auth.setMfaRequired(e.target.checked)} /> Preview the two-step verification screen at sign-in
           </label>
           <p className="note">Two-step verification is built into the sign-in flow but is on hold: nothing is enforced, and any 6-digit code passes.</p>
+        </Modal>
+      )}
+      {editId && (
+        <Modal title="Google connection" onClose={() => setEditId(false)}>
+          <ClientIdForm initial={auth.clientId} submitLabel="Save" onSave={(id) => { if (auth.saveClientId(id)) { auth.endReview(); setEditId(false) } }} />
         </Modal>
       )}
     </>
@@ -86,7 +98,7 @@ function Shell() {
     return (
       <>
         {header(null)}
-        <main className="page">{auth.phase === PHASE.mfa ? <MfaStep /> : <SignIn />}</main>
+        <main className="page">{auth.setup || auth.reviewing ? <Setup /> : auth.phase === PHASE.mfa ? <MfaStep /> : <SignIn />}</main>
       </>
     )
   }

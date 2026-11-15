@@ -1,13 +1,22 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { passphraseStrength } from '../lib/vault.js'
 import { MIX, ownerLabel } from '../lib/format.js'
 
+const openModals = [] // Escape closes only the top-most dialog
+
 export function Modal({ title, onClose, children, footer, wide }) {
+  const close = useRef(onClose)
+  close.current = onClose
   useEffect(() => {
-    const onKey = (e) => e.key === 'Escape' && onClose()
+    const me = Symbol('modal')
+    openModals.push(me)
+    const onKey = (e) => e.key === 'Escape' && openModals[openModals.length - 1] === me && close.current()
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      openModals.splice(openModals.indexOf(me), 1)
+    }
+  }, [])
   return (
     <div className="modal-back" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className={`panel modal${wide ? ' wide' : ''}`} role="dialog" aria-modal="true" aria-label={title}>

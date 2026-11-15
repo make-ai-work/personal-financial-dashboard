@@ -18,8 +18,30 @@ const wantSignIn = () => page.getByRole('button', { name: /Sign in with Google/ 
 
 try {
   await page.goto('http://localhost:4180/')
-  step('first visit shows only the sign-in screen, labelled as a demo')
+  step('first visit asks for the Google client ID before anything else, and no tab is shown')
+  await page.getByRole('heading', { name: 'Connect your Google account' }).waitFor()
+  assert.equal(await page.getByRole('tab').count(), 0)
+  const box = page.getByLabel('OAuth client ID'), save = page.getByRole('button', { name: 'Save and continue' })
+  assert.ok(await save.isDisabled())
+  await box.fill('hello'); await page.getByText(/does not look like a client ID/).waitFor(); assert.ok(await save.isDisabled())
+  await box.fill('GOCSPX-abc123'); await page.getByText(/looks like a client secret/).waitFor(); assert.ok(await save.isDisabled())
+  await box.fill(''); await page.getByText('Looks right.').waitFor({ state: 'detached' })
+  await page.getByText('How do I get one?').waitFor()
+  await page.getByText('http://localhost:4180').first().waitFor() // the address to authorise
+  step('a valid ID is saved in the browser, the confirmation card stays until Continue, then sign-in')
+  const ID = '123456789012-abcdefghij1234.apps.googleusercontent.com'
+  await box.fill(ID); await page.getByText('Looks right.').waitFor(); await save.click()
+  await page.getByRole('heading', { name: 'Google is set up' }).waitFor()
+  await page.getByText(ID).waitFor(); await page.getByText(/sign-in on hold/).waitFor()
+  await page.reload()
+  await wantSignIn() // remembered across reloads, no setup again
+  step('first visit, skipping setup goes to the demo sign-in and is remembered')
+  await page.evaluate(() => localStorage.clear()); await page.reload()
+  await page.getByRole('heading', { name: 'Connect your Google account' }).waitFor()
+  await page.getByRole('button', { name: /Skip for now/ }).click()
   await wantSignIn()
+  await page.reload(); await wantSignIn()
+  step('first visit, sign-in screen is labelled as a demo')
   assert.equal(await page.getByRole('tab').count(), 0, 'no tabs before signing in')
   await page.getByText(/Demo sign-in/).waitFor()
 
@@ -34,6 +56,17 @@ try {
   await page.getByText(/not a real Google account/).waitFor()
   await page.getByText(/on hold: nothing is enforced/).waitFor()
 
+  step('the Account dialog can set up or change the client ID later')
+  await page.getByText('Not set up (demo sign-in)').waitFor()
+  await page.getByRole('button', { name: 'Set up' }).click()
+  await page.getByLabel('OAuth client ID').fill('GOCSPX-nope'); assert.ok(await page.getByRole('button', { name: 'Save', exact: true }).isDisabled())
+  await page.getByLabel('OAuth client ID').fill(ID); await page.getByRole('button', { name: 'Save', exact: true }).click()
+  await page.getByText(/Client ID 123456789012-abcdefghij1/).waitFor()
+  await page.getByRole('button', { name: 'Change' }).click()
+  assert.equal(await page.getByLabel('OAuth client ID').inputValue(), ID)
+  await page.keyboard.press('Escape') // closes only the top dialog
+  await page.getByRole('heading', { name: 'Google connection' }).waitFor({ state: 'detached' })
+  await page.getByText(/Client ID 123456789012-abcdefghij1/).waitFor() // the Account dialog is still open
   step('sign out returns to sign-in; with the two-step preview on, the code screen sits in between')
   await page.getByLabel(/Preview the two-step verification/).check()
   await page.getByRole('button', { name: 'Sign out' }).click()
@@ -62,7 +95,16 @@ try {
   await page.getByRole('button', { name: /Sign in with Google/ }).click()
   await page.getByRole('tab', { name: 'Home' }).waitFor()
 
-  step('phone: sign-in and account are usable without scrolling sideways')
+  step('phone: setup, sign-in and account are usable without scrolling sideways; help starts folded')
+  await page.getByRole('button', { name: 'Account' }).click()
+  await page.getByRole('button', { name: 'Sign out' }).click()
+  await page.evaluate(() => localStorage.clear()); await page.reload()
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.getByRole('heading', { name: 'Connect your Google account' }).waitFor()
+  assert.equal(await page.locator('details.howto').evaluate((d) => d.open), false)
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), 0)
+  await page.getByRole('button', { name: /Skip for now/ }).click()
+  await page.getByRole('button', { name: /Sign in with Google/ }).click()
   await page.setViewportSize({ width: 390, height: 844 })
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), 0)
   await page.getByRole('button', { name: 'Account' }).click()

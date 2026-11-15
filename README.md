@@ -47,6 +47,12 @@ enforced: turn on the preview from the Account dialog to see it; any 6-digit cod
 verification and storing the data file in Google Drive are the next steps. Until then the encrypted file and its passphrase
 are unchanged.
 
+## Google setup (first run)
+
+Everyone uses their **own** Google client ID, so the first screen asks for it (with a 6-step guide, the address to authorise,
+and a refusal to accept a client *secret*, which the app never needs). It is saved in the browser only, can be changed from
+the Account dialog, and can be skipped to use the demo sign-in. Real sign-in with it is still on hold.
+
 ## Phone
 
 On a phone-sized screen the app shows a simpler layout: tighter spacing, tables keep only name, owner, amount and actions,
