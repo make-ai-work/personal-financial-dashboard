@@ -366,3 +366,4 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 @media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } .nwbig { font-size: 2.2rem; } .crow .l1 { grid-template-columns: 1fr 1fr; } .crow .mst { grid-column: 1 / -1; justify-content: flex-start; } }
 
 .track .rep { display: inline-flex; }
+.radios label b { display: block; } .radios label small { display: block; color: var(--muted); font-size: .72rem; margin-top: 2px; }
