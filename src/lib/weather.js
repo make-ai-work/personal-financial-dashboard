@@ -61,7 +61,15 @@ export function parseForecast(json, unit) {
 export async function getJson(url, fetchImpl = fetch, timeoutMs = 20_000, step = 'weather request') {
   const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null
   const timer = ctl ? setTimeout(() => ctl.abort(), timeoutMs) : null
-  const fail = (message, transient) => Object.assign(new Error(message), { transient })
+  const started = Date.now()
+  // a short technical line shown under the message, so a screenshot from a phone says what happened
+  const detail = () => [
+    step, `${Math.round((Date.now() - started) / 100) / 10}s`,
+    typeof document !== 'undefined' ? `tab ${document.visibilityState}` : '',
+    typeof navigator !== 'undefined' ? `online ${navigator.onLine}` : '',
+    typeof navigator !== 'undefined' && navigator.connection?.effectiveType ? `net ${navigator.connection.effectiveType}` : '',
+  ].filter(Boolean).join(' · ')
+  const fail = (message, transient) => Object.assign(new Error(message), { transient, detail: detail() })
   let res
   try {
     res = await fetchImpl(url, ctl ? { signal: ctl.signal } : undefined)
@@ -86,6 +94,15 @@ export async function withRetry(fn, delays = [1000, 3000]) {
   }
 }
 
+// "40.71, -74.01" skips the city lookup entirely.
+export function parseCoordinates(input) {
+  const m = String(input).trim().match(/^(-?\d{1,2}(?:\.\d+)?)\s*[,;\s]\s*(-?\d{1,3}(?:\.\d+)?)$/)
+  if (!m) return null
+  const lat = Number(m[1]), lon = Number(m[2])
+  if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return null
+  return { name: `${lat.toFixed(2)}, ${lon.toFixed(2)}`, region: '', country: '', lat, lon }
+}
+
 // Big, common places need no lookup at all (one request instead of two). Used for the demo's default city.
 const BUILTIN_PLACES = {
   'new york': { name: 'New York', region: 'New York', country: 'United States', lat: 40.7143, lon: -74.006 },
@@ -96,7 +113,7 @@ const placeKey = (city) => String(city).trim().toLowerCase()
 export async function loadWeather(city, unit, opts = {}) {
   const o = typeof opts === 'function' ? { fetchImpl: opts } : opts
   const fetchImpl = o.fetchImpl || fetch
-  let g = BUILTIN_PLACES[placeKey(city)] || o.geo?.get(city) || null
+  let g = parseCoordinates(city) || BUILTIN_PLACES[placeKey(city)] || o.geo?.get(city) || null
   if (!g) {
     g = parseGeocode(await withRetry(() => getJson(geocodeUrl(city), fetchImpl, 20_000, 'looking up the city'), o.delays), city)
     if (!g) throw new Error(`Could not find “${city}”. Try the city name alone, or a nearby larger city.`)

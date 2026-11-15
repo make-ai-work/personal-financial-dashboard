@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { clockFor, clocksFor, greeting } from '../src/lib/clocks.js'
 import { duration, marketStatus, marketsFor } from '../src/lib/markets.js'
 import { buildRequests, explainError, fetchQuotes, groupsToRefresh, mergeCache, parseQuotes, tickerItems } from '../src/lib/ticker.js'
-import { describe, forecastUrl, geocodeUrl, getJson, loadWeather, parseForecast, parseGeocode, splitPlace, withRetry } from '../src/lib/weather.js'
+import { describe, forecastUrl, geocodeUrl, getJson, loadWeather, parseForecast, parseCoordinates, parseGeocode, splitPlace, withRetry } from '../src/lib/weather.js'
 
 const MON_15_42Z = new Date('2026-11-16T15:42:00Z') // Monday afternoon in London, morning in New York
 
@@ -259,4 +259,21 @@ test('weather: New York needs no city lookup, and other cities are looked up onc
   urls.length = 0
   await loadWeather('Pune', 'C', { fetchImpl: svc, geo })
   assert.equal(urls.length, 1); assert.ok(urls[0].includes('latitude=18.52')) // the second time: no lookup
+})
+
+test('weather: failures carry a short technical line for remote debugging', async () => {
+  const e = await getJson('u', async () => { throw new TypeError('x') }, 1000, 'looking up the city').catch((x) => x)
+  assert.match(e.detail, /^looking up the city · \d+(\.\d)?s/)
+  const h = await getJson('u', async () => res({}, 503), 1000, 'getting the forecast').catch((x) => x)
+  assert.match(h.detail, /getting the forecast/)
+})
+
+test('weather: typed coordinates skip the city lookup', async () => {
+  assert.deepEqual(parseCoordinates('40.71, -74.01'), { name: '40.71, -74.01', region: '', country: '', lat: 40.71, lon: -74.01 })
+  assert.equal(parseCoordinates('-33.87 151.21').lat, -33.87)
+  for (const bad of ['Austin', '91, 0', '0, 181', '12', '40.71,-74.01,5']) assert.equal(parseCoordinates(bad), null, bad)
+  const urls = []
+  const svc = async (url) => { urls.push(url); return res(forecastBody) }
+  const w = await loadWeather('18.52, 73.86', 'C', svc)
+  assert.equal(urls.length, 1); assert.ok(urls[0].includes('latitude=18.52')); assert.equal(w.place, '18.52, 73.86')
 })

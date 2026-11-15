@@ -78,7 +78,7 @@ export function WeatherCard({ countries, version, onSettings }) {
         homePrefs.setWeather(data)
         if (live) setState({ data, error: '', loading: false })
       } catch (e) {
-        if (live) setState((s) => ({ ...s, loading: false, error: e.message || 'Could not load the weather.' }))
+        if (live) setState((s) => ({ ...s, loading: false, error: e.message || 'Could not load the weather.', detail: e.detail || '' }))
       } finally {
         running.current = false
       }
@@ -98,7 +98,7 @@ export function WeatherCard({ countries, version, onSettings }) {
       <h3><span>Weather{d ? ` · ${d.place}` : city ? ` · ${city}` : ''}</span><button className="link" onClick={onSettings}>{city ? 'Change' : 'Set city'}</button></h3>
       {!city && <p className="c">Choose your city in Home settings to see the weather. Only the city name is sent, to Open-Meteo.</p>}
       {city && !d && !state.error && <p className="c">Loading the weather…</p>}
-      {state.error && <p className="err">{state.error} <button className="link" onClick={() => retryRef.current()}>Try again</button></p>}
+      {state.error && <p className="err">{state.error} <button className="link" onClick={() => retryRef.current()}>Try again</button>{state.detail && <small className="diag">Details: {state.detail}</small>}</p>}
       {d && (
         <>
           <div className="big"><span className="ico" aria-hidden="true">{w.icon}</span><span className="t">{d.temp}°{d.unit}</span></div>
