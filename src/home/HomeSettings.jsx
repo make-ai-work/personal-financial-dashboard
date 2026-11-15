@@ -31,7 +31,7 @@ export default function HomeSettings({ countries, onClose, onSaved }) {
   }
   return (
     <Modal title="Home settings" onClose={onClose} footer={<><button className="btn" onClick={onClose}>Cancel</button><button className="btn primary" onClick={save}>Save</button></>}>
-      <div className="rowf"><span>Weather city<small>Only the city name is sent, to Open-Meteo (free, no key). Your location is never read automatically.</small></span>
+      <div className="rowf"><span>Weather city<small>Only this text is sent, to Open-Meteo (free, no key). Your location is never read automatically. You can also type coordinates, like 40.71, -74.01.</small></span>
         <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Austin, Texas" aria-label="Weather city" /></div>
       <div className="rowf"><span>Temperature unit</span>
         <select value={unit} onChange={(e) => setUnit(e.target.value)} aria-label="Temperature unit"><option value="F">°F (Fahrenheit)</option><option value="C">°C (Celsius)</option></select></div>

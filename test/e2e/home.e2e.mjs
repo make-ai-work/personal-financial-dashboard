@@ -158,9 +158,9 @@ try {
 
   step('weather: a blocked service is explained and Try again recovers')
   meteo.block = true
-  await page.evaluate(() => { localStorage.removeItem('home.weather') })
+  await page.evaluate(() => { localStorage.removeItem('home.weather'); localStorage.removeItem('home.geo') })
   await page.reload()
-  await page.getByText(/Could not reach the weather service/).waitFor()
+  await page.getByText(/Could not reach the weather service[\s\S]*looking up the city/).waitFor({ timeout: 20_000 }) // after two quiet retries
   meteo.block = false
   await page.getByLabel('Weather', { exact: true }).getByRole('button', { name: 'Try again' }).click()
   await page.getByLabel('Weather', { exact: true }).getByText(/°F|°C/).waitFor()
