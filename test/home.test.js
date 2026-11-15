@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { clockFor, clocksFor, greeting } from '../src/lib/clocks.js'
 import { duration, marketStatus, marketsFor } from '../src/lib/markets.js'
 import { buildRequests, explainError, fetchQuotes, groupsToRefresh, mergeCache, parseQuotes, tickerItems } from '../src/lib/ticker.js'
-import { describe, forecastUrl, geocodeUrl, parseForecast, parseGeocode, splitPlace } from '../src/lib/weather.js'
+import { describe, forecastUrl, geocodeUrl, getJson, loadWeather, parseForecast, parseGeocode, splitPlace } from '../src/lib/weather.js'
 
 const MON_15_42Z = new Date('2026-11-16T15:42:00Z') // Monday afternoon in London, morning in New York
 
@@ -190,4 +190,32 @@ test('weather answers are read into a small summary', () => {
 
 test('weather codes map to words and an icon', () => {
   assert.deepEqual(describe(0), { icon: '☀️', text: 'Clear' }); assert.equal(describe(63).text, 'Rain'); assert.equal(describe(95).text, 'Thunderstorm'); assert.equal(describe(999).text, 'Weather')
+})
+
+// ---- weather failures are explained, never a silent "Loading…" ----
+const res = (body, status = 200) => ({ ok: status < 400, status, json: async () => { if (body instanceof Error) throw body; return body } })
+
+test('weather: a blocked or offline request says so in words', async () => {
+  await assert.rejects(getJson('u', async () => { throw new TypeError('Failed to fetch') }), /Could not reach the weather service[\s\S]*blocker/)
+})
+test('weather: a request that never answers times out instead of hanging', async () => {
+  const hang = (url, opts) => new Promise((_, reject) => opts.signal.addEventListener('abort', () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' }))))
+  await assert.rejects(getJson('u', hang, 20), /did not answer in time/)
+})
+test('weather: HTTP errors and unreadable answers are explained', async () => {
+  await assert.rejects(getJson('u', async () => res({}, 500)), /HTTP 500/)
+  await assert.rejects(getJson('u', async () => res({}, 429)), /limiting requests/)
+  await assert.rejects(getJson('u', async () => res(new Error('bad json'))), /unreadable/)
+})
+test('weather: loadWeather end to end with a fake service (name searched, qualifier picks the place)', async () => {
+  const seen = []
+  const fake = async (url) => {
+    seen.push(url)
+    if (url.includes('geocoding')) return res({ results: [{ name: 'Austin', admin1: 'Minnesota', country: 'United States', latitude: 43.67, longitude: -92.97 }, { name: 'Austin', admin1: 'Texas', country: 'United States', latitude: 30.27, longitude: -97.74 }] })
+    return res({ current: { temperature_2m: 68.4, relative_humidity_2m: 52, weather_code: 2, wind_speed_10m: 8.2 }, daily: { time: ['2026-11-16', '2026-11-17', '2026-11-18', '2026-11-19', '2026-11-20'], weather_code: [2, 0, 1, 61, 3], temperature_2m_max: [73.6, 72, 70, 63, 66], temperature_2m_min: [55.1, 52, 50, 48, 49] } })
+  }
+  const w = await loadWeather('Austin, Texas', 'F', fake)
+  assert.equal(w.place, 'Austin'); assert.equal(w.temp, 68); assert.ok(seen[1].includes('latitude=30.27'), 'the Texas match was used')
+  await assert.rejects(loadWeather('Nowhere', 'C', async () => res({})), /Could not find “Nowhere”/)
+  await assert.rejects(loadWeather('Austin', 'C', async (u) => (u.includes('geocoding') ? res({ results: [{ name: 'A', latitude: 1, longitude: 2 }] }) : res({}))), /unexpected/)
 })

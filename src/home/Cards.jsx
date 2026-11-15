@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { clocksFor, greeting } from '../lib/clocks.js'
 import { marketsFor } from '../lib/markets.js'
 import { COUNTRIES } from '../lib/format.js'
@@ -58,15 +58,20 @@ export function WeatherCard({ countries, version, onSettings }) {
   const city = homePrefs.city() || (IS_DEMO ? 'New York' : '')
   const unit = homePrefs.unit(countries[0] === 'us' ? 'F' : 'C')
   const [state, setState] = useState({ data: null, error: '', loading: false })
+  const retryRef = useRef(() => {})
 
+  const running = useRef(false)
   useEffect(() => {
     if (!city) { setState({ data: null, error: '', loading: false }); return undefined }
     let live = true
-    const check = async (force) => {
+    // reason: initial | timer | visible | retry. Only the periodic refresh waits for a visible tab; the first fetch never does.
+    const check = async (reason) => {
       const cached = homePrefs.weather()
       const fresh = cached && cached.city === city && cached.unit === unit && Date.now() - cached.fetchedAt < homePrefs.refreshMin() * 60_000
-      if (fresh && !force) { setState({ data: cached, error: '', loading: false }); return }
-      if (document.visibilityState === 'hidden' && !force) return
+      if (fresh && reason !== 'retry') { setState({ data: cached, error: '', loading: false }); return }
+      if (reason === 'timer' && document.visibilityState === 'hidden') return
+      if (running.current) return
+      running.current = true
       setState((s) => ({ ...s, loading: true, error: '' }))
       try {
         const data = { ...(await loadWeather(city, unit)), city, unit }
@@ -74,12 +79,16 @@ export function WeatherCard({ countries, version, onSettings }) {
         if (live) setState({ data, error: '', loading: false })
       } catch (e) {
         if (live) setState((s) => ({ ...s, loading: false, error: e.message || 'Could not load the weather.' }))
+      } finally {
+        running.current = false
       }
     }
-    check(false)
-    const id = setInterval(() => check(false), 5 * 60_000)
-    window.__weatherRetry = () => check(true)
-    return () => { live = false; clearInterval(id) }
+    check('initial')
+    const id = setInterval(() => check('timer'), 5 * 60_000)
+    const onVisible = () => { if (document.visibilityState === 'visible') check('visible') }
+    document.addEventListener('visibilitychange', onVisible)
+    retryRef.current = () => check('retry')
+    return () => { live = false; clearInterval(id); document.removeEventListener('visibilitychange', onVisible) }
   }, [city, unit, version])
 
   const d = state.data
@@ -89,7 +98,7 @@ export function WeatherCard({ countries, version, onSettings }) {
       <h3><span>Weather{d ? ` · ${d.place}` : city ? ` · ${city}` : ''}</span><button className="link" onClick={onSettings}>{city ? 'Change' : 'Set city'}</button></h3>
       {!city && <p className="c">Choose your city in Home settings to see the weather. Only the city name is sent, to Open-Meteo.</p>}
       {city && !d && !state.error && <p className="c">Loading the weather…</p>}
-      {state.error && <p className="err">{state.error} <button className="link" onClick={() => window.__weatherRetry?.()}>Try again</button></p>}
+      {state.error && <p className="err">{state.error} <button className="link" onClick={() => retryRef.current()}>Try again</button></p>}
       {d && (
         <>
           <div className="big"><span className="ico" aria-hidden="true">{w.icon}</span><span className="t">{d.temp}°{d.unit}</span></div>

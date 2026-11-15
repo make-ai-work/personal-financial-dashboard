@@ -38,9 +38,11 @@ export default function Ticker({ countries, version, onSettings }) {
     return () => { live = false }
   }, [])
 
-  const run = useCallback(async (force) => {
+  // mode: initial | timer | visible | force. Only the periodic refresh waits for a visible tab; the first fetch never does.
+  const run = useCallback(async (mode) => {
+    const force = mode === 'force'
     if (running.current || !key) return
-    if (!force && document.visibilityState === 'hidden') return
+    if (mode === 'timer' && document.visibilityState === 'hidden') return
     const now = Date.now()
     const relevant = [...new Set(['us', 'in', ...countries])]
     const open = relevant.filter((c) => marketStatus(c, new Date(now)).open)
@@ -66,9 +68,11 @@ export default function Ticker({ countries, version, onSettings }) {
 
   useEffect(() => {
     if (IS_DEMO || !key) return undefined
-    run(false)
-    const id = setInterval(() => run(false), 60_000)
-    return () => clearInterval(id)
+    run('initial')
+    const id = setInterval(() => run('timer'), 60_000)
+    const onVisible = () => { if (document.visibilityState === 'visible') run('visible') }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVisible) }
   }, [run, key, version])
 
   const shown = (cache?.quotes || []).map((q) => ({ q, it: items.find((i) => i.id === q.id) })).filter((x) => x.it)
@@ -88,7 +92,7 @@ export default function Ticker({ countries, version, onSettings }) {
     return (
       <div className="ticker">
         <div className={`tmsg${problemText ? ' err' : ''}`}>
-          {busy || (!problemText && !IS_DEMO && !cache) ? 'Loading prices…' : <><b>Prices unavailable.</b> {problemText || 'The market service sent no prices.'} <button className="link" onClick={() => run(true)}>Try again</button></>}
+          {busy || (!problemText && !IS_DEMO && !cache) ? 'Loading prices…' : <><b>Prices unavailable.</b> {problemText || 'The market service sent no prices.'} <button className="link" onClick={() => run('force')}>Try again</button></>}
         </div>
       </div>
     )
@@ -113,7 +117,7 @@ export default function Ticker({ countries, version, onSettings }) {
       <div className="tstate">
         <span>
           {IS_DEMO ? `Snapshot from ${snap.at ? when(snap.at) : 'the site build'} · refreshed a few times a day` : `Prices as of ${newest ? when(newest) : '…'} · refreshed every ${interval} minutes`} · indices show the last close when the market is shut
-          {!IS_DEMO && <> · <button className="link" onClick={() => run(true)} disabled={busy}>{busy ? 'Refreshing…' : 'Refresh now'}</button></>}
+          {!IS_DEMO && <> · <button className="link" onClick={() => run('force')} disabled={busy}>{busy ? 'Refreshing…' : 'Refresh now'}</button></>}
         </span>
         <span>Source: FCS API</span>
       </div>

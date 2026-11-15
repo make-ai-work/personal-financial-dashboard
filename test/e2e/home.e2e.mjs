@@ -15,7 +15,7 @@ const server = spawn('npx', ['vite', 'preview', '--port', '4183', '--strictPort'
 await new Promise((r) => setTimeout(r, 2500))
 const browser = await chromium.launch()
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, timezoneId: 'America/Chicago', acceptDownloads: true })
-await ctx.addInitScript(() => { delete window.showSaveFilePicker; delete window.showOpenFilePicker; if (!sessionStorage.getItem('seeded')) { localStorage.setItem('auth.demo', '1'); sessionStorage.setItem('seeded', '1') } })
+await ctx.addInitScript(() => { Object.defineProperty(document, 'visibilityState', { get: () => window.__hidden ? 'hidden' : 'visible', configurable: true }); delete window.showSaveFilePicker; delete window.showOpenFilePicker; if (!sessionStorage.getItem('seeded')) { localStorage.setItem('auth.demo', '1'); sessionStorage.setItem('seeded', '1') } })
 
 // ---- stubs ----
 const PER_USD = { USD: 1, INR: 84, GBP: 0.8, AUD: 1.5, CHF: 0.9 }
@@ -41,9 +41,10 @@ await ctx.route(/api-v4\.fcsapi\.com/, (route) => {
   if (u.pathname === '/crypto/latest') return ok([row('COINBASE:BTCUSD', 98450, -1196, -1.2)])
   return fail(404, 'unknown')
 })
-const meteo = { geocodeMiss: false, calls: 0, geocodeUrls: [] }
+const meteo = { geocodeMiss: false, block: false, calls: 0, geocodeUrls: [] }
 await ctx.route(/geocoding-api\.open-meteo\.com/, (r) => {
   meteo.geocodeUrls.push(r.request().url())
+  if (meteo.block) return r.abort('failed')
   r.fulfill({ json: meteo.geocodeMiss ? {} : { results: [{ name: 'Austin', admin1: 'Minnesota', country: 'United States', latitude: 43.67, longitude: -92.97 }, { name: 'Austin', admin1: 'Texas', country: 'United States', latitude: 30.27, longitude: -97.74 }] } })
 })
 await ctx.route(/\/\/api\.open-meteo\.com/, (r) => { // note: must not also match geocoding-api.open-meteo.com
@@ -58,7 +59,7 @@ const page = await ctx.newPage()
 await page.clock.setFixedTime(new Date('2026-11-16T15:42:00Z')) // 9:42 AM in Chicago
 const errors = []
 page.on('pageerror', (e) => errors.push(e.message))
-page.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
+page.on('console', (m) => m.type() === 'error' && !(meteo.block && /ERR_FAILED|Failed to load resource/.test(m.text())) && errors.push(m.text())) // the blocked-service step expects one failed request
 const step = (s) => console.log('•', s)
 const dialog = () => page.getByRole('dialog')
 const topTab = (name) => page.getByRole('tab', { name })
@@ -145,6 +146,24 @@ try {
   fcs.mode = 'full'
   await page.getByRole('button', { name: 'Try again' }).click()
   await ticker().getByText('S&P 500').first().waitFor()
+
+  step('a tab opened in the background still loads weather and prices (and re-checks when shown)')
+  await page.evaluate(() => { localStorage.removeItem('home.weather'); localStorage.removeItem('home.quotes') })
+  const hiddenWx = meteo.calls
+  await page.addInitScript(() => { window.__hidden = true })
+  await page.reload()
+  await page.getByLabel('Weather', { exact: true }).getByText(/°F|°C/).waitFor()
+  await ticker().getByText('S&P 500').first().waitFor()
+  assert.ok(meteo.calls > hiddenWx)
+
+  step('weather: a blocked service is explained and Try again recovers')
+  meteo.block = true
+  await page.evaluate(() => { localStorage.removeItem('home.weather') })
+  await page.reload()
+  await page.getByText(/Could not reach the weather service/).waitFor()
+  meteo.block = false
+  await page.getByLabel('Weather', { exact: true }).getByRole('button', { name: 'Try again' }).click()
+  await page.getByLabel('Weather', { exact: true }).getByText(/°F|°C/).waitFor()
 
   step('weather: an unknown city is explained')
   meteo.geocodeMiss = true
