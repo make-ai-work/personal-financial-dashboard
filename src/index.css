@@ -345,12 +345,13 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 }
 
 /* Home, simplified: net worth (half) + one compact block per country */
-.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: stretch; }
 .nwc .seg { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 14px; border: 0; overflow: visible; }
 .nwc .seg button { font: inherit; font-size: .85rem; padding: 4px 12px; border: 1px solid var(--line); border-radius: 99px; background: transparent; color: var(--text); cursor: pointer; }
 .nwc .seg button.on { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
 .nwbig { font-size: 2.8rem; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
-.nwrows { margin-top: 12px; } .nwr { display: flex; justify-content: space-between; gap: 10px; padding: 12px 0; border-top: 1px solid var(--line); font-size: 1rem; } .nwr small { color: var(--muted); margin-left: 6px; }
+.nwtop { display: flex; gap: 24px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; }
+.nwmain { flex: 1 1 220px; min-width: 0; } .nwrows { flex: 1 1 230px; min-width: 0; } .nwr { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); font-size: .95rem; } .nwr:first-child { border-top: 0; padding-top: 2px; } .nwr small { color: var(--muted); margin-left: 6px; }
 .nwtiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
 .nwtiles > div { background: var(--surface-2); border-radius: var(--r-sm); padding: 10px 12px; } .nwtiles small { display: block; color: var(--muted); font-size: .75rem; } .nwtiles b { font-size: 1.25rem; }
 .crow { padding: 10px 0; border-top: 1px solid var(--line); } .crow:first-of-type { border-top: 0; }
@@ -363,3 +364,5 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 .crow .wt { font-size: 1.1rem; font-weight: 600; color: var(--text); }
 .aqi { background: var(--surface-2); border: 1px solid var(--line); border-radius: 99px; padding: 0 8px; font-size: .75rem; }
 @media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } .nwbig { font-size: 2.2rem; } .crow .l1 { grid-template-columns: 1fr 1fr; } .crow .mst { grid-column: 1 / -1; justify-content: flex-start; } }
+
+.track .rep { display: inline-flex; }

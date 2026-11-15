@@ -206,6 +206,8 @@ try {
   const owners = await nw.getByRole('group', { name: 'Whose net worth' }).getByRole('button').allInnerTexts()
   assert.deepEqual(owners, ['All', 'Mine', 'Joint', 'Spouse', 'Parent'])
   assert.match(await nw.getByTestId('networth').innerText(), /^\$\s?0$/)
+  const top = await page.locator('.nwtop').evaluate((e) => ({ big: e.querySelector('.nwbig').getBoundingClientRect(), rows: e.querySelector('.nwrows').getBoundingClientRect() }))
+  assert.ok(top.rows.left >= top.big.right - 1 && Math.abs(top.rows.top - top.big.top) < 30, 'the country breakup sits next to the big number')
   await nw.getByRole('button', { name: 'Spouse' }).click()
   assert.equal(await page.evaluate(() => localStorage.getItem('home.owner')), 'spouse')
   await page.reload()
@@ -216,6 +218,9 @@ try {
   const boxes = await page.locator('.grid2 > .card').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().width)))
   assert.equal(boxes.length, 2)
   assert.ok(Math.abs(boxes[0] - boxes[1]) <= 2, `half and half: ${boxes}`)
+  const heights = await page.locator('.grid2 > .card').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().height)))
+  assert.ok(Math.abs(heights[0] - heights[1]) <= 1, `the two boxes are the same height: ${heights}`)
+  assert.ok((await ticker().locator('.track .set').first().evaluate((e) => e.getBoundingClientRect().width)) >= 1280, 'the ticker strip is longer than the screen')
   assert.equal(await overflow(), 0)
   await page.screenshot({ path: `${OUT}/desktop.png`, fullPage: true })
 
