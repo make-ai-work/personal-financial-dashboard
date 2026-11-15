@@ -289,7 +289,6 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 .acctrow { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
 @media (max-width: 640px) { .kvs { grid-template-columns: 1fr; } .rowend { flex-direction: column-reverse; align-items: stretch; } .rowend .btn { width: 100%; } .rowend .link { text-align: center; } }
 
-.docs-link { text-align: center; padding: 0 16px 28px; font-size: .8rem; } .docs-link a { color: var(--muted); }
 
 /* Demo mode */
 .demobar { background: var(--surface-2); border-bottom: 2px solid var(--amber); padding: 9px 24px; display: flex; gap: 10px 14px; align-items: center; flex-wrap: wrap; font-size: .86rem; }

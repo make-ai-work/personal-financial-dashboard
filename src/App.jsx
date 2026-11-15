@@ -81,8 +81,6 @@ function DemoBar() {
   )
 }
 
-const DocsLink = () => <footer className="docs-link"><a href="./docs/branch-flow.html">Docs: how the branches work</a></footer>
-
 function Shell() {
   const auth = useAuth()
   const [tab, setTab] = useState(() => read('tab', 'finance'))
@@ -116,7 +114,6 @@ function Shell() {
       <>
         {header(null)}
         <main className="page">{auth.setup || auth.reviewing ? <Setup /> : auth.phase === PHASE.mfa ? <MfaStep /> : <SignIn />}</main>
-        <DocsLink />
       </>
     )
   }
@@ -131,7 +128,6 @@ function Shell() {
           ))}
         </nav>
         <main className="page">{current.render()}</main>
-        <DocsLink />
       </NavContext.Provider>
     </VaultProvider>
   )
