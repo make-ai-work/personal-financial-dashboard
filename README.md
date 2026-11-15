@@ -38,6 +38,11 @@ you unlock your data. It persists between visits on this device but is **not enc
 - **Weather and air quality** use [Open-Meteo](https://open-meteo.com) (free, no key) for the city where each country's main stock
   exchange is (New York, Mumbai, London, Sydney, Zurich). The coordinates are built in, so only those are sent. The temperature unit is
   automatic (°F in the US, °C elsewhere) unless you choose one. AQI is the US air quality index and is left out when there is no data.
+- **Market data provider** (web and Android; pick one in Home settings, you bring your own key, none is built in):
+  - **Alpha Vantage** (free key from alphavantage.co): index prices through ETF stand-ins, labelled on the ticker (S&P 500 as SPY, Nasdaq as
+    QQQ, Nifty 50 as Nifty BeES, FTSE 100 as ISF, SMI as EWL). No Sensex, ASX 200, gold or Bitcoin. A free key allows 25 requests a day, so
+    it refreshes every 6, 12 or 24 hours (each refresh uses up to 5 requests) and the last prices are kept if the limit is hit.
+  - **FCS API** (below).
 - **Market ticker** uses [FCS API](https://fcsapi.com). Paste your key and press **Test**. It shows S&P 500, Nasdaq, Sensex and Nifty 50,
   one main index for each other country in Finance → Settings (FTSE 100, ASX 200, SMI), gold (XAU/USD) and Bitcoin (BTC/USD).
   - **Plans:** FCS's free plan (500 calls a month) covers **gold and Bitcoin only**. **Index prices need an FCS stock plan** (from about

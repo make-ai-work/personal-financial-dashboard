@@ -41,6 +41,15 @@ await ctx.route(/api-v4\.fcsapi\.com/, (route) => {
   if (u.pathname === '/crypto/latest') return ok([row('COINBASE:BTCUSD', 98450, -1196, -1.2)])
   return fail(404, 'unknown')
 })
+const av = { mode: 'ok', calls: [] } // ok | limit
+const AVQ = { SPY: [754.37, -2.75, '-0.3632%'], QQQ: [679.89, -8.28, '-1.2032%'], 'NIFTYBEES.BSE': [286.66, -1.38, '-0.4814%'] }
+await ctx.route(/alphavantage\.co/, (r) => {
+  const sym = new URL(r.request().url()).searchParams.get('symbol')
+  av.calls.push(sym)
+  if (av.mode === 'limit') return r.fulfill({ json: { Information: 'Thank you for using Alpha Vantage! Our standard API rate limit is 25 requests per day.' } })
+  const q = AVQ[sym]
+  r.fulfill({ json: q ? { 'Global Quote': { '01. symbol': sym, '05. price': String(q[0]), '07. latest trading day': '2026-11-13', '09. change': String(q[1]), '10. change percent': q[2] } } : { 'Global Quote': {} } })
+})
 const meteo = { block: false, calls: 0, airCalls: 0, geocodeCalls: 0, noAir: false }
 await ctx.route(/geocoding-api\.open-meteo\.com/, (r) => { meteo.geocodeCalls++; r.abort('failed') }) // must never be called: the cities are built in
 await ctx.route(/air-quality-api\.open-meteo\.com/, (r) => {
@@ -178,6 +187,44 @@ try {
   meteo.block = false
   await ny.getByRole('button', { name: 'Try again' }).click()
   await ny.getByText(/°F/).waitFor()
+
+  step('Alpha Vantage option: choose it, add your own key, test it; indices show as ETFs on a slow schedule and FCS is no longer asked')
+  const fcsBefore = fcs.calls.length
+  await openSettings()
+  await dialog().locator('.radios label', { hasText: 'Alpha Vantage' }).click()
+  assert.equal(await dialog().getByLabel('Alpha Vantage API key').inputValue(), '')
+  assert.equal(await dialog().getByLabel('FCS API key').count(), 0)
+  assert.deepEqual(await dialog().getByLabel('Refresh interval').locator('option').allInnerTexts(), ['6 hours', '12 hours', '24 hours'])
+  await dialog().getByLabel('Alpha Vantage API key').fill('MYAVKEY')
+  await dialog().getByRole('button', { name: 'Test' }).click()
+  await dialog().getByText('✓ Working: SPY ETF 754.37').waitFor()
+  await dialog().getByText(/index ETF stand-ins/).waitFor()
+  await dialog().getByRole('button', { name: 'Save' }).click()
+  await dialog().waitFor({ state: 'detached' })
+  await page.getByText('Source: Alpha Vantage (index ETFs)').waitFor()
+  const avt = await ticker().innerText()
+  assert.ok(/S&P 500\s*SPY ETF\s*754\.37/.test(avt) && /Nasdaq\s*QQQ ETF\s*679\.89/.test(avt) && /Nifty 50\s*Nifty BeES ETF\s*286\.66/.test(avt), avt)
+  assert.ok(!avt.includes('Sensex') && !avt.includes('Gold') && !avt.includes('Bitcoin'))
+  assert.equal(fcs.calls.length, fcsBefore, 'FCS is not asked while Alpha Vantage is chosen')
+  assert.deepEqual(av.calls.slice(-3), ['SPY', 'QQQ', 'NIFTYBEES.BSE']) // one request per index: 3 for USA + India
+  assert.equal(await page.evaluate(() => localStorage.getItem('home.avKey')), 'MYAVKEY')
+  await page.getByText(/refreshed every 6 hours/).waitFor()
+  const avCalls = av.calls.length
+  await page.reload(); await page.getByText('Source: Alpha Vantage (index ETFs)').waitFor(); await page.waitForTimeout(400)
+  assert.equal(av.calls.length, avCalls, 'cached: a reload does not use the daily quota')
+  av.mode = 'limit'
+  await page.getByRole('button', { name: 'Refresh now' }).click()
+  await page.getByText(/daily request limit/).waitFor()
+  assert.ok((await ticker().innerText()).includes('754.37'), 'the last prices stay on screen')
+  av.mode = 'ok'
+  step('switching back to FCS brings its prices back')
+  await openSettings()
+  await dialog().locator('.radios label', { hasText: 'FCS API' }).click()
+  assert.equal(await dialog().getByLabel('FCS API key').inputValue(), 'GOODKEY')
+  assert.deepEqual(await dialog().getByLabel('Refresh interval').locator('option').allInnerTexts(), ['15 minutes', '30 minutes', '60 minutes'])
+  await dialog().getByRole('button', { name: 'Save' }).click()
+  await page.getByText('Source: FCS API').waitFor()
+  await ticker().getByText('6,412.30').first().waitFor()
 
   step('countries come from the data file: create it, add the UK and Australia in Finance, and Home follows')
   await topTab('Finance Dashboard').click()
