@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { decryptVault, encryptVault, newSession, parseVault } from '../lib/vault.js'
 import { emptyData, normalizeData } from '../lib/model.js'
+import { IS_DEMO, loadDemoData } from '../lib/demo.js'
 import {
   download, ensurePermission, forgetHandle, hasFS, isAbort, pickNewVaultHandle, pickVault,
   readHandle, recallHandle, rememberHandle, writeHandle,
@@ -29,6 +30,18 @@ export function VaultProvider({ children }) {
 
   useEffect(() => {
     let live = true
+    if (IS_DEMO) {
+      // Demo: sample data, kept in memory only. No file, passphrase or saving.
+      loadDemoData().then((d) => {
+        if (!live) return
+        dataRef.current = d
+        setData(d)
+        setFileName('Sample data')
+        setSaveState('saved')
+        setPhase('unlocked')
+      })
+      return () => { live = false }
+    }
     ;(async () => {
       const h = hasFS() ? await recallHandle() : null
       if (!live) return
@@ -68,6 +81,7 @@ export function VaultProvider({ children }) {
     const next = fn(dataRef.current)
     dataRef.current = next
     setData(next)
+    if (IS_DEMO) return // nothing is saved in the demo
     setSaveState('unsaved')
     clearTimeout(timer.current)
     timer.current = setTimeout(persist, 500)
@@ -145,6 +159,7 @@ export function VaultProvider({ children }) {
   }, [])
 
   const lock = useCallback(async () => {
+    if (IS_DEMO) return
     clearTimeout(timer.current)
     if (dataRef.current) await persist()
     dataRef.current = null
@@ -171,7 +186,7 @@ export function VaultProvider({ children }) {
   // Auto-lock after idle time.
   const autoLockMin = data?.settings?.autoLockMin
   useEffect(() => {
-    if (phase !== 'unlocked' || !autoLockMin) return
+    if (IS_DEMO || phase !== 'unlocked' || !autoLockMin) return
     let t
     const arm = () => {
       clearTimeout(t)
@@ -198,7 +213,14 @@ export function VaultProvider({ children }) {
     return () => window.removeEventListener('beforeunload', warn)
   }, [phase, canWrite, saveState])
 
+  const resetDemo = useCallback(async () => {
+    const d = await loadDemoData()
+    dataRef.current = d
+    setData(d)
+  }, [])
+
   const value = {
+    demo: IS_DEMO, resetDemo,
     phase, data, fileName, saveState, canWrite, error, setError,
     update, create, openFile, unlock, lock, switchFile, changePassphrase, downloadNow,
   }

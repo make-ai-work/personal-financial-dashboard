@@ -12,7 +12,20 @@ const GoogleMark = () => (
 )
 
 export function SignIn() {
-  const { signIn } = useAuth()
+  const { signIn, demo } = useAuth()
+  if (demo) {
+    return (
+      <div className="panel center narrow">
+        <h2>Welcome</h2>
+        <p className="note">Sign in to open your dashboard. There is no password to remember.</p>
+        <button className="gbtn" disabled title="Not available in the demo"><GoogleMark /> Sign in with Google</button>
+        <button className="btn primary wide" onClick={signIn}>Demo Mode (skip sign in)</button>
+        <div className="warn">
+          <b>This is the demo.</b> Google sign-in is switched off here. Demo Mode opens the app with made-up sample data. You can change anything; nothing is saved or sent anywhere, and a reload resets it.
+        </div>
+      </div>
+    )
+  }
   return (
     <div className="panel center narrow">
       <h2>Welcome</h2>

@@ -27,7 +27,7 @@ function Section({ title, tag, action, simple, open, children }) {
 }
 
 export default function PlanPage({ plan, fx }) {
-  const { data, update } = useVault()
+  const { data, update, demo } = useVault()
   const phone = usePhone()
   const r = data.retirement.plan
   const set = (patch) => update((d) => setPlan(d, patch))
@@ -98,7 +98,7 @@ export default function PlanPage({ plan, fx }) {
           <div className="pad sub">Each row changes only the yield, applied to the bond share in both the saving and the retirement phases.</div>
         </div>
       )}
-      <div className="panel"><div className="pad sub">Estimates only, not financial advice. Saved in your encrypted file; nothing is sent anywhere.</div></div>
+      <div className="panel"><div className="pad sub">Estimates only, not financial advice. {demo ? 'Nothing is saved in the demo.' : 'Saved in your encrypted file; nothing is sent anywhere.'}</div></div>
     </>
   )
 

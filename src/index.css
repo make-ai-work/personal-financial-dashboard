@@ -290,3 +290,12 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 @media (max-width: 640px) { .kvs { grid-template-columns: 1fr; } .rowend { flex-direction: column-reverse; align-items: stretch; } .rowend .btn { width: 100%; } .rowend .link { text-align: center; } }
 
 .docs-link { text-align: center; padding: 0 16px 28px; font-size: .8rem; } .docs-link a { color: var(--muted); }
+
+/* Demo mode */
+.demobar { background: var(--surface-2); border-bottom: 2px solid var(--amber); padding: 9px 24px; display: flex; gap: 10px 14px; align-items: center; flex-wrap: wrap; font-size: .86rem; }
+.demobar .sp { flex: 1; } .demobar .btn { background: var(--surface); color: var(--text); border-color: var(--line); }
+.demobar .btn.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.demobar .pill { background: var(--amber); color: var(--on-status); letter-spacing: .04em; }
+.dot.demo { background: var(--blue); }
+.gbtn:disabled { opacity: .5; cursor: not-allowed; } .gbtn:disabled:hover { background: #fff; }
+@media (max-width: 640px) { .demobar { padding: 8px 14px; } }

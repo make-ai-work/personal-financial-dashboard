@@ -57,8 +57,10 @@ export default function Settings() {
       </div>
 
       <div className="panel">
-        <div className="p-head"><div className="title">🔒 Security</div></div>
+        <div className="p-head"><div className="title">{v.demo ? "Data" : "🔒 Security"}</div></div>
         <div className="col">
+          {!v.demo && (
+            <>
           <div className="row">
             <span>Data file<small>{v.fileName} · AES-256-GCM, key derived from your passphrase</small></span>
             <span className="row-actions">
@@ -83,6 +85,8 @@ export default function Settings() {
               <option value={5}>5 min</option><option value={10}>10 min</option><option value={30}>30 min</option><option value={0}>Never</option>
             </select>
           </div>
+            </>
+          )}
           <div className="row">
             <span>Export decrypted Excel copy<small>For opening in Excel. The copy is NOT encrypted. Delete it when done.</small></span>
             <button className="btn danger-btn" onClick={exportExcel}>Export…</button>
@@ -92,7 +96,7 @@ export default function Settings() {
             <button className="btn" onClick={importExcel}>Import…</button>
           </div>
           {msg && <div className="note">{msg}</div>}
-          <div className="warn">Also recommended: keep the file on an encrypted disk (BitLocker / FileVault) and keep a second backup copy somewhere private. Data files are excluded from this Git repository.</div>
+          {!v.demo && <div className="warn">Also recommended: keep the file on an encrypted disk (BitLocker / FileVault) and keep a second backup copy somewhere private. Data files are excluded from this Git repository.</div>}
         </div>
       </div>
     </>

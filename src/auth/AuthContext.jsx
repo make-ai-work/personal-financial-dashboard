@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useState } from 'react'
 import { DEMO_USER, PHASE, nextPhase } from '../lib/auth.js'
 import { isClientId, needsSetup } from '../lib/google.js'
+import { IS_DEMO } from '../lib/demo.js'
 
 const Ctx = createContext(null)
 export const useAuth = () => useContext(Ctx)
@@ -10,24 +11,25 @@ const write = (k, v) => { try { v ? localStorage.setItem(k, v) : localStorage.re
 
 // Placeholder session only: a flag in this browser. Replace with the real Google sign-in later.
 export function AuthProvider({ children }) {
-  const [mfaRequired, setMfaRequired] = useState(() => read('auth.mfaPreview') === '1')
+  const [mfaRequired, setMfaRequired] = useState(() => !IS_DEMO && read('auth.mfaPreview') === '1')
   const [savedId, setSavedId] = useState(() => read('google.clientId') || '')
   const [skipped, setSkipped] = useState(() => read('google.setupSkipped') === '1')
   const clientId = savedId
   const [reviewing, setReviewing] = useState(false) // keeps the "Google is set up" card up until Continue
-  const [phase, setPhase] = useState(() => (read('auth.demo') === '1' ? PHASE.ready : PHASE.signedOut))
+  const [phase, setPhase] = useState(() => (!IS_DEMO && read('auth.demo') === '1' ? PHASE.ready : PHASE.signedOut)) // the demo always starts at the sign-in page
   const go = useCallback((event, opts) => {
     setPhase((p) => {
       const n = nextPhase(p, event, opts)
-      write('auth.demo', n === PHASE.ready ? '1' : '')
+      if (!IS_DEMO) write('auth.demo', n === PHASE.ready ? '1' : '')
       return n
     })
   }, [])
   const value = {
-    clientId, setup: needsSetup({ clientId, skipped }),
+    clientId, setup: !IS_DEMO && needsSetup({ clientId, skipped }),
     saveClientId: (v) => { const id = String(v).trim(); if (!isClientId(id)) return false; setSavedId(id); write('google.clientId', id); setSkipped(false); write('google.setupSkipped', ''); setReviewing(true); return true },
     reviewing, endReview: () => setReviewing(false),
     skipSetup: () => { setSkipped(true); write('google.setupSkipped', '1') },
+    demo: IS_DEMO,
     phase, user: phase === PHASE.ready ? DEMO_USER : null, mfaRequired,
     signIn: () => go('signIn', { mfaRequired }),
     mfaPassed: () => go('mfaPassed'),

@@ -10,16 +10,24 @@ npm install
 npm run dev          # http://localhost:5173
 npm test             # unit tests (encryption + data model)
 npm run build && npm run test:e2e && npm run test:e2e:countries && npm run test:e2e:property && npm run test:e2e:portfolio && npm run test:e2e:retirement && npm run test:e2e:auth
+npm run build:demo && npm run test:e2e:demo      # the demo build
                      # end-to-end browser tests (need Playwright + Chromium)
 ```
 
-## Deploy (GitHub Pages)
+## Demo site (GitHub Pages)
 
-`.github/workflows/pages.yml` runs the unit tests, builds, and publishes `dist/` whenever `main` changes. One-time setup:
-repository **Settings → Pages → Build and deployment → Source: GitHub Actions**. The site is then at
-`https://<user>.github.io/<repo>/`. Assets use relative paths (`base: './'`), so the same build works at any sub-path
-and inside an Android wrapper. This address is what each person adds as an "Authorized JavaScript origin"
-(just the origin, e.g. `https://<user>.github.io`, without the path) in their Google Cloud project.
+The public site is a **demo** with made-up sample data from `demo/demo-data.json`. The sign-in page is shown with Google
+sign-in switched off and a **Demo Mode (skip sign in)** button; the app is fully editable, nothing is saved, and a reload resets it.
+
+- Demo mode is a build setting in this same codebase (`VITE_DEMO=true`, set by `.env.demo`), not a copy of the app:
+  `npm run dev:demo` to try it locally, `npm run build:demo` to build it (into `dist-demo/`).
+- `.github/workflows/pages.yml` runs the tests, builds the demo and publishes it **when the `demo` branch is updated**.
+  `main` never publishes. To refresh the showcase: merge `main` into `demo` (one way only).
+- To change the sample data, edit `demo/build-demo-data.mjs` and run `node demo/build-demo-data.mjs` (it uses the app's own
+  functions, so the file always matches the data model). Dates are moved forward each time the demo opens so it never looks stale.
+- One-time setup: repository **Settings → Pages → Build and deployment → Source: GitHub Actions**. The site is then at
+  `https://<user>.github.io/<repo>/`. Assets use relative paths (`base: './'`), so any build works at a sub-path or any static host.
+- `.github/workflows/ci.yml` runs the tests and both builds on every pull request and push to `main`.
 
 ## How the branches work
 
@@ -39,7 +47,7 @@ flowchart TD
 | Deployment | Built from | Data lives in |
 |---|---|---|
 | **Local or self-hosted** | `main` (download it, or host it anywhere) | an encrypted file you keep, or your own Google Drive |
-| **Demo** | `demo`, updated from `main`, on GitHub Pages | sample data in `demo/demo-data.json`; nothing saved, no sign-in |
+| **Demo** | `demo`, updated from `main`, published by the workflow | sample data in `demo/demo-data.json`; nothing saved; Google sign-in off, Demo Mode button |
 | **Android** | `main`, on a release tag | an encrypted file in app storage, or your Google Drive |
 
 - New work starts from `main` on its own branch and returns by pull request. Code flows **one way** into `demo`, never back.
@@ -117,5 +125,6 @@ Retirement shows the key results and two charts with the detailed assumptions fo
 - [x] Step 3: generic country lists (1-5 per section) and the Property tab
 - [x] Step 4: Portfolio tab (holdings, allocation, rebalancing), linked to Finance accounts
 - [x] Step 5: Retirement tab (Plan + Monte Carlo with 3 saved versions), placeholder Google sign-in, phone layout
-- [ ] Next: demo mode + `demo` branch on GitHub Pages, local-run polish (`npm start`), Android app (Capacitor)
+- [x] Step 6: demo mode (sample data, sign-in page with Demo Mode) published from the `demo` branch
+- [ ] Next: local-run polish (`npm start`), Android app (Capacitor)
 - [ ] Then: real Google sign-in, two-step verification, Google Drive storage (web and Android)
