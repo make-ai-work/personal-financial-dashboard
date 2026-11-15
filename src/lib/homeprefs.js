@@ -19,6 +19,10 @@ const json = (k) => { try { return JSON.parse(read(k, 'null')) } catch { return 
 export const homePrefs = {
   city: () => read('home.city'), setCity: (v) => write('home.city', v.trim()),
   unit: (fallback = 'C') => read('home.unit') || fallback, setUnit: (v) => write('home.unit', v),
+  // which service supplies prices: 'fcs' (default) or 'av' (Alpha Vantage, index ETFs only)
+  provider: () => (read('home.provider') === 'av' ? 'av' : 'fcs'), setProvider: (v) => write('home.provider', v === 'av' ? 'av' : ''),
+  avKey: () => read('home.avKey'), setAvKey: (v) => write('home.avKey', v.trim()),
+  avQuotes: () => json('home.avQuotes'), setAvQuotes: (v) => write('home.avQuotes', JSON.stringify(v)),
   fcsKey: () => read('home.fcsKey'), setFcsKey: (v) => write('home.fcsKey', v.trim()),
   refreshMin: () => Number(read('home.refreshMin')) || 30, setRefreshMin: (v) => write('home.refreshMin', String(v)),
   countries: () => { const c = json('home.countries'); return Array.isArray(c) && c.length ? c : ['us', 'in'] },
