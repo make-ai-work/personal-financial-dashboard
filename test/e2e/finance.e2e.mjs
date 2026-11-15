@@ -19,7 +19,7 @@ await new Promise((r) => setTimeout(r, 2500))
 
 const browser = await chromium.launch()
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true })
-await ctx.addInitScript(() => { delete window.showSaveFilePicker; delete window.showOpenFilePicker })
+await ctx.addInitScript(() => { delete window.showSaveFilePicker; delete window.showOpenFilePicker; localStorage.setItem('auth.demo', '1') }) // start signed in
 await ctx.route('**/api.frankfurter.dev/**', (r) => r.fulfill({ json: { base: 'USD', date: '2026-10-27', rates: { INR: 84 } } }))
 const page = await ctx.newPage()
 await page.clock.setFixedTime(new Date('2026-10-27T12:00:00')) // 'today' must not drift

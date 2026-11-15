@@ -84,7 +84,7 @@ export default function PropertyPage({ property, reveal, onDeleted }) {
           <Kv label="Range on file">{range && `${fmt(range.min)} – ${fmt(range.max)}`}</Kv>
           <Kv label="Last updated">{snap.valuation && (() => { const n = daysBetween(snap.valuation.date, today); return n <= 0 ? 'today' : `${n} day${n === 1 ? '' : 's'} ago` })()}</Kv>
         </div>
-        <div className="tblw"><table className="t-left"><thead><tr><th>Date</th><th>Source</th><th className="r">Value</th><th>Notes</th><th /></tr></thead><tbody>
+        <div className="tblw"><table className="t-left t-val"><thead><tr><th>Date</th><th>Source</th><th className="r">Value</th><th>Notes</th><th /></tr></thead><tbody>
           {vals.length === 0 && <tr><td colSpan="5" className="none">No valuations yet. Add one to see value and equity.</td></tr>}
           {vals.map((v) => (
             <tr key={v.id}>
@@ -122,7 +122,7 @@ export default function PropertyPage({ property, reveal, onDeleted }) {
               <Kv label="Scheduled payoff" sub={payoff ? 'from rate & term' : ''}>{payoff && new Date(payoff + 'T00:00:00').toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}</Kv>
               <Kv label="Notes">{l.notes}</Kv>
             </div>
-            <div className="tblw"><table className="t-left"><thead><tr><th>Date</th><th className="r">Balance after</th><th className="r">Principal paid</th><th className="r">Interest paid</th><th className="r">Escrow paid</th><th>Notes</th><th /></tr></thead><tbody>
+            <div className="tblw"><table className="t-left t-loan"><thead><tr><th>Date</th><th className="r">Balance after</th><th className="r">Principal paid</th><th className="r">Interest paid</th><th className="r">Escrow paid</th><th>Notes</th><th /></tr></thead><tbody>
               {ups.length === 0 && <tr><td colSpan="7" className="none">No updates recorded yet.</td></tr>}
               {ups.map((u) => (
                 <tr key={u.id}>

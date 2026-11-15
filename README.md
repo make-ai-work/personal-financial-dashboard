@@ -9,13 +9,22 @@ A personal dashboard built step by step with React + Vite. Each section is a top
 npm install
 npm run dev          # http://localhost:5173
 npm test             # unit tests (encryption + data model)
-npm run build && npm run test:e2e && npm run test:e2e:countries && npm run test:e2e:property && npm run test:e2e:portfolio
+npm run build && npm run test:e2e && npm run test:e2e:countries && npm run test:e2e:property && npm run test:e2e:portfolio && npm run test:e2e:retirement && npm run test:e2e:auth
                      # end-to-end browser tests (need Playwright + Chromium)
 ```
 
 ## Tabs
 
 - **Home** – clock and greeting.
+- **Retirement** – *Plan*: your situation, savings picked from Finance asset accounts (converted to the plan
+  currency, equity share taken from the Portfolio mix), income sources with start and end ages, market conditions with a
+  staleness warning, nest-egg needed, shortfall and extra saving, and a yield sensitivity table. *Monte Carlo*: 1,000 to 10,000
+  random futures in today's money (lognormal real returns per asset class, correlated, rebalanced yearly): chance
+  your savings last, spread of outcomes (**Projected Net Worth**), chance by age, when money runs out, the spending
+  that still meets a target chance, an optional flexible-spending rule, and up to **3 saved versions** you can load,
+  overwrite, rename, delete and compare. The starting return, volatility and correlation figures are **placeholders,
+  not forecasts**; edit them. A version stores its inputs and seed, and results are recalculated on load.
+  Engine: `src/lib/montecarlo.js`; plan and versions: `src/lib/retirement.js`. Not included in the Excel export.
 - **Property** – properties by country with a value history you enter (USA has an "Open on Zillow" link for
   looking up the Zestimate yourself), manually recorded mortgages (balance, principal, interest, escrow),
   equity and loan-to-value, reminders for mortgage payments and property tax, and monthly charts.
@@ -30,7 +39,20 @@ npm run build && npm run test:e2e && npm run test:e2e:countries && npm run test:
   Australia or Switzerland; choose one to five, and Finance and Property each keep their own list), with a summary page, owner filter (Mine / Joint / Parent) and a
   month-by-month chart per country.
 
-## How your data is stored (Finance, Property and Portfolio)
+## Sign-in (placeholder)
+
+The app opens on a **Sign in with Google** screen. The button is a dummy: it is not connected to Google, signs you in as a demo
+user and sends nothing anywhere. A two-step (MFA) screen is built into the flow (`src/lib/auth.js`, `src/auth/`) but not
+enforced: turn on the preview from the Account dialog to see it; any 6-digit code passes. Real Google sign-in, real
+verification and storing the data file in Google Drive are the next steps. Until then the encrypted file and its passphrase
+are unchanged.
+
+## Phone
+
+On a phone-sized screen the app shows a simpler layout: tighter spacing, tables keep only name, owner, amount and actions,
+Retirement shows the key results and two charts with the detailed assumptions folded away.
+
+## How your data is stored (Finance, Property, Portfolio and Retirement)
 
 - Everything lives in one encrypted file (`*.wvault`), created and opened from the app. Nothing is
   sent to a server. Full account and policy numbers are stored in it.
@@ -52,7 +74,8 @@ npm run build && npm run test:e2e && npm run test:e2e:countries && npm run test:
 - [x] Step 3: Pets tab (later retired, see below)
 - [x] Step 4: generic country lists (1-5 per section) and the Property tab
 - [x] Step 5: Portfolio tab (holdings, allocation, rebalancing), linked to Finance accounts
-- [ ] Later: Google Drive storage
+- [x] Step 6: Retirement tab (Plan + Monte Carlo with 3 saved versions), placeholder Google sign-in, phone layout
+- [ ] Next: real Google sign-in, two-step verification, Google Drive storage
 
 ## Retired: Pets tab
 
