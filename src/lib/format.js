@@ -7,9 +7,9 @@ export const COUNTRIES = {
 }
 export const COUNTRY_CODES = Object.keys(COUNTRIES)
 
-export const OWNERS = ['mine', 'joint', 'parent']
+export const OWNERS = ['mine', 'joint', 'spouse', 'parent']
 export const ownerLabel = (owner, parentLabel = 'Parent') =>
-  owner === 'mine' ? 'Mine' : owner === 'joint' ? 'Joint' : parentLabel || 'Parent'
+  owner === 'mine' ? 'Mine' : owner === 'joint' ? 'Joint' : owner === 'spouse' ? 'Spouse' : parentLabel || 'Parent'
 
 export const MIX = [
   { key: 'equities', label: 'Equities', short: 'Eq' },

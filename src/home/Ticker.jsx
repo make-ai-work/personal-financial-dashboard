@@ -82,19 +82,18 @@ export default function Ticker({ countries, version, onSettings }) {
   const newest = IS_DEMO ? snap.at : Math.max(0, ...Object.values(cache?.fetched || {}))
   const interval = homePrefs.refreshMin()
 
-  if (!IS_DEMO && !key) {
-    return <div className="ticker"><div className="tmsg"><b>Market ticker is off.</b> Add your FCS API key in <button className="link" onClick={onSettings}>Home settings</button> to turn it on.</div></div>
-  }
-  if (IS_DEMO && snap.state !== 'ok' && snap.state !== 'loading') {
-    return <div className="ticker"><div className="tmsg err"><b>Prices unavailable.</b> {snap.message || 'The demo’s price snapshot has not been generated yet.'}</div></div>
-  }
-  if (!shown.length) {
+  // The strip is always there. Without prices it shows the index names with a dash, and one line says why.
+  let reason = ''
+  if (!IS_DEMO && !key) reason = <><b>Prices are off.</b> Add your FCS API key in <button className="link" onClick={onSettings}>Home settings</button> to turn them on.</>
+  else if (IS_DEMO && snap.state !== 'ok' && snap.state !== 'loading') reason = <><b>Prices unavailable.</b> {snap.message || 'The demo’s price snapshot has not been generated yet.'}</>
+  else if (!shown.length) reason = busy || (!problemText && !IS_DEMO && !cache) || (IS_DEMO && snap.state === 'loading') ? 'Loading prices…' : <><b>Prices unavailable.</b> {problemText || 'The market service sent no prices.'} <button className="link" onClick={() => run('force')}>Try again</button></>
+  if (reason) {
+    const names = items.map((it) => <span className="tk" key={it.id}><b>{it.label}</b> <small>{it.sub}</small> <span className="px">—</span></span>)
     return (
-      <div className="ticker">
-        <div className={`tmsg${problemText ? ' err' : ''}`}>
-          {busy || (!problemText && !IS_DEMO && !cache) ? 'Loading prices…' : <><b>Prices unavailable.</b> {problemText || 'The market service sent no prices.'} <button className="link" onClick={() => run('force')}>Try again</button></>}
-        </div>
-      </div>
+      <>
+        <div className="ticker" role="marquee" aria-label="Market ticker"><div className="track" style={{ animationDuration: `${Math.max(30, items.length * 6)}s` }}><span className="set">{names}</span><span className="set" aria-hidden="true">{names}</span></div></div>
+        <div className={`tstate${problemText ? ' warnline' : ''}`}><span>{reason}</span></div>
+      </>
     )
   }
   const row = shown.map(({ q, it }) => {

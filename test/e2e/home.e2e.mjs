@@ -1,4 +1,4 @@
-// End-to-end check of the Home page: clocks, weather, markets, ticker and Home settings (all network calls stubbed).
+// End-to-end check of the Home page: net worth, country rows (city, time, market, weather, AQI), ticker and Home settings (all network calls stubbed).
 // Run:  npm run build && npm run test:e2e:home
 import { createRequire } from 'node:module'
 import { spawn } from 'node:child_process'
@@ -41,13 +41,16 @@ await ctx.route(/api-v4\.fcsapi\.com/, (route) => {
   if (u.pathname === '/crypto/latest') return ok([row('COINBASE:BTCUSD', 98450, -1196, -1.2)])
   return fail(404, 'unknown')
 })
-const meteo = { geocodeMiss: false, block: false, calls: 0, geocodeUrls: [] }
-await ctx.route(/geocoding-api\.open-meteo\.com/, (r) => {
-  meteo.geocodeUrls.push(r.request().url())
-  if (meteo.block) return r.abort('failed')
-  r.fulfill({ json: meteo.geocodeMiss ? {} : { results: [{ name: 'Austin', admin1: 'Minnesota', country: 'United States', latitude: 43.67, longitude: -92.97 }, { name: 'Austin', admin1: 'Texas', country: 'United States', latitude: 30.27, longitude: -97.74 }] } })
+const meteo = { block: false, calls: 0, airCalls: 0, geocodeCalls: 0, noAir: false }
+await ctx.route(/geocoding-api\.open-meteo\.com/, (r) => { meteo.geocodeCalls++; r.abort('failed') }) // must never be called: the cities are built in
+await ctx.route(/air-quality-api\.open-meteo\.com/, (r) => {
+  meteo.airCalls++
+  const lat = Number(new URL(r.request().url()).searchParams.get('latitude'))
+  if (meteo.noAir || lat < 0) return r.fulfill({ json: { current: { us_aqi: null } } }) // Sydney: no data
+  r.fulfill({ json: { current: { us_aqi: lat < 30 ? 142 : 38 } } }) // Mumbai 142, New York 38
 })
-await ctx.route(/\/\/api\.open-meteo\.com/, (r) => { // note: must not also match geocoding-api.open-meteo.com
+await ctx.route(/\/\/api\.open-meteo\.com/, (r) => { // note: must not also match the other open-meteo hosts
+  if (meteo.block) return r.abort('failed')
   meteo.calls++
   const u = new URL(r.request().url())
   const f = u.searchParams.get('temperature_unit') === 'fahrenheit'
@@ -70,28 +73,31 @@ const openSettings = async () => { await page.getByRole('button', { name: '⚙ H
 
 try {
   await page.goto('http://localhost:4183/')
-  step('Home is the landing page: capitalised greeting, a clock for each country (capital time zones), markets open/closed')
-  await page.getByRole('heading', { name: /^Time/ }).waitFor()
-  await page.getByText('Good Morning').waitFor()
-  const time = page.getByLabel('Time', { exact: true })
-  assert.match(await time.innerText(), /Washington, D\.C\.[\s\S]*10:42 AM[\s\S]*Mon 16 Nov/)
-  assert.match(await time.innerText(), /New Delhi[\s\S]*9:12 PM/)
-  assert.equal(await time.locator('.ck').count(), 2) // USA and India are the default countries
-  const markets = page.getByLabel('Markets', { exact: true })
-  const mtext = await markets.innerText()
-  assert.match(mtext, /NYSE · Nasdaq[\s\S]*Closes in 5h 18m[\s\S]*Open/)
-  assert.match(mtext, /NSE · BSE[\s\S]*Opens tomorrow in 12h 3m[\s\S]*Closed/)
-  assert.match(mtext, /Public holidays are not included/)
+  step('Home is the landing page: one row per country with city, time (AM/PM, day or night icon) and market status; locked data asks to unlock')
+  const ny = page.getByTestId('row-us'), mum = page.getByTestId('row-in')
+  await ny.waitFor()
+  assert.match(await ny.innerText(), /New York[\s\S]*10:42 AM[\s\S]*Mon[\s\S]*Open[\s\S]*Closes in 5h 18m/)
+  assert.match(await mum.innerText(), /Mumbai[\s\S]*9:12 PM[\s\S]*Closed[\s\S]*Opens tomorrow in 12h 3m/)
+  assert.equal(await ny.getByRole('img', { name: 'Daytime' }).count(), 1); assert.equal(await mum.getByRole('img', { name: 'Night' }).count(), 1)
+  assert.equal(await page.locator('.crow').count(), 2) // USA and India are the default countries
+  assert.match(await page.getByLabel('Markets, time and weather').innerText(), /public holidays are not included/i)
+  await page.getByText('Unlock your data to see this.').waitFor()
 
-  step('no key and no city yet: the ticker says it is off and the weather asks for a city; nothing was requested')
-  await page.getByText('Market ticker is off.').waitFor()
-  await page.getByText(/Choose your city in Home settings/).waitFor()
-  assert.equal(fcs.calls.length, 0); assert.equal(meteo.calls, 0)
+  step('weather: no city to set; each row shows its own exchange city, in °F for the US and °C elsewhere, with AQI when there is data')
+  await ny.getByText('68°F').waitFor(); await mum.getByText('20°C').waitFor()
+  assert.match(await ny.innerText(), /Partly cloudy[\s\S]*High 74°[\s\S]*Low 55°[\s\S]*Wind 8 mph[\s\S]*Humidity 52%[\s\S]*AQI 38 · Good/)
+  assert.match(await mum.innerText(), /High 23°[\s\S]*Low 13°[\s\S]*Wind 8 km\/h[\s\S]*AQI 142 · Unhealthy for some/)
+  assert.equal(meteo.geocodeCalls, 0, 'no city lookup'); assert.equal(meteo.calls, 2); assert.equal(meteo.airCalls, 2)
 
-  step('Home settings: a wrong key is reported by the Test button, a good key works, city and unit are saved')
+  step('no key: the ticker strip is still there with names and dashes, and says prices are off; nothing was requested from FCS')
+  const t0 = await ticker().innerText()
+  for (const label of ['S&P 500', 'Nasdaq', 'Sensex', 'Nifty 50', 'Gold', 'Bitcoin']) assert.ok(t0.includes(label), label)
+  await page.getByText('Prices are off.').waitFor()
+  assert.equal(fcs.calls.length, 0)
+
+  step('Home settings: no city field; a wrong key is reported by Test, a good key works, the unit can be forced')
   await openSettings()
-  await dialog().getByLabel('Weather city').fill('Austin, Texas')
-  await dialog().getByLabel('Temperature unit').selectOption('F')
+  assert.equal(await dialog().getByLabel('Weather city').count(), 0)
   await dialog().getByLabel('FCS API key').fill('BADKEY')
   await dialog().getByRole('button', { name: 'Test' }).click()
   await dialog().getByText(/key is not valid/).waitFor()
@@ -106,28 +112,27 @@ try {
   await dialog().getByRole('button', { name: 'Save' }).click()
   await dialog().waitFor({ state: 'detached' })
 
-  step('the ticker rolls with the base indices, gold and Bitcoin; the weather appears in °F')
-  await ticker().waitFor()
+  step('the ticker rolls with the base indices, gold and Bitcoin')
+  await page.getByText(/Prices as of .* refreshed every 30 minutes/).waitFor()
   const tk = await ticker().innerText()
-  for (const label of ['S&P 500', 'Nasdaq', 'Sensex', 'Nifty 50', 'Gold', 'Bitcoin']) assert.ok(tk.includes(label), label)
   assert.ok(tk.includes('6,412.30') && tk.includes('▲ 0.42%') && tk.includes('▼ 1.20%'))
   assert.ok(!tk.includes('FTSE')) // UK is not a selected country yet
-  await page.getByText(/Prices as of .* refreshed every 30 minutes/).waitFor()
-  const wx = page.getByLabel('Weather', { exact: true })
-  await wx.getByText('68°F').waitFor()
-  assert.match(await wx.innerText(), /austin[\s\S]*Partly cloudy[\s\S]*High 74°[\s\S]*Low 55°[\s\S]*Humidity 52%/i)
-  assert.equal(await wx.locator('.fc > div').count(), 4)
   const callsAfterFirst = fcs.calls.length
   assert.equal(callsAfterFirst - beforeSave, 3) // one call per group: indices, gold, Bitcoin
-  assert.ok(meteo.geocodeUrls[0].includes('name=Austin&count=10'), 'only the name is searched: ' + meteo.geocodeUrls[0])
-  assert.ok(meteo.calls === 1 && (await page.evaluate(() => localStorage.getItem('home.weather'))).includes('Austin'))
 
-  step('key, city and prices persist: after a reload nothing is asked again within the refresh interval')
+  step('key and weather persist: after a reload nothing is asked again within the refresh interval')
   await page.reload()
-  await ticker().waitFor()
-  await page.getByLabel('Weather', { exact: true }).getByText('68°F').waitFor()
+  await ny.getByText('68°F').waitFor(); await page.getByText(/Prices as of/).waitFor()
   await page.waitForTimeout(500)
-  assert.equal(fcs.calls.length, callsAfterFirst, 'cached prices are reused'); assert.equal(meteo.calls, 1, 'cached weather is reused')
+  assert.equal(fcs.calls.length, callsAfterFirst, 'cached prices are reused'); assert.equal(meteo.calls, 2, 'cached weather is reused')
+
+  step('temperature unit setting: forcing °C changes the New York row')
+  await openSettings(); await dialog().getByLabel('Temperature unit').selectOption('C')
+  await dialog().getByRole('button', { name: 'Save' }).click()
+  await ny.getByText('20°C').waitFor()
+  await openSettings(); await dialog().getByLabel('Temperature unit').selectOption('')
+  await dialog().getByRole('button', { name: 'Save' }).click()
+  await ny.getByText('68°F').waitFor()
 
   step('free FCS plan: gold and Bitcoin still show, with a plain note that indices need a stock plan')
   fcs.mode = 'free'
@@ -135,46 +140,44 @@ try {
   await page.reload()
   await page.getByText(/does not include index prices/).waitFor()
   const free = await ticker().innerText()
-  assert.ok(free.includes('Gold') && free.includes('Bitcoin') && !free.includes('S&P 500'))
+  assert.ok(/Gold[\s\S]*4,120\.55/.test(free) && /Bitcoin[\s\S]*98,450/.test(free) && !/S&P 500[^\n]*6,412/.test(free))
 
-  step('an invalid key: no prices, an explanation and Try again; fixing it brings prices back')
+  step('an invalid key: dashes, an explanation and Try again; fixing it brings prices back')
   fcs.mode = 'badkey'
   await page.evaluate(() => localStorage.removeItem('home.quotes'))
   await page.reload()
   await page.getByText('Prices unavailable.').waitFor()
   await page.getByText(/key is not valid/).first().waitFor()
+  assert.ok((await ticker().innerText()).includes('S&P 500'), 'the strip stays')
   fcs.mode = 'full'
   await page.getByRole('button', { name: 'Try again' }).click()
-  await ticker().getByText('S&P 500').first().waitFor()
+  await page.getByText('6,412.30').first().waitFor()
 
-  step('a tab opened in the background still loads weather and prices (and re-checks when shown)')
-  await page.evaluate(() => { localStorage.removeItem('home.weather'); localStorage.removeItem('home.quotes') })
+  step('a tab opened in the background still loads weather and prices')
+  await page.evaluate(() => { localStorage.removeItem('home.weatherBy'); localStorage.removeItem('home.quotes') })
   const hiddenWx = meteo.calls
   await page.addInitScript(() => { window.__hidden = true })
   await page.reload()
-  await page.getByLabel('Weather', { exact: true }).getByText(/°F|°C/).waitFor()
-  await ticker().getByText('S&P 500').first().waitFor()
+  await ny.getByText(/°F/).waitFor()
+  await page.getByText('6,412.30').first().waitFor()
   assert.ok(meteo.calls > hiddenWx)
+
+  step('no air quality data: the weather still shows, without an AQI chip')
+  await page.evaluate(() => localStorage.removeItem('home.weatherBy'))
+  meteo.noAir = true
+  await page.reload()
+  await ny.getByText(/°F/).waitFor()
+  assert.ok(!/AQI/.test(await ny.innerText()))
+  meteo.noAir = false
 
   step('weather: a blocked service is explained and Try again recovers')
   meteo.block = true
-  await page.evaluate(() => { localStorage.removeItem('home.weather'); localStorage.removeItem('home.geo') })
+  await page.evaluate(() => localStorage.removeItem('home.weatherBy'))
   await page.reload()
-  await page.getByText(/Could not reach the weather service[\s\S]*looking up the city/).waitFor({ timeout: 20_000 }) // after two quiet retries
+  await page.getByText(/Could not reach the weather service[\s\S]*getting the forecast/).first().waitFor({ timeout: 20_000 }) // after two quiet retries
   meteo.block = false
-  await page.getByLabel('Weather', { exact: true }).getByRole('button', { name: 'Try again' }).click()
-  await page.getByLabel('Weather', { exact: true }).getByText(/°F|°C/).waitFor()
-
-  step('weather: an unknown city is explained')
-  meteo.geocodeMiss = true
-  await openSettings()
-  await dialog().getByLabel('Weather city').fill('Nowhereville')
-  await dialog().getByRole('button', { name: 'Save' }).click()
-  await page.getByText(/Could not find “Nowhereville”/).waitFor()
-  meteo.geocodeMiss = false
-  await openSettings(); await dialog().getByLabel('Weather city').fill('Austin'); await dialog().getByLabel('Temperature unit').selectOption('C')
-  await dialog().getByRole('button', { name: 'Save' }).click()
-  await page.getByLabel('Weather', { exact: true }).getByText('20°C').waitFor()
+  await ny.getByRole('button', { name: 'Try again' }).click()
+  await ny.getByText(/°F/).waitFor()
 
   step('countries come from the data file: create it, add the UK and Australia in Finance, and Home follows')
   await topTab('Finance Dashboard').click()
@@ -188,26 +191,31 @@ try {
   await page.getByLabel('Show United Kingdom').check().catch(async () => page.getByLabel('Show UK').check())
   await page.getByLabel('Show Australia').check()
   await topTab('Home').click()
-  const time2 = page.getByLabel('Time', { exact: true })
-  await time2.getByText('London').waitFor()
-  assert.equal(await time2.locator('.ck').count(), 4)
-  assert.match(await time2.innerText(), /Canberra[\s\S]*2:42 AM[\s\S]*Tue 17 Nov/) // Australia uses its capital's clock
-  assert.match(await time2.innerText(), /London[\s\S]*3:42 PM/)
-  const m2 = await page.getByLabel('Markets', { exact: true }).innerText()
-  assert.match(m2, /London Stock Exchange[\s\S]*Closes in 48 min/); assert.match(m2, /ASX[\s\S]*Opens in 7h 18m/)
-  await ticker().getByText('FTSE 100').first().waitFor() // a new country's index is fetched at once
+  const lon = page.getByTestId('row-uk'), syd = page.getByTestId('row-au')
+  await lon.waitFor()
+  assert.equal(await page.locator('.crow').count(), 4)
+  assert.match(await lon.innerText(), /London[\s\S]*3:42 PM[\s\S]*Open[\s\S]*Closes in 48 min/)
+  assert.match(await syd.innerText(), /Sydney[\s\S]*2:42 AM[\s\S]*Tue[\s\S]*Closed[\s\S]*Opens in 7h 18m/)
+  assert.equal(await syd.getByRole('img', { name: 'Night' }).count(), 1)
+  await syd.getByText(/°C/).waitFor(); assert.ok(!/AQI/.test(await syd.innerText()), 'Sydney has no AQI data')
+  await page.getByText('FTSE 100').first().waitFor() // a new country's index is fetched at once
   assert.ok((await ticker().innerText()).includes('9,310.40'))
-  // the country list is remembered: after locking, Home still shows four clocks and four markets
-  await page.getByRole('button', { name: 'Lock now' }).click().catch(() => {})
-  await topTab('Home').click()
-  assert.equal(await page.getByLabel('Time', { exact: true }).locator('.ck').count(), 4)
 
-  step('desktop layout: three cards of sensible size side by side, no sideways scrolling')
+  step('net worth card: owner choices include Spouse, an empty file shows zero, the choice is remembered')
+  const nw = page.getByLabel('Total net worth')
+  const owners = await nw.getByRole('group', { name: 'Whose net worth' }).getByRole('button').allInnerTexts()
+  assert.deepEqual(owners, ['All', 'Mine', 'Joint', 'Spouse', 'Parent'])
+  assert.match(await nw.getByTestId('networth').innerText(), /^\$\s?0$/)
+  await nw.getByRole('button', { name: 'Spouse' }).click()
+  assert.equal(await page.evaluate(() => localStorage.getItem('home.owner')), 'spouse')
+  await page.reload()
+  assert.equal(await page.getByLabel('Total net worth').locator('button.on').innerText(), 'Spouse')
+
+  step('desktop layout: net worth takes half the width, the country block the other half, no sideways scrolling')
   await page.waitForTimeout(300)
-  const boxes = await page.locator('.grid3 > .card').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().width)))
-  assert.equal(boxes.length, 3)
-  assert.ok(Math.abs(boxes[0] - boxes[1]) <= 2, `time and weather cards are the same width: ${boxes}`)
-  assert.ok(boxes[2] < boxes[0], 'markets is the smaller card')
+  const boxes = await page.locator('.grid2 > .card').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().width)))
+  assert.equal(boxes.length, 2)
+  assert.ok(Math.abs(boxes[0] - boxes[1]) <= 2, `half and half: ${boxes}`)
   assert.equal(await overflow(), 0)
   await page.screenshot({ path: `${OUT}/desktop.png`, fullPage: true })
 
@@ -215,12 +223,12 @@ try {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.waitForTimeout(300)
   assert.equal(await overflow(), 0)
-  const stacked = await page.locator('.grid3 > .card').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)))
-  assert.ok(stacked[0] < stacked[1] && stacked[1] < stacked[2])
+  const stacked = await page.locator('.grid2 > .card').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)))
+  assert.ok(stacked[0] < stacked[1])
   await page.screenshot({ path: `${OUT}/phone.png`, fullPage: true })
 } catch (e) {
   await page.screenshot({ path: `${OUT}/failure.png`, fullPage: true })
-  console.error('FAILED:', e.message)
+  console.error('FAILED:', e.message, '| page errors:', errors.join(' | '))
   await browser.close(); server.kill(); process.exit(1)
 }
 console.log('page errors:', errors.length ? errors.join(' | ') : 'none')

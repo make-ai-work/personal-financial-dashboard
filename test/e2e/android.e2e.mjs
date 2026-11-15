@@ -50,7 +50,7 @@ const back = () => page.evaluate(() => window.__back())
 try {
   await page.goto('http://localhost:4184/')
   step('the app opens straight to Home: no Google setup, no sign-in, no Account button')
-  await page.getByRole('heading', { name: /^Time/ }).waitFor()
+  await page.getByRole('heading', { name: /^Markets · time · weather/ }).waitFor()
   assert.equal(await page.getByRole('heading', { name: 'Connect your Google account' }).count(), 0)
   assert.equal(await page.getByRole('button', { name: /Sign in with Google/ }).count(), 0)
   assert.equal(await page.getByRole('button', { name: 'Account' }).count(), 0)

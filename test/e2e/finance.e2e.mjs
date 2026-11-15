@@ -19,6 +19,7 @@ await new Promise((r) => setTimeout(r, 2500))
 
 const browser = await chromium.launch()
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true })
+await ctx.route(/open-meteo\.com/, (r) => r.fulfill({ json: { current: { temperature_2m: 20, relative_humidity_2m: 50, weather_code: 1, wind_speed_10m: 5, us_aqi: 40 }, daily: { time: ['2026-11-16', '2026-11-17'], weather_code: [1, 1], temperature_2m_max: [22, 22], temperature_2m_min: [12, 12] } } })) // Home's weather: not under test here
 await ctx.addInitScript(() => { delete window.showSaveFilePicker; delete window.showOpenFilePicker; localStorage.setItem('auth.demo', '1') }) // start signed in
 await ctx.route('**/api.frankfurter.dev/**', (r) => r.fulfill({ json: { base: 'USD', date: '2026-10-27', rates: { INR: 84 } } }))
 const page = await ctx.newPage()

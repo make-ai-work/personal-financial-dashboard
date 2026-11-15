@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useVault } from '../finance/VaultContext.jsx'
 import { homePrefs } from '../lib/homeprefs.js'
-import { MarketsCard, TimeCard, WeatherCard, useNow } from './Cards.jsx'
+import { CountriesCard, NetWorthCard, useNow } from './Cards.jsx'
 import Ticker from './Ticker.jsx'
 import HomeSettings from './HomeSettings.jsx'
 
-// The landing page: a market ticker, the time in each selected country, the weather, and which markets are open.
-// It works before the data file is unlocked: the country list is remembered from the last time it was.
+// The landing page: the market ticker, then your net worth (left, half the screen) and one compact block per country
+// (right): city, time, market status and weather. It works before the data file is unlocked: the country list is
+// remembered from the last time it was, and the net worth card asks you to unlock.
 export default function Home() {
   const vault = useVault()
   const fromVault = vault?.data?.settings?.countries
@@ -22,11 +23,9 @@ export default function Home() {
     <div className="home">
       <Ticker countries={countries} version={version} onSettings={() => setOpen(true)} />
       <div className="home-page">
-        <div className="home-bar"><button className="btn sm" onClick={() => setOpen(true)}>⚙ Home settings</button></div>
-        <div className="grid3">
-          <TimeCard countries={countries} now={now} />
-          <WeatherCard countries={countries} version={version} onSettings={() => setOpen(true)} />
-          <MarketsCard countries={countries} now={now} />
+        <div className="grid2">
+          <NetWorthCard data={vault?.data || null} parentLabel={vault?.data?.settings?.parentLabel || 'Parent'} />
+          <CountriesCard countries={countries} now={now} version={version} onSettings={() => setOpen(true)} />
         </div>
       </div>
       {open && <HomeSettings countries={countries} onClose={() => setOpen(false)} onSaved={() => setVersion((v) => v + 1)} />}

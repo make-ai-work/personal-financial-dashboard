@@ -47,6 +47,7 @@ export function OwnerPicker({ value, onChange, parentLabel }) {
   const opts = [
     ['mine', 'Mine', 'Only me'],
     ['joint', 'Joint', `Me + ${parentLabel.toLowerCase()}`],
+    ['spouse', 'Spouse', 'Only my spouse'],
     ['parent', parentLabel, `Only ${parentLabel.toLowerCase()}`],
   ]
   return (

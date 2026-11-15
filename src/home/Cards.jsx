@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { clocksFor, greeting } from '../lib/clocks.js'
-import { marketsFor } from '../lib/markets.js'
-import { COUNTRIES } from '../lib/format.js'
-import { describe, loadWeather } from '../lib/weather.js'
+import { cityClock, EXCHANGE_CITIES } from '../lib/exchangecity.js'
+import { marketStatus, EXCHANGES } from '../lib/markets.js'
+import { COUNTRIES, OWNERS, moneyCurrency, ownerLabel } from '../lib/format.js'
+import { describe, loadPlaceWeather } from '../lib/weather.js'
+import { netWorth } from '../lib/networth.js'
 import { homePrefs } from '../lib/homeprefs.js'
-import { IS_DEMO } from '../lib/demo.js'
+import { useFx } from '../finance/useFx.js'
 
 // A Date that refreshes itself (every 15 seconds is plenty for minute-accurate clocks).
 export function useNow(ms = 15_000) {
@@ -16,67 +17,28 @@ export function useNow(ms = 15_000) {
   return now
 }
 
-export function TimeCard({ countries, now }) {
-  const clocks = clocksFor(countries, now)
-  return (
-    <div className="card" aria-label="Time">
-      <h3 className="ch"><span>Time</span><span className="sub">capital city of each country</span></h3>
-      <p className="hello">{greeting(now.getHours())}</p>
-      <div className="clocks">
-        {clocks.map((c) => (
-          <div className="ck" key={c.code}>
-            <span className="fl">{COUNTRIES[c.code].flag}</span>
-            <div className="nm"><b>{c.city}</b><small>{c.country} · {c.zone}</small></div>
-            <div className="tm"><b>{c.time}</b><small>{c.day}</small></div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
+const unitFor = (code) => homePrefs.unit('') || EXCHANGE_CITIES[code].unit
 
-export function MarketsCard({ countries, now }) {
-  const list = marketsFor(countries, now)
-  return (
-    <div className="card mkts" aria-label="Markets">
-      <h3 className="ch"><span>Markets</span><span className="sub">now</span></h3>
-      <div className="mlist">
-        {list.map((m) => (
-          <div className="mk" key={m.code}>
-            <span className="fl">{COUNTRIES[m.code].flag}</span>
-            <div className="nm"><b>{m.name}</b><small>{m.label}</small></div>
-            <span className={`pill ${m.open ? 'o' : 'c'}`}>{m.open ? 'Open' : 'Closed'}</span>
-          </div>
-        ))}
-      </div>
-      <p className="fine">Regular trading hours only. Public holidays are not included, so a holiday can show as open.</p>
-    </div>
-  )
-}
-
-export function WeatherCard({ countries, version, onSettings }) {
-  const city = homePrefs.city() || (IS_DEMO ? 'New York' : '')
-  const unit = homePrefs.unit(countries[0] === 'us' ? 'F' : 'C')
-  const [state, setState] = useState({ data: null, error: '', loading: false })
-  const retryRef = useRef(() => {})
-
+// Weather for one country's exchange city. The first fetch never waits for a visible tab; the periodic refresh does.
+function useCityWeather(code, version) {
+  const unit = unitFor(code)
+  const [state, setState] = useState({ data: null, error: '', loading: true, detail: '' })
   const running = useRef(false)
+  const retryRef = useRef(() => {})
   useEffect(() => {
-    if (!city) { setState({ data: null, error: '', loading: false }); return undefined }
     let live = true
-    // reason: initial | timer | visible | retry. Only the periodic refresh waits for a visible tab; the first fetch never does.
     const check = async (reason) => {
-      const cached = homePrefs.weather()
-      const fresh = cached && cached.city === city && cached.unit === unit && Date.now() - cached.fetchedAt < homePrefs.refreshMin() * 60_000
-      if (fresh && reason !== 'retry') { setState({ data: cached, error: '', loading: false }); return }
+      const cached = homePrefs.weatherOf(code)
+      const fresh = cached && cached.unit === unit && Date.now() - cached.fetchedAt < homePrefs.refreshMin() * 60_000
+      if (fresh && reason !== 'retry') { setState({ data: cached, error: '', loading: false, detail: '' }); return }
       if (reason === 'timer' && document.visibilityState === 'hidden') return
       if (running.current) return
       running.current = true
       setState((s) => ({ ...s, loading: true, error: '' }))
       try {
-        const data = { ...(await loadWeather(city, unit, { geo: { get: homePrefs.geo, set: homePrefs.setGeo } })), city, unit }
-        homePrefs.setWeather(data)
-        if (live) setState({ data, error: '', loading: false })
+        const data = { ...(await loadPlaceWeather(EXCHANGE_CITIES[code], unit)), unit }
+        homePrefs.setWeatherOf(code, data)
+        if (live) setState({ data, error: '', loading: false, detail: '' })
       } catch (e) {
         if (live) setState((s) => ({ ...s, loading: false, error: e.message || 'Could not load the weather.', detail: e.detail || '' }))
       } finally {
@@ -89,24 +51,89 @@ export function WeatherCard({ countries, version, onSettings }) {
     document.addEventListener('visibilitychange', onVisible)
     retryRef.current = () => check('retry')
     return () => { live = false; clearInterval(id); document.removeEventListener('visibilitychange', onVisible) }
-  }, [city, unit, version])
+  }, [code, unit, version])
+  return { ...state, retry: () => retryRef.current() }
+}
 
-  const d = state.data
-  const w = d && describe(d.code)
+// One country: line 1 = city, time (with a day or night icon), market status; line 2 = the weather.
+export function CountryRow({ code, now, version }) {
+  const ck = cityClock(code, now)
+  const m = marketStatus(code, now)
+  const w = useCityWeather(code, version)
+  const d = w.data
+  const info = d && describe(d.code)
   return (
-    <div className="card wx" aria-label="Weather">
-      <h3><span>Weather{d ? ` · ${d.place}` : city ? ` · ${city}` : ''}</span><button className="link" onClick={onSettings}>{city ? 'Change' : 'Set city'}</button></h3>
-      {!city && <p className="c">Choose your city in Home settings to see the weather. Only the city name is sent, to Open-Meteo.</p>}
-      {city && !d && !state.error && <p className="c">Loading the weather…</p>}
-      {state.error && <p className="err">{state.error} <button className="link" onClick={() => retryRef.current()}>Try again</button>{state.detail && <small className="diag">Details: {state.detail}</small>}</p>}
-      {d && (
-        <>
-          <div className="big"><span className="ico" aria-hidden="true">{w.icon}</span><span className="t">{d.temp}°{d.unit}</span></div>
-          <div className="c">{w.text}</div>
-          <div className="row"><span>High <b>{d.high}°</b></span><span>Low <b>{d.low}°</b></span><span>Wind <b>{d.wind} {d.windUnit}</b></span><span>Humidity <b>{d.humidity}%</b></span></div>
-          <div className="fc">{d.next.map((x) => <div key={x.day}>{x.day}<b>{x.high}°</b><span aria-hidden="true">{describe(x.code).icon}</span></div>)}</div>
-        </>
-      )}
+    <div className="crow" data-testid={`row-${code}`}>
+      <div className="l1">
+        <div className="cty"><span className="fl">{COUNTRIES[code].flag}</span><b>{ck.city}</b><small>{EXCHANGES[code].name}</small></div>
+        <div className="tme"><b>{ck.time}</b><span className="dn-ico" role="img" aria-label={ck.isDay ? 'Daytime' : 'Night'}>{ck.isDay ? '☀️' : '🌙'}</span><small>{ck.day}</small></div>
+        <div className="mst"><span className={`pill ${m.open ? 'o' : 'c'}`}>{m.open ? 'Open' : 'Closed'}</span><small>{m.label}</small></div>
+      </div>
+      <div className="l2">
+        {w.loading && !d && <span className="c">Loading the weather…</span>}
+        {w.error && <span className="err">{w.error} <button className="link" onClick={w.retry}>Try again</button>{w.detail && <small className="diag">Details: {w.detail}</small>}</span>}
+        {d && (
+          <>
+            <span className="wt"><span aria-hidden="true">{info.icon}</span> {d.temp}°{d.unit}</span>
+            <span>{info.text}</span>
+            <span>High <b>{d.high}°</b></span><span>Low <b>{d.low}°</b></span>
+            <span>Wind <b>{d.wind} {d.windUnit}</b></span><span>Humidity <b>{d.humidity}%</b></span>
+            {d.aqi != null && <span className="aqi" title="US air quality index">AQI <b>{d.aqi}</b> · {d.aqiLabel}</span>}
+          </>
+        )}
+      </div>
     </div>
+  )
+}
+
+export function CountriesCard({ countries, now, version, onSettings }) {
+  const list = countries.filter((c) => EXCHANGE_CITIES[c] && EXCHANGES[c])
+  return (
+    <div className="card" aria-label="Markets, time and weather">
+      <h3 className="ch"><span>Markets · time · weather</span><button className="link" onClick={onSettings}>⚙ Home settings</button></h3>
+      {list.map((c) => <CountryRow key={c} code={c} now={now} version={version} />)}
+      <p className="fine">The city is where each country’s main stock exchange is. Market hours are regular trading hours only; public holidays are not included. Weather: Open-Meteo.</p>
+    </div>
+  )
+}
+
+// Total net worth with an owner selector. Needs the unlocked data (the Home page itself works before unlocking).
+export function NetWorthCard({ data, parentLabel }) {
+  const [owner, setOwner] = useState(() => homePrefs.owner())
+  const pick = (o) => { setOwner(o); homePrefs.setOwner(o) }
+  return (
+    <div className="card nwc" aria-label="Total net worth">
+      <h3 className="ch"><span>Total net worth</span></h3>
+      <div className="seg" role="group" aria-label="Whose net worth">
+        {['all', ...OWNERS].map((o) => <button key={o} className={owner === o ? 'on' : ''} onClick={() => pick(o)}>{o === 'all' ? 'All' : ownerLabel(o, parentLabel)}</button>)}
+      </div>
+      {data ? <NetWorthBody data={data} owner={owner} /> : <p className="c">Unlock your data to see this.</p>}
+    </div>
+  )
+}
+
+function NetWorthBody({ data, owner }) {
+  const fx = useFx(data.settings.countries, data.rates)
+  const nw = netWorth(data, owner, fx)
+  const cur = nw.base
+  const show = (n) => (Number.isNaN(n) ? '—' : moneyCurrency(cur, n))
+  const multi = nw.per.length > 1
+  return (
+    <>
+      <div className="nwbig" data-testid="networth">{nw.ready ? show(nw.total.net) : fx.loading ? 'Loading rates…' : '—'}</div>
+      <div className="sub">in {cur}{multi ? ' · converted at today’s rates' : ''}{fx.source === 'saved' ? ' (saved rates)' : ''}{!nw.ready && !fx.loading ? ' · exchange rates needed: open Finance Dashboard and set them' : ''}</div>
+      <div className="nwrows">
+        {nw.per.map((p) => (
+          <div className="nwr" key={p.code}>
+            <span>{COUNTRIES[p.code].flag} {COUNTRIES[p.code].name}</span>
+            <span>{moneyCurrency(p.currency, p.net)}{multi && p.currency !== cur && !Number.isNaN(p.inBase.net) ? <small> ≈ {show(p.inBase.net)}</small> : null}</span>
+          </div>
+        ))}
+      </div>
+      <div className="nwtiles">
+        <div><small>Assets</small><b className="pos">{show(nw.total.assets)}</b></div>
+        <div><small>Liabilities</small><b className="neg">{show(nw.total.liabilities)}</b></div>
+      </div>
+    </>
   )
 }
