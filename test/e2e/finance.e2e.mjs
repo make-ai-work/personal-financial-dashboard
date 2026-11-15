@@ -49,7 +49,7 @@ try {
   await page.getByRole('checkbox').check()
   const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Create encrypted file' }).click()])
   await dl.saveAs(`${OUT}/WealthTracker.wvault`)
-  await page.getByText('Summary ·').waitFor()
+  await page.getByText('Update date', { exact: true }).waitFor()
 
   step('add accounts and policy in USA')
   await page.getByRole('button', { name: /USA/ }).first().click()
@@ -96,12 +96,29 @@ try {
   assert.match(await page.locator('.kpis').innerText(), /\$ 18,000/) // 96000 - 78000
   await page.locator('.filterbar .seg').getByRole('button', { name: 'All' }).click()
 
-  step('summary with FX')
-  await page.getByRole('button', { name: 'Summary' }).click()
+  step('rates bar on the Finance page, and the combined total (now on Home) uses them')
   await page.getByText('1 USD = ₹ 84').waitFor()
-  const sum = await page.locator('.tblw').first().innerText()
-  assert.match(sum, /Total in USD[\s\S]*\$ 49,200/) // Checking edited to 9,200 -> net 49,200
-  assert.match(sum, /Total in INR[\s\S]*₹ 41,32,800/) // 49,200 x 84, Indian digit grouping
+  await page.getByRole('tab', { name: 'Home' }).click()
+  await page.getByTestId('networth').getByText(/\$\s?49,200/).waitFor() // Checking edited to 9,200 -> net 49,200
+  await page.getByRole('tab', { name: 'Finance Dashboard' }).click()
+
+  step('layout: accounts on the left, chart and Performance on the right; no Summary tab; sections fold and the choice is remembered')
+  assert.equal(await page.locator('.subtabs button', { hasText: 'Summary' }).count(), 0)
+  const lbox = await page.locator('.fin-left').boundingBox(), rbox = await page.locator('.fin-right').boundingBox()
+  assert.ok(rbox.x > lbox.x + lbox.width - 2 && lbox.x < 40, `two columns across the whole screen: ${JSON.stringify([lbox, rbox])}`)
+  await page.getByRole('heading', { name: 'Performance' }).or(page.getByText('Performance').first()).waitFor()
+  const assets = page.locator('.ctoggle', { hasText: 'Assets' })
+  assert.equal(await assets.getAttribute('aria-expanded'), 'true')
+  assert.ok(await page.locator('table.t-a').isVisible())
+  await assets.click()
+  assert.equal(await assets.getAttribute('aria-expanded'), 'false'); assert.equal(await page.locator('table.t-a').count(), 0)
+  assert.ok(await page.getByRole('button', { name: '+ Add asset' }).isVisible(), 'the Add button stays')
+  await page.getByRole('tab', { name: 'Home' }).click(); await page.getByRole('tab', { name: 'Finance Dashboard' }).click()
+  assert.equal(await page.locator('.ctoggle', { hasText: 'Assets' }).getAttribute('aria-expanded'), 'false', 'remembered')
+  assert.equal(JSON.parse(await page.evaluate(() => localStorage.getItem('ui.collapsed'))).assets, true)
+  await page.locator('.ctoggle', { hasText: 'Insurance' }).click(); await page.locator('.ctoggle', { hasText: 'Insurance' }).click() // fold and unfold
+  await page.locator('.ctoggle', { hasText: 'Assets' }).click()
+  assert.ok(await page.locator('table.t-a').isVisible())
 } catch (e) {
   await page.screenshot({ path: `${OUT}/failure.png`, fullPage: true })
   console.error('FAILED:', e.message)
@@ -117,7 +134,7 @@ await page.getByRole('button', { name: 'Unlock' }).click()
 await page.getByText('Wrong passphrase or damaged file.').waitFor()
 await page.getByPlaceholder('Passphrase').fill(PASS)
 await page.getByRole('button', { name: 'Unlock' }).click()
-await page.getByText('Summary ·').waitFor()
+await page.getByText('Update date', { exact: true }).waitFor()
 
 step('saved file holds no plaintext, then reopen it after a reload')
 const [dl2] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Download to save' }).click().catch(() => null)])
@@ -130,7 +147,7 @@ const [fc] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole
 await fc.setFiles(`${OUT}/WealthTracker.wvault`)
 await page.getByPlaceholder('Passphrase').fill(PASS)
 await page.getByRole('button', { name: 'Unlock' }).click()
-await page.getByText('Summary ·').waitFor()
+await page.getByText('Update date', { exact: true }).waitFor()
 await page.getByRole('button', { name: /USA/ }).first().click()
 assert.ok(await page.getByText('Brokerage').isVisible())
 

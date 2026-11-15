@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { passphraseStrength } from '../lib/vault.js'
 import { MIX, ownerLabel } from '../lib/format.js'
+import { getCollapsed, setCollapsed } from '../lib/uiprefs.js'
 
 const openModals = [] // Escape (and the Android Back button) close only the top-most dialog
 // Closes the top-most dialog, if any. Returns true when one was closed.
@@ -114,5 +115,25 @@ export function PassphraseForm({ submitLabel, onSubmit, busy, error }) {
         <button className="btn primary" disabled={!!problem || busy}>{busy ? 'Working…' : submitLabel}</button>
       </div>
     </form>
+  )
+}
+
+// A panel whose body can be folded away. The choice is remembered on this device (not in the demo). `defaultOpen` applies until the
+// user chooses; on a phone the default is folded.
+export function Collapsible({ id, title, sub, action, defaultOpen = true, phoneFolded = false, phone = false, children }) {
+  const saved = getCollapsed(id)
+  const [open, setOpen] = useState(saved === undefined ? !(phoneFolded && phone) && defaultOpen : !saved)
+  const toggle = () => { setOpen(!open); setCollapsed(id, open) }
+  return (
+    <div className={`panel collap${open ? ' open' : ''}`}>
+      <div className="p-head">
+        <button className="ctoggle" onClick={toggle} aria-expanded={open} aria-controls={`sec-${id}`}>
+          <span className="chev" aria-hidden="true">{open ? '▾' : '▸'}</span>
+          <span className="title">{title} {sub != null && <span className="sub">{sub}</span>}</span>
+        </button>
+        {action}
+      </div>
+      {open && <div id={`sec-${id}`}>{children}</div>}
+    </div>
   )
 }

@@ -18,7 +18,7 @@ import { APP_URL } from './lib/demo.js'
 // Add future sections here: each entry becomes a top-level tab.
 const TABS = [
   { id: 'home', label: 'Home', wide: true, render: () => <Home /> },
-  { id: 'finance', label: 'Finance Dashboard', render: () => <Finance /> },
+  { id: 'finance', label: 'Finance Dashboard', wide: true, render: () => <Finance /> },
   { id: 'property', label: '🏠 Property', render: () => <Property /> },
   { id: 'portfolio', label: '📈 Portfolio', render: () => <Portfolio /> },
   { id: 'retirement', label: '🏖️ Retirement', render: () => <Retirement /> },
