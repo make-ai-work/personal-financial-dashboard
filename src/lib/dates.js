@@ -1,4 +1,4 @@
-// Date helpers shared by Pets and Property. Dates are 'YYYY-MM-DD' strings; `today` is always passed in.
+// Date helpers used by Property. Dates are 'YYYY-MM-DD' strings; `today` is always passed in.
 import { fmtDate } from './format.js'
 
 // UTC based, so daylight saving never shifts a day

@@ -19,8 +19,6 @@ export const emptyData = () => ({
   policies: [],
   balances: [],
   rates: [],
-  pets: [], // legacy: data from the retired Pets tab is kept, not shown (code lives on branch archive/pets-tab)
-  petRecords: [],
   properties: [],
   propertyValues: [],
   loans: [],
@@ -37,8 +35,7 @@ export function normalizeData(d) {
   // Property keeps its own list; a vault from before that existed starts from the Finance list.
   settings.propertyCountries = sanitizeCountries(d?.settings?.propertyCountries || settings.countries)
   settings.portfolioCountries = sanitizeCountries(d?.settings?.portfolioCountries || settings.countries)
-  // The reminder window used to be a Pets setting; carry a saved value over.
-  settings.dueSoonDays = d?.settings?.dueSoonDays ?? d?.settings?.petSoonDays ?? base.settings.dueSoonDays
+  settings.dueSoonDays = d?.settings?.dueSoonDays ?? base.settings.dueSoonDays
   return {
     version: 1,
     settings,
@@ -46,8 +43,6 @@ export function normalizeData(d) {
     policies: d?.policies || [],
     balances: d?.balances || [],
     rates: d?.rates || [],
-    pets: d?.pets || [],
-    petRecords: d?.petRecords || [],
     properties: d?.properties || [],
     propertyValues: d?.propertyValues || [],
     loans: d?.loans || [],
