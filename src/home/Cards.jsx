@@ -120,15 +120,19 @@ function NetWorthBody({ data, owner }) {
   const multi = nw.per.length > 1
   return (
     <>
-      <div className="nwbig" data-testid="networth">{nw.ready ? show(nw.total.net) : fx.loading ? 'Loading rates…' : '—'}</div>
-      <div className="sub">in {cur}{multi ? ' · converted at today’s rates' : ''}{fx.source === 'saved' ? ' (saved rates)' : ''}{!nw.ready && !fx.loading ? ' · exchange rates needed: open Finance Dashboard and set them' : ''}</div>
-      <div className="nwrows">
-        {nw.per.map((p) => (
-          <div className="nwr" key={p.code}>
-            <span>{COUNTRIES[p.code].flag} {COUNTRIES[p.code].name}</span>
-            <span>{moneyCurrency(p.currency, p.net)}{multi && p.currency !== cur && !Number.isNaN(p.inBase.net) ? <small> ≈ {show(p.inBase.net)}</small> : null}</span>
-          </div>
-        ))}
+      <div className="nwtop">
+        <div className="nwmain">
+          <div className="nwbig" data-testid="networth">{nw.ready ? show(nw.total.net) : fx.loading ? 'Loading rates…' : '—'}</div>
+          <div className="sub">in {cur}{multi ? ' · converted at today’s rates' : ''}{fx.source === 'saved' ? ' (saved rates)' : ''}{!nw.ready && !fx.loading ? ' · exchange rates needed: open Finance Dashboard and set them' : ''}</div>
+        </div>
+        <div className="nwrows" aria-label="By country">
+          {nw.per.map((p) => (
+            <div className="nwr" key={p.code}>
+              <span>{COUNTRIES[p.code].flag} {COUNTRIES[p.code].name}</span>
+              <span>{moneyCurrency(p.currency, p.net)}{multi && p.currency !== cur && !Number.isNaN(p.inBase.net) ? <small> ≈ {show(p.inBase.net)}</small> : null}</span>
+            </div>
+          ))}
+        </div>
       </div>
       <div className="nwtiles">
         <div><small>Assets</small><b className="pos">{show(nw.total.assets)}</b></div>
