@@ -25,7 +25,7 @@ Stop it with `Ctrl+C`. Run `npm start` again whenever you want to use it. If por
 
 ```bash
 npm test             # unit tests (encryption, data model, retirement engine, demo data, ...)
-npm run build && npm run test:e2e && npm run test:e2e:countries && npm run test:e2e:property && npm run test:e2e:portfolio && npm run test:e2e:retirement && npm run test:e2e:auth && npm run test:e2e:home
+npm run build && npm run test:e2e && npm run test:e2e:countries && npm run test:e2e:property && npm run test:e2e:portfolio && npm run test:e2e:retirement && npm run test:e2e:auth && npm run test:e2e:home && npm run test:e2e:android
 npm run build:demo && npm run test:e2e:demo      # the demo build
                      # end-to-end browser tests need Playwright + Chromium
 ```
@@ -35,8 +35,9 @@ npm run build:demo && npm run test:e2e:demo      # the demo build
 Open **⚙ Home settings** on the Home page. Everything there is kept in this browser (not in the encrypted file), so Home works before
 you unlock your data. It persists between visits on this device but is **not encrypted**.
 
-- **Weather** uses [Open-Meteo](https://open-meteo.com) (free, no key). Type a city, optionally with a region ("Austin, Texas"); only that
-  name is sent. Your location is never read automatically.
+- **Weather and air quality** use [Open-Meteo](https://open-meteo.com) (free, no key) for the city where each country's main stock
+  exchange is (New York, Mumbai, London, Sydney, Zurich). The coordinates are built in, so only those are sent. The temperature unit is
+  automatic (°F in the US, °C elsewhere) unless you choose one. AQI is the US air quality index and is left out when there is no data.
 - **Market ticker** uses [FCS API](https://fcsapi.com). Paste your key and press **Test**. It shows S&P 500, Nasdaq, Sensex and Nifty 50,
   one main index for each other country in Finance → Settings (FTSE 100, ASX 200, SMI), gold (XAU/USD) and Bitcoin (BTC/USD).
   - **Plans:** FCS's free plan (500 calls a month) covers **gold and Bitcoin only**. **Index prices need an FCS stock plan** (from about
@@ -46,6 +47,43 @@ you unlock your data. It persists between visits on this device but is **not enc
 - **Market open/closed** is calculated from each exchange's regular hours and time zone. **Public holidays are not included**, so a
   holiday can show as open.
 - The FCS symbols are in one file, `src/lib/ticker.js`.
+
+## Android app
+
+The Android app is this same web app packaged with [Capacitor](https://capacitorjs.com) (one codebase). **First version: your data is
+kept in the app's own private storage**; Google Drive comes later. The project is in `android/`.
+
+**What you need:** [Android Studio](https://developer.android.com/studio) (it brings its own JDK and the Android SDK) and Node.js
+**22 or newer** (Capacitor 8's tooling; the web app itself only needs 18).
+
+```bash
+npm install
+npm run android:sync     # builds the web app and copies it into android/
+npm run android:open     # opens the project in Android Studio; press Run to start it on an emulator or a plugged-in phone
+```
+
+After changing the web app, run `npm run android:sync` again before Run.
+
+- **What is different in the app:** it opens straight to the app (no Google setup or sign-in, since nothing leaves the phone), the first
+  screen is "Create your vault", and Finance → Settings → *Your data* has **Export backup…** (the phone's share sheet),
+  *Last backup* (a reminder), **Restore…** (asks first, and only a valid backup ever replaces the vault) and **Delete…** (you must
+  type DELETE). The Back button closes a dialog, then goes to Home, then leaves the app. The app locks itself when you come back after
+  longer than your auto-lock time. Home's weather and prices need internet.
+- **Where the data is:** one encrypted vault file in the app's private folder (not visible to other apps or the file manager), saved safely
+  (a complete temporary copy is written first, so a crash mid-save cannot lose it). **Uninstalling the app or clearing its data deletes
+  it**, so use *Export backup* now and then; backups are encrypted. Android's automatic cloud backup is switched off for the app.
+- **App id:** `io.github.saurskr.dashboard` (in `capacitor.config.json` and `android/app/build.gradle`). Change both before publishing if
+  you want a different one: Google Play never lets it change after release.
+- **Icon and splash screen:** a simple placeholder drawn in the app's colours. Replace `assets/icon-only.png`, `icon-foreground.png` and
+  `icon-background.png` (1024×1024) and run `npm run android:assets`.
+- **Release to Google Play:** in Android Studio, *Build → Generate Signed App Bundle*. Create a signing key once and **keep it safe and
+  out of git**; losing it means you cannot update the app.
+- **Tests:** the app behaviour (first launch, create, relaunch and unlock, backup, restore, delete, Back button, lock after time away) is
+  covered by `npm run test:e2e:android`, which runs the real screens against an in-memory stand-in for the phone's folder, share sheet and
+  Back button, and by unit tests for the storage.
+- **Status:** the project and the web side are tested, but the app has **not yet been compiled or run on a device or emulator** by this
+  repository's authors, so expect a first round of fixes when you press Run. Things only a real phone can show: the edge-to-edge layout
+  around the notch and gesture bar, the share sheet, and the file chooser for restoring.
 
 ## Demo site (GitHub Pages)
 
@@ -58,10 +96,11 @@ sign-in switched off and a **Demo Mode (skip sign in)** button; the app is fully
   `main` never publishes. To refresh the showcase: merge `main` into `demo` (one way only).
 - To change the sample data, edit `demo/build-demo-data.mjs` and run `node demo/build-demo-data.mjs` (it uses the app's own
   functions, so the file always matches the data model). Dates are moved forward each time the demo opens so it never looks stale.
-- **Demo ticker prices** come from a snapshot written at build time, so your FCS key never reaches the page. Add your key as a repository
-  secret named `FCS_API_KEY` (**Settings → Secrets and variables → Actions → New repository secret**; never commit it or paste it into a
-  chat). The workflow also runs every 6 hours to refresh the snapshot. Without the secret the demo says "Prices unavailable". The
-  snapshot needs an FCS stock plan for index prices; on a free key only gold and Bitcoin appear.
+- **Demo ticker prices** come straight from FCS API. The page asks FCS for a 24-hour token using only the **public** key in `.env.demo`
+  (`VITE_FCS_PUBLIC_KEY`; it is public by design and only works from websites you list). One-time setup in the FCS dashboard:
+  **Security → Allowed Domains (Public Key)**: add `saurskr.github.io` (and `localhost` to try it locally) and set **Token Expiry** to
+  86400. No secret key is used anywhere. Each visit costs about four FCS calls (token + one per price group), and the free plan has 500 a
+  month, so a busy demo can run out (the ticker then says so). Index prices need an FCS stock plan; on a free key only gold and Bitcoin appear.
 - One-time setup: repository **Settings → Pages → Build and deployment → Source: GitHub Actions**. The site is then at
   `https://<user>.github.io/<repo>/`. Assets use relative paths (`base: './'`), so any build works at a sub-path or any static host.
 - `.github/workflows/ci.yml` runs the tests and both builds on every pull request and push to `main`.
@@ -97,9 +136,10 @@ A picture version of this, which also ships with the site, is in
 
 ## Tabs
 
-- **Home** – the landing page. A rolling **market ticker**, a **clock for each country** you selected in Finance → Settings (each in
-  its capital's time zone; a country with several zones uses its capital's), the **weather** for a city you choose, and whether each
-  country's main **stock market is open or closed**. See "Home settings" below.
+- **Home** – the landing page. A rolling **market ticker** (always visible; dashes until prices load), a **Total net worth** card on the
+  left (choose All, Mine, Joint, Spouse or Parent; everything converted into your first country's currency; unlock your data to see it),
+  and on the right one compact block per country you selected in Finance → Settings: the **city of its main stock exchange**, the **time**
+  (AM/PM with a day or night icon), **market open/closed** (or when it opens) and the **weather**. See "Home settings" below.
 - **Retirement** – *Plan*: your situation, savings picked from Finance asset accounts (converted to the plan
   currency, equity share taken from the Portfolio mix), income sources with start and end ages, market conditions with a
   staleness warning, nest-egg needed, shortfall and extra saving, and a yield sensitivity table. *Monte Carlo*: 1,000 to 10,000
@@ -167,5 +207,6 @@ Retirement shows the key results and two charts with the detailed assumptions fo
 - [x] Step 6: demo mode (sample data, sign-in page with Demo Mode) published from the `demo` branch
 - [x] Step 7: run on your own computer with `npm start`
 - [x] Step 8: Home rebuild: clocks for each country, weather, markets open/closed, FCS market ticker
-- [ ] Next: Android app (Capacitor)
+- [x] Step 9: Android app, first version (Capacitor; data in the app's private storage; backup/restore; Back button): tested here, **needs a first run on a device**
+- [ ] Next: run it in Android Studio and fix what a device shows; then Google Drive storage
 - [ ] Then: real Google sign-in, two-step verification, Google Drive storage (web and Android)

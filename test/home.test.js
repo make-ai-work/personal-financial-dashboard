@@ -277,3 +277,97 @@ test('weather: typed coordinates skip the city lookup', async () => {
   const w = await loadWeather('18.52, 73.86', 'C', svc)
   assert.equal(urls.length, 1); assert.ok(urls[0].includes('latitude=18.52')); assert.equal(w.place, '18.52, 73.86')
 })
+
+// ---- simplified Home ----
+import { cityClock, EXCHANGE_CITIES } from '../src/lib/exchangecity.js'
+import { netWorth } from '../src/lib/networth.js'
+import { aqiLabel, airQualityUrl, parseAirQuality, loadPlaceWeather } from '../src/lib/weather.js'
+import { OWNERS, ownerLabel } from '../src/lib/format.js'
+
+test('every country has an exchange city with coordinates; the clock reads in AM/PM with a day or night flag', () => {
+  for (const c of ['us', 'in', 'uk', 'au', 'ch']) assert.ok(EXCHANGE_CITIES[c].lat && EXCHANGE_CITIES[c].lon && EXCHANGE_CITIES[c].tz, c)
+  assert.deepEqual(EXCHANGE_CITIES.us.city, 'New York'); assert.equal(EXCHANGE_CITIES.in.city, 'Mumbai')
+  const t = new Date('2026-11-16T14:42:00Z') // 9:42 AM New York, 8:12 PM Mumbai, 1:42 AM Tue Sydney
+  assert.deepEqual(cityClock('us', t), { code: 'us', city: 'New York', time: '9:42 AM', day: 'Mon', isDay: true })
+  assert.deepEqual([cityClock('in', t).time, cityClock('in', t).isDay], ['8:12 PM', false])
+  assert.deepEqual([cityClock('au', t).time, cityClock('au', t).day, cityClock('au', t).isDay], ['1:42 AM', 'Tue', false])
+  assert.equal(cityClock('us', new Date('2026-11-16T22:59:00Z')).isDay, true) // 5:59 PM
+  assert.equal(cityClock('us', new Date('2026-11-16T23:00:00Z')).isDay, false) // 6:00 PM
+})
+
+test('Spouse is an owner, labelled Spouse, between Joint and the parent', () => {
+  assert.deepEqual(OWNERS, ['mine', 'joint', 'spouse', 'parent'])
+  assert.equal(ownerLabel('spouse'), 'Spouse'); assert.equal(ownerLabel('parent', 'Mother'), 'Mother')
+})
+
+test('net worth: converts each country into the first country’s currency and filters by owner', () => {
+  const data = { settings: { countries: ['us', 'in'] }, accounts: [
+    { country: 'us', type: 'asset', owner: 'mine', balance: 1000 }, { country: 'us', type: 'asset', owner: 'spouse', balance: 500 },
+    { country: 'us', type: 'liability', owner: 'mine', balance: 200 }, { country: 'in', type: 'asset', owner: 'mine', balance: 84000 },
+    { country: 'in', type: 'asset', owner: 'parent', balance: 8400 },
+  ] }
+  const fx = { base: 'USD', rates: { INR: 84 } }
+  const all = netWorth(data, 'all', fx)
+  assert.equal(all.base, 'USD'); assert.equal(all.ready, true)
+  assert.equal(all.total.assets, 1000 + 500 + 1000 + 100); assert.equal(all.total.liabilities, 200); assert.equal(all.total.net, 2400)
+  assert.equal(netWorth(data, 'mine', fx).total.net, 1000 - 200 + 1000)
+  assert.equal(netWorth(data, 'spouse', fx).total.net, 500)
+  assert.equal(netWorth(data, 'parent', fx).per[1].net, 8400)
+  assert.equal(netWorth(data, 'joint', fx).total.net, 0)
+})
+
+test('net worth: without an exchange rate it is not ready instead of showing a wrong number', () => {
+  const data = { settings: { countries: ['us', 'in'] }, accounts: [{ country: 'in', type: 'asset', owner: 'mine', balance: 840 }] }
+  assert.equal(netWorth(data, 'all', { base: 'USD', rates: {} }).ready, false)
+  const one = { settings: { countries: ['uk'] }, accounts: [{ country: 'uk', type: 'asset', owner: 'mine', balance: 10 }] }
+  assert.deepEqual([netWorth(one, 'all', { base: 'GBP', rates: {} }).ready, netWorth(one, 'all', { base: 'GBP', rates: {} }).total.net], [true, 10])
+})
+
+test('air quality: US AQI bands, URL and parsing; missing data is null', () => {
+  assert.deepEqual([0, 50, 51, 100, 101, 150, 151, 200, 201, 300, 301].map(aqiLabel), ['Good', 'Good', 'Moderate', 'Moderate', 'Unhealthy for some', 'Unhealthy for some', 'Unhealthy', 'Unhealthy', 'Very unhealthy', 'Very unhealthy', 'Hazardous'])
+  const u = new URL(airQualityUrl({ lat: 19.07, lon: 72.88 }))
+  assert.equal(u.host, 'air-quality-api.open-meteo.com'); assert.equal(u.searchParams.get('current'), 'us_aqi'); assert.equal(u.searchParams.get('latitude'), '19.07')
+  assert.deepEqual(parseAirQuality({ current: { us_aqi: 142.4 } }), { aqi: 142, aqiLabel: 'Unhealthy for some' })
+  assert.equal(parseAirQuality({ current: { us_aqi: null } }), null); assert.equal(parseAirQuality({}), null)
+})
+
+test('place weather: uses the built-in coordinates (no city lookup) and adds the AQI; a failed AQI never breaks the weather', async () => {
+  const urls = []
+  const ok = (json) => ({ ok: true, json: async () => json })
+  const forecast = { current: { temperature_2m: 27.4, relative_humidity_2m: 71, weather_code: 1, wind_speed_10m: 11 }, daily: { time: ['2026-11-16', '2026-11-17'], weather_code: [1, 2], temperature_2m_max: [31, 30], temperature_2m_min: [22, 21] } }
+  const make = (airOk) => async (url) => { urls.push(url); if (url.includes('air-quality')) return airOk ? ok({ current: { us_aqi: 142 } }) : { ok: false, status: 500, json: async () => ({}) }; return ok(forecast) }
+  const w = await loadPlaceWeather(EXCHANGE_CITIES.in, 'C', { fetchImpl: make(true) })
+  assert.deepEqual([w.place, w.temp, w.high, w.low, w.aqi, w.aqiLabel], ['Mumbai', 27, 31, 22, 142, 'Unhealthy for some'])
+  assert.ok(urls.every((u) => !u.includes('geocoding')) && urls.length === 2)
+  const noAir = await loadPlaceWeather(EXCHANGE_CITIES.in, 'C', { fetchImpl: make(false), delays: [] })
+  assert.equal(noAir.temp, 27); assert.equal(noAir.aqi, null)
+})
+
+// ---- demo: token from the public key ----
+import { buildRequests as build2, fetchToken, demoAuth, forgetToken, tokenUrl, explainError as explain2 } from '../src/lib/ticker.js'
+
+test('token: asked with only the public key; requests then carry jwt_token and no access_key', () => {
+  assert.equal(new URL(tokenUrl('PUB')).pathname, '/forex/jwt_token'); assert.equal(new URL(tokenUrl('PUB')).searchParams.get('public_key'), 'PUB')
+  const urls = build2(tickerItems(['us']), { token: 'TKN' }).map((r) => new URL(r.url))
+  assert.ok(urls.length === 3 && urls.every((u) => u.searchParams.get('jwt_token') === 'TKN' && !u.searchParams.has('access_key')))
+  assert.equal(new URL(build2(tickerItems(['us']), 'KEY')[0].url).searchParams.get('access_key'), 'KEY')
+})
+
+test('token: a good answer is read, a refused domain and a network failure are explained, and the token is reused', async () => {
+  const good = (n) => async () => ({ json: async () => ({ status: true, code: 200, response: { jwt_token: 'T' + n, expiry: Math.floor(Date.now() / 1000) + 86400 } }) })
+  const t = await fetchToken('PUB', { fetchImpl: good(1) })
+  assert.equal(t.token, 'T1'); assert.ok(t.expiresAt > Date.now() + 80_000_000)
+  await assert.rejects(fetchToken('PUB', { fetchImpl: async () => ({ json: async () => ({ status: false, code: 101, msg: 'Add Allowed domains for your key, Public key without _token' }) }) }), /allowed-domain list/)
+  await assert.rejects(fetchToken('PUB', { fetchImpl: async () => { throw new Error('x') } }), /Could not reach/)
+  forgetToken()
+  let calls = 0
+  const counting = async () => { calls++; return good(calls)() }
+  assert.equal((await demoAuth('PUB', { fetchImpl: counting })).token, 'T1')
+  assert.equal((await demoAuth('PUB', { fetchImpl: counting })).token, 'T1'); assert.equal(calls, 1)
+  forgetToken(); assert.equal((await demoAuth('PUB', { fetchImpl: counting })).token, 'T2')
+  forgetToken()
+})
+
+test('a free plan refusing index prices (code 403) is explained like code 105', () => {
+  assert.match(explain2(403, 'You are trying to access stock/index data without an active subscription'), /does not include index prices/)
+})

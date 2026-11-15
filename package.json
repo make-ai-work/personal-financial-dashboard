@@ -18,14 +18,26 @@
     "dev:demo": "vite --mode demo",
     "build:demo": "vite build --mode demo --outDir dist-demo",
     "test:e2e:demo": "node test/e2e/demo.e2e.mjs",
-    "test:e2e:home": "node test/e2e/home.e2e.mjs"
+    "test:e2e:home": "node test/e2e/home.e2e.mjs",
+    "android:sync": "vite build && cap sync android",
+    "android:open": "cap open android",
+    "android:run": "vite build && cap sync android && cap run android",
+    "test:e2e:android": "node test/e2e/android.e2e.mjs",
+    "android:assets": "capacitor-assets generate --android --iconBackgroundColor '#0f4c4c' --iconBackgroundColorDark '#0f4c4c' --splashBackgroundColor '#0f4c4c' --splashBackgroundColorDark '#0f4c4c'"
   },
   "dependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/share": "^8.0.3",
     "exceljs": "^4.4.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@capacitor/assets": "^4.0.0",
+    "@capacitor/cli": "^8.6.2",
     "@vitejs/plugin-react": "^5.2.0",
     "vite": "^7.3.7"
   },

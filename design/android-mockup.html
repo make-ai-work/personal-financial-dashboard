@@ -1,0 +1,133 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Android app mockup</title>
+<style>
+/* PMO Hub theme tokens. Light = "Warm Paper", dark = "Midnight".
+   Change the look of the whole app here; styles.css only uses these names. */
+:root {
+  color-scheme: light;
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --r: 12px;            /* panels, cards */
+  --r-sm: 8px;          /* buttons, inputs */
+
+  --bg: #f7f4ee;
+  --surface: #fffdf9;
+  --surface-2: #f1ece2;
+  --text: #2b2722;
+  --muted: #7a7266;
+  --line: #e6dfd2;
+  --accent: #0f6e6e;
+  --accent-text: #ffffff;
+  --head: #0f4c4c;      /* top bar */
+  --head-text: #ffffff;
+  --shadow: 0 8px 30px rgba(60, 40, 10, .18);
+
+  /* status */
+  --red: #c8402f; --amber: #d98e04; --green: #3f8f55;
+  --blue: #4a7fb0; --grey: #a39a8b; --done: #7b7466;
+  --on-status: #ffffff; /* glyph colour drawn on top of a status colour */
+
+  /* note labels (the rest reuse status colours) */
+  --purple: #8b6cf0; --pink: #c4467d;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --r: 6px; --r-sm: 5px;
+    --bg: #0f1420; --surface: #181f2e; --surface-2: #212a3d;
+    --text: #e7ebf3; --muted: #9aa5ba; --line: #2a3347;
+    --accent: #6ea8ff; --accent-text: #0b1220;
+    --head: #0a0e17; --head-text: #e7ebf3;
+    --shadow: 0 8px 30px rgba(0, 0, 0, .6);
+    --red: #ff6b6b; --amber: #ffc233; --green: #3ddc84;
+    --blue: #5cb3ff; --grey: #74809a; --done: #8d9ab3;
+    --on-status: #0b1220;
+    --purple: #a58bff; --pink: #f07aa8;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --r: 6px; --r-sm: 5px;
+  --bg: #0f1420; --surface: #181f2e; --surface-2: #212a3d;
+  --text: #e7ebf3; --muted: #9aa5ba; --line: #2a3347;
+  --accent: #6ea8ff; --accent-text: #0b1220;
+  --head: #0a0e17; --head-text: #e7ebf3;
+  --shadow: 0 8px 30px rgba(0, 0, 0, .6);
+  --red: #ff6b6b; --amber: #ffc233; --green: #3ddc84;
+  --blue: #5cb3ff; --grey: #74809a; --done: #8d9ab3;
+  --on-status: #0b1220;
+  --purple: #a58bff; --pink: #f07aa8;
+}
+
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font)}
+button,input{font:inherit}button{cursor:pointer}
+.mock{background:var(--surface-2);border-bottom:1px solid var(--line);padding:8px 20px;font-size:.82rem;color:var(--muted);display:flex;gap:10px;align-items:center;flex-wrap:wrap}.mock button{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:3px 10px;color:var(--text)}
+.wrap{max-width:1250px;margin:0 auto;padding:18px 16px 50px}h1{font-size:1.25rem;margin:4px 0 2px}.lead{color:var(--muted);margin:0 0 18px;font-size:.92rem}
+.phones{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+.phone{width:320px;border:9px solid #1d1d1f;border-radius:34px;background:var(--bg);overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.25);flex:none}
+.cap{width:320px;font-size:.8rem;color:var(--muted);margin:8px 0 0;text-align:center;flex:none}.col{display:flex;flex-direction:column;align-items:center}
+.sb{background:var(--head);color:var(--head-text);font-size:.7rem;padding:5px 14px;display:flex;justify-content:space-between}
+.top{background:var(--head);color:var(--head-text);padding:8px 14px 10px;display:flex;justify-content:space-between;align-items:center}.top b{font-size:.98rem}
+.tabs{background:var(--surface);border-bottom:1px solid var(--line);display:flex;overflow:hidden;font-size:.78rem}.tabs span{padding:10px 11px;color:var(--muted);white-space:nowrap}.tabs .on{color:var(--accent);border-bottom:3px solid var(--accent);font-weight:600}
+.body{padding:12px;min-height:520px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:12px}.ph{padding:11px 14px;border-bottom:1px solid var(--line);font-weight:600;font-size:.92rem}.pad{padding:12px 14px}
+h2{font-size:1.1rem;margin:0 0 4px;text-align:center}.note{color:var(--muted);font-size:.8rem;margin:0 0 10px;text-align:center}
+.choice{display:grid;gap:8px;margin:12px 0 4px}.choice button{background:var(--surface-2);border:1px solid var(--line);color:var(--text);border-radius:var(--r-sm);padding:10px 12px;text-align:left;font-size:.86rem}.choice button small{display:block;color:var(--muted);margin-top:2px;font-size:.74rem}
+.choice button.p{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}.choice button.p small{color:inherit;opacity:.85}.choice button[disabled]{opacity:.5}
+.field input{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:9px;text-align:center}
+.btn{background:var(--accent);color:var(--accent-text);border:0;border-radius:var(--r-sm);padding:9px;width:100%;margin-top:10px}
+.link{background:none;border:0;color:var(--accent);font-size:.8rem;padding:6px 0;display:block;margin:0 auto}.link.red{color:var(--red)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:.84rem}.row small{display:block;color:var(--muted);font-size:.72rem}.row:last-child{border:0}
+.b2{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:4px 10px;font-size:.78rem;color:var(--text)}.b2.red{color:var(--red)}
+.warn{background:var(--surface-2);border-left:3px solid var(--amber);padding:9px 11px;border-radius:var(--r-sm);font-size:.78rem;margin:8px 0}
+.dim{position:relative}.dim:after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.45)}
+.dlg{position:absolute;left:14px;right:14px;top:150px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;z-index:2;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.nav{background:#111;color:#bbb;display:flex;justify-content:space-around;padding:8px 0;font-size:.9rem}
+.list{max-width:900px;margin-top:26px}.list h2{text-align:left;font-size:1.05rem}.list li{margin:7px 0;font-size:.9rem}
+.tag{font-size:.68rem;background:var(--amber);color:var(--on-status);border-radius:99px;padding:1px 8px;font-weight:700;margin-left:6px;vertical-align:middle}
+</style></head><body>
+<div class="mock"><b>MOCKUP</b> The Android app, first version: data kept in the app's private storage. Fake data. <button onclick="var r=document.documentElement;r.dataset.theme=(r.dataset.theme==='dark'?'light':'dark')">Light / dark</button></div>
+<div class="wrap"><h1>Android app screens</h1><p class="lead">Same app as the web version. What changes is where the data lives, and a few phone touches.</p>
+<div class="phones">
+
+<div class="col"><div class="phone"><div class="sb"><span>9:41</span><span>▲ ◼ 87%</span></div><div class="top"><b>My Dashboard</b><span style="font-size:.9rem">🌙</span></div>
+ <div class="body"><div class="panel"><div class="pad"><h2>Create your vault</h2><p class="note">Your data is encrypted with your passphrase and stored <b>inside this app only</b>. No sign-in needed.</p>
+ <div class="choice"><button class="p">Create a new encrypted vault<small>You set the passphrase next.</small></button><button>Restore from a backup file<small>A .wvault file you exported before.</small></button><button>Import from an Excel file<small>For a workbook exported from this app.</small></button><button disabled>Save to Google Drive<small>Coming in a later version.</small></button></div></div></div></div>
+ <div class="nav"><span>◀</span><span>●</span><span>■</span></div></div><p class="cap">1 · First launch</p></div>
+
+<div class="col"><div class="phone"><div class="sb"><span>9:41</span><span>▲ ◼ 87%</span></div><div class="top"><b>My Dashboard</b><span style="font-size:.9rem">🌙</span></div>
+ <div class="body"><div class="panel"><div class="pad"><div style="text-align:center;font-size:2rem">🔒</div><h2>Your vault</h2><p class="note">Enter your passphrase to unlock.</p>
+ <div class="field"><input type="password" value="••••••••••••" aria-label="Passphrase"></div><button class="btn">Unlock</button>
+ <p class="note" style="margin-top:10px">The passphrase is kept only while unlocked. The app locks itself after idle time.</p>
+ <button class="link">Restore from a backup…</button><button class="link red">Delete the vault in this app…</button></div></div></div>
+ <div class="nav"><span>◀</span><span>●</span><span>■</span></div></div><p class="cap">2 · Every launch after that</p></div>
+
+<div class="col"><div class="phone"><div class="sb"><span>9:41</span><span>▲ ◼ 87%</span></div><div class="top"><b>My Dashboard</b><span style="font-size:.9rem">🌙</span></div>
+ <div class="tabs"><span>Home</span><span class="on">Finance</span><span>Property</span><span>Portfolio</span></div>
+ <div class="body"><div class="panel"><div class="ph">🔒 Your data</div><div class="pad">
+  <div class="row"><span>Stored in<small>Private to this app</small></span><b style="font-size:.8rem">This app</b></div>
+  <div class="row"><span>Back up<small>Opens the share sheet: Files, Drive, email…</small></span><button class="b2">Export…</button></div>
+  <div class="row"><span>Last backup<small>A reminder to back up now and then</small></span><span style="font-size:.78rem;color:var(--amber)">never</span></div>
+  <div class="row"><span>Restore<small>Replaces the vault in this app</small></span><button class="b2">Restore…</button></div>
+  <div class="row"><span>Passphrase</span><button class="b2">Change</button></div>
+  <div class="row"><span>Auto-lock after</span><button class="b2">10 min ▾</button></div>
+  <div class="row"><span>Delete the vault<small>Cannot be undone</small></span><button class="b2 red">Delete…</button></div>
+  <div class="warn"><b>Uninstalling the app, or clearing its data, deletes your vault.</b> Export a backup now and then. The backup is encrypted, so it is safe to keep in Drive.</div>
+ </div></div></div><div class="nav"><span>◀</span><span>●</span><span>■</span></div></div><p class="cap">3 · Finance › Settings › Your data</p></div>
+
+<div class="col"><div class="phone dim" style="position:relative"><div class="sb"><span>9:41</span><span>▲ ◼ 87%</span></div><div class="top"><b>My Dashboard</b><span></span></div>
+ <div class="body"></div>
+ <div class="dlg" style="top:130px"><b>Delete the vault in this app?</b><p class="note" style="text-align:left;margin:8px 0">All accounts, history, portfolios, properties and retirement plans stored here will be erased. <b>This cannot be undone.</b> Export a backup first if you might want it.</p>
+  <div class="field"><input value="" placeholder="Type DELETE to confirm"></div>
+  <div style="display:flex;gap:8px;margin-top:10px"><button class="b2" style="flex:1">Cancel</button><button class="b2 red" style="flex:1;opacity:.5">Delete</button></div></div>
+ <div class="nav" style="position:relative;z-index:3"><span>◀</span><span>●</span><span>■</span></div></div><p class="cap">4 · Delete asks you to type DELETE</p></div>
+</div>
+
+<div class="list"><h2>What is different in the app <span class="tag">v1</span></h2><ul>
+<li><b>No Google sign-in or setup screens.</b> There is nothing to sign in to when data stays on the phone, so the app opens straight to the vault. The Account button is hidden. Google Drive comes in a later version.</li>
+<li><b>Storage is private to the app.</b> The vault is the same encrypted file as on the web, kept where other apps and the file manager cannot see it. Android's automatic cloud backup is switched off for it, so there is no hidden copy.</li>
+<li><b>Safe saving.</b> Each save writes a complete temporary copy first, so a crash or a flat battery mid-save cannot lose the vault.</li>
+<li><b>Backup and restore</b> use the phone's share sheet and a file picker. A restore asks before it replaces anything.</li>
+<li><b>The Back button</b> closes a dialog first, then goes to Home, and leaves the app from Home.</li>
+<li><b>Fits the phone:</b> room for the notch and the gesture bar, the same simplified phone layout as the web version.</li>
+<li><b>Same everything else:</b> Home (clocks, weather, markets, ticker), Finance, Property, Portfolio and Retirement. The ticker and weather need internet.</li>
+</ul></div></div></body></html>

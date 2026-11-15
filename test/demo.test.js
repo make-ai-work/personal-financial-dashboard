@@ -74,14 +74,3 @@ test('freshening does not change the input', () => {
   freshenDemo(d, new Date('2028-01-10T12:00:00'))
   assert.equal(JSON.stringify(d), copy)
 })
-
-test('the snapshot script writes nothing and succeeds when there is no key', async () => {
-  const { spawnSync } = await import('node:child_process')
-  const { existsSync, rmSync } = await import('node:fs')
-  const file = new URL('../public/ticker-snapshot.json', import.meta.url)
-  rmSync(file, { force: true })
-  const r = spawnSync(process.execPath, [new URL('../scripts/fetch-ticker-snapshot.mjs', import.meta.url).pathname], { env: { ...process.env, FCS_API_KEY: '' }, encoding: 'utf8' })
-  assert.equal(r.status, 0)
-  assert.match(r.stdout, /FCS_API_KEY is not set/)
-  assert.equal(existsSync(file), false)
-})

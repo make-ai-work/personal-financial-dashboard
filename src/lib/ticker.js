@@ -32,11 +32,14 @@ export function tickerItems(countries) {
 
 const PATH = { index: 'stock/latest', forex: 'forex/latest', crypto: 'crypto/latest' }
 // One request per group (symbols are sent together), so a refresh costs at most 3 calls.
+// `key` is an FCS access key (string) or { token } for a short-lived token (the public demo site).
 export function buildRequests(items, key) {
   const groups = {}
   for (const it of items) (groups[it.group] ||= []).push(it.symbol)
   return Object.entries(groups).map(([group, symbols]) => {
-    const q = new URLSearchParams({ symbol: symbols.join(','), access_key: key })
+    const q = new URLSearchParams({ symbol: symbols.join(',') })
+    if (typeof key === 'object' && key) q.set('jwt_token', key.token)
+    else q.set('access_key', key)
     if (group === 'index') q.set('type', 'index')
     return { group, symbols, url: `${FCS_BASE}/${PATH[group]}?${q}` }
   })
@@ -47,12 +50,31 @@ export function explainError(code, msg = '') {
   switch (Number(code)) {
     case 101: case 104: return 'The FCS API key is not valid. Check it in Home settings.'
     case 102: case 103: return 'The FCS account is not active.'
-    case 105: return 'This FCS plan does not include index prices. They need an FCS stock plan; gold and Bitcoin work on the free plan.'
+    case 403: case 105: return 'This FCS plan does not include index prices. They need an FCS stock plan; gold and Bitcoin work on the free plan.'
     case 211: return 'The monthly FCS request limit is used up.'
     case 429: return 'FCS is limiting requests (free plan: 3 per minute). Try again in a minute.'
     default: return msg ? `FCS said: ${String(msg).split('----')[0].trim()}` : 'The market service did not answer.'
   }
 }
+
+// A token for the public demo: the browser asks FCS with only the PUBLIC key (the website must be on the key's allowed-domain
+// list in the FCS dashboard) and gets a pass that works for a day. Nothing secret is involved. One credit per token.
+export const tokenUrl = (publicKey) => `${FCS_BASE}/forex/jwt_token?${new URLSearchParams({ public_key: publicKey })}`
+export async function fetchToken(publicKey, { fetchImpl = fetch } = {}) {
+  let json
+  try { json = await (await fetchImpl(tokenUrl(publicKey))).json() } catch { throw new Error('Could not reach the market service. Check your connection.') }
+  const t = json?.response?.jwt_token
+  if (json?.status === true && t) return { token: t, expiresAt: (Number(json.response.expiry) || Math.floor(Date.now() / 1000) + 3600) * 1000 }
+  if (/allowed domain/i.test(json?.msg || '')) throw new Error('This website is not on the allowed-domain list of the FCS key, so prices are off. (FCS dashboard → Security → Allowed Domains.)')
+  throw new Error(explainError(json?.code, json?.msg))
+}
+// One token at a time, reused until five minutes before it expires.
+let cachedToken = null
+export async function demoAuth(publicKey, opts = {}) {
+  if (!cachedToken || cachedToken.publicKey !== publicKey || cachedToken.expiresAt - Date.now() < 5 * 60_000) cachedToken = { ...(await fetchToken(publicKey, opts)), publicKey }
+  return { token: cachedToken.token }
+}
+export const forgetToken = () => { cachedToken = null }
 
 // Turn one FCS JSON answer into quotes, matched back to the items by symbol. Items FCS did not return are left out.
 export function parseQuotes(json, items) {

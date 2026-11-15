@@ -2,13 +2,21 @@ import { useEffect, useRef, useState } from 'react'
 import { passphraseStrength } from '../lib/vault.js'
 import { MIX, ownerLabel } from '../lib/format.js'
 
-const openModals = [] // Escape closes only the top-most dialog
+const openModals = [] // Escape (and the Android Back button) close only the top-most dialog
+// Closes the top-most dialog, if any. Returns true when one was closed.
+export function closeTopModal() {
+  const top = openModals[openModals.length - 1]
+  if (!top) return false
+  top.close()
+  return true
+}
+export const hasOpenModal = () => openModals.length > 0
 
 export function Modal({ title, onClose, children, footer, wide }) {
   const close = useRef(onClose)
   close.current = onClose
   useEffect(() => {
-    const me = Symbol('modal')
+    const me = { close: () => close.current() }
     openModals.push(me)
     const onKey = (e) => e.key === 'Escape' && openModals[openModals.length - 1] === me && close.current()
     window.addEventListener('keydown', onKey)
@@ -39,6 +47,7 @@ export function OwnerPicker({ value, onChange, parentLabel }) {
   const opts = [
     ['mine', 'Mine', 'Only me'],
     ['joint', 'Joint', `Me + ${parentLabel.toLowerCase()}`],
+    ['spouse', 'Spouse', 'Only my spouse'],
     ['parent', parentLabel, `Only ${parentLabel.toLowerCase()}`],
   ]
   return (

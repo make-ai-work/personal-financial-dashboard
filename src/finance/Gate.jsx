@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useVault } from './VaultContext.jsx'
 import { PassphraseForm } from './ui.jsx'
 import { pickExcel, isAbort } from '../lib/fileio.js'
+import { ConfirmDelete, ConfirmRestore } from './AppDialogs.jsx'
 
 export function FirstRun() {
   const v = useVault()
@@ -43,8 +44,10 @@ export function FirstRun() {
         <div className="steps"><span>1 · Choose file</span> › <b>2 · Set passphrase</b></div>
         <h2>Set a passphrase</h2>
         {notice && <p className="note">{notice}</p>}
-        <p className="note">Your data is encrypted with this passphrase (AES-256) before it is saved. After you press Create you will choose where to save the file.</p>
-        <PassphraseForm submitLabel="Create encrypted file" onSubmit={create} busy={busy} error={err} />
+        <p className="note">{v.isApp
+          ? 'Your data is encrypted with this passphrase (AES-256) and stored inside this app.'
+          : 'Your data is encrypted with this passphrase (AES-256) before it is saved. After you press Create you will choose where to save the file.'}</p>
+        <PassphraseForm submitLabel={v.isApp ? 'Create vault' : 'Create encrypted file'} onSubmit={create} busy={busy} error={err} />
         <button className="link" onClick={() => setStep('choose')}>← Back</button>
       </div>
     )
@@ -52,8 +55,20 @@ export function FirstRun() {
   return (
     <div className="panel center">
       <div className="steps"><b>1 · Choose file</b> › 2 · Set passphrase</div>
-      <h2>Where is your data?</h2>
-      <p className="note">Everything is encrypted with your passphrase before it is saved. Nothing is sent to a server.</p>
+      <h2>{v.isApp ? 'Create your vault' : 'Where is your data?'}</h2>
+      <p className="note">{v.isApp
+        ? <>Your data is encrypted with your passphrase and stored <b>inside this app only</b>. No sign-in needed.</>
+        : 'Everything is encrypted with your passphrase before it is saved. Nothing is sent to a server.'}</p>
+      {v.isApp ? (
+      <div className="choice">
+        <button className="primary" onClick={() => { setInitial(null); setNotice(''); setStep('pass') }}>
+          Create a new encrypted vault<small>You set the passphrase next.</small>
+        </button>
+        <button onClick={v.openFile}>Restore from a backup file<small>A .wvault file you exported before.</small></button>
+        <button onClick={importExcel}>Import from an Excel file<small>For a workbook exported from this app. The original is left untouched, so delete or secure it yourself afterwards.</small></button>
+        <button disabled>Save to Google Drive<small>Coming in a later version.</small></button>
+      </div>
+      ) : (
       <div className="choice">
         <button className="primary" onClick={() => { setInitial(null); setNotice(''); setStep('pass') }}>
           Create a new encrypted file<small>Starts empty. You set the passphrase next.</small>
@@ -64,6 +79,7 @@ export function FirstRun() {
         </button>
         <button disabled>Save to Google Drive<small>Needs the real Google sign-in, which is on hold.</small></button>
       </div>
+      )}
       {(v.error || err) && <div className="err">{v.error || err}</div>}
     </div>
   )
@@ -74,6 +90,7 @@ export function Unlock() {
   const [pass, setPass] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
+  const [dlg, setDlg] = useState('') // app only: 'restore' | 'delete'
   const submit = async (e) => {
     e.preventDefault()
     setBusy(true)
@@ -90,7 +107,7 @@ export function Unlock() {
   return (
     <div className="panel center narrow">
       <div className="lock">🔒</div>
-      <h2>{v.fileName || 'Encrypted file'}</h2>
+      <h2>{v.isApp ? 'Your vault' : v.fileName || 'Encrypted file'}</h2>
       <p className="note">Enter your passphrase to unlock.</p>
       <form onSubmit={submit}>
         <input className="pw center-text" type="password" autoFocus autoComplete="current-password" placeholder="Passphrase" value={pass} onChange={(e) => setPass(e.target.value)} />
@@ -98,7 +115,14 @@ export function Unlock() {
         <button className="btn primary wide" disabled={busy || !pass}>{busy ? 'Unlocking…' : 'Unlock'}</button>
       </form>
       <p className="note">The passphrase stays in memory only while unlocked. Auto-lock clears it after idle time.</p>
-      <button className="link" onClick={v.switchFile}>Use a different file</button>
+      {v.isApp ? (
+        <>
+          <button className="link" onClick={() => setDlg('restore')}>Restore from a backup…</button>
+          <button className="link danger" onClick={() => setDlg('delete')}>Delete the vault in this app…</button>
+          {dlg === 'restore' && <ConfirmRestore onClose={() => setDlg('')} onConfirm={async () => { setDlg(''); await v.openFile() }} />}
+          {dlg === 'delete' && <ConfirmDelete onClose={() => setDlg('')} onConfirm={async () => { await v.deleteAppVault(); setDlg('') }} />}
+        </>
+      ) : <button className="link" onClick={v.switchFile}>Use a different file</button>}
     </div>
   )
 }
