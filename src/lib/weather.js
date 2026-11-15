@@ -123,3 +123,31 @@ export async function loadWeather(city, unit, opts = {}) {
   if (!f) throw new Error('The weather service sent something unexpected. Try again later.')
   return { place: g.name, ...f, fetchedAt: Date.now() }
 }
+
+// ---- Home page: weather for a fixed place (latitude/longitude known), plus the air quality index when available ----
+export const airQualityUrl = ({ lat, lon }) => `https://air-quality-api.open-meteo.com/v1/air-quality?${new URLSearchParams({ latitude: String(lat), longitude: String(lon), current: 'us_aqi', timezone: 'auto' })}`
+
+// US AQI bands.
+export function aqiLabel(n) {
+  if (!Number.isFinite(n)) return ''
+  if (n <= 50) return 'Good'
+  if (n <= 100) return 'Moderate'
+  if (n <= 150) return 'Unhealthy for some'
+  if (n <= 200) return 'Unhealthy'
+  if (n <= 300) return 'Very unhealthy'
+  return 'Hazardous'
+}
+export function parseAirQuality(json) {
+  const n = json?.current?.us_aqi
+  return Number.isFinite(n) ? { aqi: Math.round(n), aqiLabel: aqiLabel(n) } : null
+}
+
+// Weather for a known place. The air quality is a bonus: if its request fails or has no data the weather still shows (aqi: null).
+export async function loadPlaceWeather(place, unit, opts = {}) {
+  const fetchImpl = opts.fetchImpl || fetch
+  const f = parseForecast(await withRetry(() => getJson(forecastUrl({ lat: place.lat, lon: place.lon, unit }), fetchImpl, 20_000, 'getting the forecast'), opts.delays), unit)
+  if (!f) throw new Error('The weather service sent something unexpected. Try again later.')
+  let air = null
+  try { air = parseAirQuality(await getJson(airQualityUrl(place), fetchImpl, 10_000, 'getting the air quality')) } catch { /* optional */ }
+  return { place: place.city || place.name || '', ...f, aqi: air?.aqi ?? null, aqiLabel: air?.aqiLabel || '', fetchedAt: Date.now() }
+}

@@ -14,6 +14,7 @@ const server = spawn('npx', ['vite', 'preview', '--port', '4179', '--strictPort'
 await new Promise((r) => setTimeout(r, 2500))
 const browser = await chromium.launch()
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true })
+await ctx.route(/open-meteo\.com/, (r) => r.fulfill({ json: { current: { temperature_2m: 20, relative_humidity_2m: 50, weather_code: 1, wind_speed_10m: 5, us_aqi: 40 }, daily: { time: ['2026-11-16', '2026-11-17'], weather_code: [1, 1], temperature_2m_max: [22, 22], temperature_2m_min: [12, 12] } } })) // Home's weather: not under test here
 await ctx.addInitScript(() => { delete window.showSaveFilePicker; delete window.showOpenFilePicker; localStorage.setItem('auth.demo', '1') })
 const PER_USD = { USD: 1, INR: 84, GBP: 0.8, AUD: 1.5, CHF: 0.9 }
 await ctx.route('**/api.frankfurter.dev/**', (r) => {

@@ -35,8 +35,9 @@ npm run build:demo && npm run test:e2e:demo      # the demo build
 Open **⚙ Home settings** on the Home page. Everything there is kept in this browser (not in the encrypted file), so Home works before
 you unlock your data. It persists between visits on this device but is **not encrypted**.
 
-- **Weather** uses [Open-Meteo](https://open-meteo.com) (free, no key). Type a city, optionally with a region ("Austin, Texas"); only that
-  name is sent. Your location is never read automatically.
+- **Weather and air quality** use [Open-Meteo](https://open-meteo.com) (free, no key) for the city where each country's main stock
+  exchange is (New York, Mumbai, London, Sydney, Zurich). The coordinates are built in, so only those are sent. The temperature unit is
+  automatic (°F in the US, °C elsewhere) unless you choose one. AQI is the US air quality index and is left out when there is no data.
 - **Market ticker** uses [FCS API](https://fcsapi.com). Paste your key and press **Test**. It shows S&P 500, Nasdaq, Sensex and Nifty 50,
   one main index for each other country in Finance → Settings (FTSE 100, ASX 200, SMI), gold (XAU/USD) and Bitcoin (BTC/USD).
   - **Plans:** FCS's free plan (500 calls a month) covers **gold and Bitcoin only**. **Index prices need an FCS stock plan** (from about
@@ -134,9 +135,10 @@ A picture version of this, which also ships with the site, is in
 
 ## Tabs
 
-- **Home** – the landing page. A rolling **market ticker**, a **clock for each country** you selected in Finance → Settings (each in
-  its capital's time zone; a country with several zones uses its capital's), the **weather** for a city you choose, and whether each
-  country's main **stock market is open or closed**. See "Home settings" below.
+- **Home** – the landing page. A rolling **market ticker** (always visible; dashes until prices load), a **Total net worth** card on the
+  left (choose All, Mine, Joint, Spouse or Parent; everything converted into your first country's currency; unlock your data to see it),
+  and on the right one compact block per country you selected in Finance → Settings: the **city of its main stock exchange**, the **time**
+  (AM/PM with a day or night icon), **market open/closed** (or when it opens) and the **weather**. See "Home settings" below.
 - **Retirement** – *Plan*: your situation, savings picked from Finance asset accounts (converted to the plan
   currency, equity share taken from the Portfolio mix), income sources with start and end ages, market conditions with a
   staleness warning, nest-egg needed, shortfall and extra saving, and a yield sensitivity table. *Monte Carlo*: 1,000 to 10,000

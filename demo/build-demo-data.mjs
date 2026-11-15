@@ -20,6 +20,7 @@ const accounts = [
   A('us-checking', 'us', 'asset', 'Checking', '0000-1111-2203', 'Sample Bank', 'mine', 8200, [0, 100, 0, 0]),
   A('us-savings', 'us', 'asset', 'Savings', '0000-1111-2204', 'Sample Bank', 'joint', 24000, [0, 100, 0, 0]),
   A('us-cd', 'us', 'asset', 'Certificate of deposit', '0000-1111-2205', 'Sample Bank', 'parent', 20000, [0, 100, 0, 0], { maturityDate: '2027-06-30', maturityValue: 21400 }),
+  A('us-spouse-ira', 'us', 'asset', 'Spouse IRA', '0000-1111-2207', 'Sample Retirement Co', 'spouse', 41000, null),
   A('us-car', 'us', 'liability', 'Car loan', '0000-1111-2206', 'Sample Auto Finance', 'mine', 12300, null),
   A('in-funds', 'in', 'asset', 'Mutual funds', '0000-3333-4401', 'Sample AMC', 'mine', 4200000, null),
   A('in-fd', 'in', 'asset', 'Fixed deposit', '0000-3333-4402', 'Sample Bank India', 'parent', 1200000, [0, 100, 0, 0], { maturityDate: '2027-03-31', maturityValue: 1290000 }),

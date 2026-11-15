@@ -15,6 +15,7 @@ const write = (k, v) => {
 }
 const json = (k) => { try { return JSON.parse(read(k, 'null')) } catch { return null } }
 
+// unit '' means automatic (°F in the US, °C elsewhere)
 export const homePrefs = {
   city: () => read('home.city'), setCity: (v) => write('home.city', v.trim()),
   unit: (fallback = 'C') => read('home.unit') || fallback, setUnit: (v) => write('home.unit', v),
@@ -24,6 +25,11 @@ export const homePrefs = {
   setCountries: (list) => write('home.countries', JSON.stringify(list)),
   quotes: () => json('home.quotes'), setQuotes: (v) => write('home.quotes', JSON.stringify(v)),
   weather: () => json('home.weather'), setWeather: (v) => write('home.weather', JSON.stringify(v)),
+  // weather per country, keyed by country code
+  weatherOf: (code) => (json('home.weatherBy') || {})[code] || null,
+  setWeatherOf: (code, v) => write('home.weatherBy', JSON.stringify({ ...(json('home.weatherBy') || {}), [code]: v })),
+  // whose net worth the Home card shows: all | mine | joint | spouse | parent
+  owner: () => read('home.owner') || 'all', setOwner: (v) => write('home.owner', v),
   // a city's coordinates, remembered after the first lookup so the weather needs one request, not two
   geo: (city) => (json('home.geo') || {})[String(city).trim().toLowerCase()] || null,
   setGeo: (city, place) => write('home.geo', JSON.stringify({ ...(json('home.geo') || {}), [String(city).trim().toLowerCase()]: place })),

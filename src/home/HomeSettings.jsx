@@ -6,8 +6,7 @@ import { fetchQuotes, fmtPrice, tickerItems } from '../lib/ticker.js'
 import { COUNTRIES } from '../lib/format.js'
 
 export default function HomeSettings({ countries, onClose, onSaved }) {
-  const [city, setCity] = useState(homePrefs.city() || (IS_DEMO ? 'New York' : ''))
-  const [unit, setUnit] = useState(homePrefs.unit(countries[0] === 'us' ? 'F' : 'C'))
+  const [unit, setUnit] = useState(homePrefs.unit(''))
   const [key, setKey] = useState(homePrefs.fcsKey())
   const [show, setShow] = useState(false)
   const [every, setEvery] = useState(homePrefs.refreshMin())
@@ -22,7 +21,6 @@ export default function HomeSettings({ countries, onClose, onSaved }) {
     else setTest({ state: 'bad', text: out.problems[0]?.message || 'The key did not work.' })
   }
   const save = () => {
-    homePrefs.setCity(city)
     homePrefs.setUnit(unit)
     homePrefs.setRefreshMin(every)
     if (!IS_DEMO) homePrefs.setFcsKey(key)
@@ -31,10 +29,8 @@ export default function HomeSettings({ countries, onClose, onSaved }) {
   }
   return (
     <Modal title="Home settings" onClose={onClose} footer={<><button className="btn" onClick={onClose}>Cancel</button><button className="btn primary" onClick={save}>Save</button></>}>
-      <div className="rowf"><span>Weather city<small>Only this text is sent, to Open-Meteo (free, no key). Your location is never read automatically. You can also type coordinates, like 40.71, -74.01.</small></span>
-        <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Austin, Texas" aria-label="Weather city" /></div>
-      <div className="rowf"><span>Temperature unit</span>
-        <select value={unit} onChange={(e) => setUnit(e.target.value)} aria-label="Temperature unit"><option value="F">°F (Fahrenheit)</option><option value="C">°C (Celsius)</option></select></div>
+      <div className="rowf"><span>Temperature unit<small>Weather and air quality come from Open-Meteo (free, no key) for the city of each country’s main stock exchange. Only the city’s coordinates are sent.</small></span>
+        <select value={unit} onChange={(e) => setUnit(e.target.value)} aria-label="Temperature unit"><option value="">Automatic (°F in the US, °C elsewhere)</option><option value="F">°F (Fahrenheit)</option><option value="C">°C (Celsius)</option></select></div>
       <hr className="sep" />
       {IS_DEMO ? (
         <div className="warn"><b>Market ticker.</b> The demo shows a snapshot of prices taken when the site was built, so no API key is needed (or stored) here.</div>

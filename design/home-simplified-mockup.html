@@ -1,0 +1,178 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Home simplified mockup</title><style>
+/* PMO Hub theme tokens. Light = "Warm Paper", dark = "Midnight".
+   Change the look of the whole app here; styles.css only uses these names. */
+:root {
+  color-scheme: light;
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --r: 12px;            /* panels, cards */
+  --r-sm: 8px;          /* buttons, inputs */
+
+  --bg: #f7f4ee;
+  --surface: #fffdf9;
+  --surface-2: #f1ece2;
+  --text: #2b2722;
+  --muted: #7a7266;
+  --line: #e6dfd2;
+  --accent: #0f6e6e;
+  --accent-text: #ffffff;
+  --head: #0f4c4c;      /* top bar */
+  --head-text: #ffffff;
+  --shadow: 0 8px 30px rgba(60, 40, 10, .18);
+
+  /* status */
+  --red: #c8402f; --amber: #d98e04; --green: #3f8f55;
+  --blue: #4a7fb0; --grey: #a39a8b; --done: #7b7466;
+  --on-status: #ffffff; /* glyph colour drawn on top of a status colour */
+
+  /* note labels (the rest reuse status colours) */
+  --purple: #8b6cf0; --pink: #c4467d;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --r: 6px; --r-sm: 5px;
+    --bg: #0f1420; --surface: #181f2e; --surface-2: #212a3d;
+    --text: #e7ebf3; --muted: #9aa5ba; --line: #2a3347;
+    --accent: #6ea8ff; --accent-text: #0b1220;
+    --head: #0a0e17; --head-text: #e7ebf3;
+    --shadow: 0 8px 30px rgba(0, 0, 0, .6);
+    --red: #ff6b6b; --amber: #ffc233; --green: #3ddc84;
+    --blue: #5cb3ff; --grey: #74809a; --done: #8d9ab3;
+    --on-status: #0b1220;
+    --purple: #a58bff; --pink: #f07aa8;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --r: 6px; --r-sm: 5px;
+  --bg: #0f1420; --surface: #181f2e; --surface-2: #212a3d;
+  --text: #e7ebf3; --muted: #9aa5ba; --line: #2a3347;
+  --accent: #6ea8ff; --accent-text: #0b1220;
+  --head: #0a0e17; --head-text: #e7ebf3;
+  --shadow: 0 8px 30px rgba(0, 0, 0, .6);
+  --red: #ff6b6b; --amber: #ffc233; --green: #3ddc84;
+  --blue: #5cb3ff; --grey: #74809a; --done: #8d9ab3;
+  --on-status: #0b1220;
+  --purple: #a58bff; --pink: #f07aa8;
+}
+
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Home mockup</title>
+<style>
+/* PMO Hub theme tokens. Light = "Warm Paper", dark = "Midnight".
+   Change the look of the whole app here; styles.css only uses these names. */
+:root {
+  color-scheme: light;
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --r: 12px;            /* panels, cards */
+  --r-sm: 8px;          /* buttons, inputs */
+
+  --bg: #f7f4ee;
+  --surface: #fffdf9;
+  --surface-2: #f1ece2;
+  --text: #2b2722;
+  --muted: #7a7266;
+  --line: #e6dfd2;
+  --accent: #0f6e6e;
+  --accent-text: #ffffff;
+  --head: #0f4c4c;      /* top bar */
+  --head-text: #ffffff;
+  --shadow: 0 8px 30px rgba(60, 40, 10, .18);
+
+  /* status */
+  --red: #c8402f; --amber: #d98e04; --green: #3f8f55;
+  --blue: #4a7fb0; --grey: #a39a8b; --done: #7b7466;
+  --on-status: #ffffff; /* glyph colour drawn on top of a status colour */
+
+  /* note labels (the rest reuse status colours) */
+  --purple: #8b6cf0; --pink: #c4467d;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --r: 6px; --r-sm: 5px;
+    --bg: #0f1420; --surface: #181f2e; --surface-2: #212a3d;
+    --text: #e7ebf3; --muted: #9aa5ba; --line: #2a3347;
+    --accent: #6ea8ff; --accent-text: #0b1220;
+    --head: #0a0e17; --head-text: #e7ebf3;
+    --shadow: 0 8px 30px rgba(0, 0, 0, .6);
+    --red: #ff6b6b; --amber: #ffc233; --green: #3ddc84;
+    --blue: #5cb3ff; --grey: #74809a; --done: #8d9ab3;
+    --on-status: #0b1220;
+    --purple: #a58bff; --pink: #f07aa8;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --r: 6px; --r-sm: 5px;
+  --bg: #0f1420; --surface: #181f2e; --surface-2: #212a3d;
+  --text: #e7ebf3; --muted: #9aa5ba; --line: #2a3347;
+  --accent: #6ea8ff; --accent-text: #0b1220;
+  --head: #0a0e17; --head-text: #e7ebf3;
+  --shadow: 0 8px 30px rgba(0, 0, 0, .6);
+  --red: #ff6b6b; --amber: #ffc233; --green: #3ddc84;
+  --blue: #5cb3ff; --grey: #74809a; --done: #8d9ab3;
+  --on-status: #0b1220;
+  --purple: #a58bff; --pink: #f07aa8;
+}
+
+
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font)}
+.hd{background:var(--head);color:var(--head-text);padding:12px 24px;font-weight:600}
+.tk{background:var(--surface);border-bottom:1px solid var(--line);padding:11px 24px;white-space:nowrap;overflow:hidden;font-size:.9rem}
+.tk span{margin-right:26px}.up{color:var(--green)}.dn{color:var(--red)}.tk small{color:var(--muted)}
+.page{padding:16px 24px;display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:16px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+h3{margin:0 0 10px;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between}
+.seg{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:14px}.seg b{font-weight:500;font-size:.8rem;padding:4px 10px;border:1px solid var(--line);border-radius:99px}.seg b.on{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+.nw{font-size:2.2rem;font-weight:700}.sub{color:var(--muted);font-size:.85rem}
+.kv{display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--line);font-size:.92rem}.kv:first-of-type{margin-top:14px}
+.pos{color:var(--green)}.neg{color:var(--red)}
+.row{display:grid;grid-template-columns:1.2fr 1fr 1.1fr 2fr;gap:14px;align-items:center;padding:14px 0;border-top:1px solid var(--line)}.row:first-of-type{border-top:0}
+.row.head{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:0 0 8px}
+.city b{display:block;font-size:1.05rem}.city small{color:var(--muted)}
+.time b{font-size:1.35rem}.time small{display:block;color:var(--muted)}
+.pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:.78rem;font-weight:600;color:var(--on-status)}.o{background:var(--green)}.c{background:var(--grey)}
+.mst small{display:block;color:var(--muted);margin-top:3px}
+.wx{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.wx .t{font-size:1.5rem;font-weight:600}.wx small{color:var(--muted);display:block}.wx .aq{padding:2px 8px;border-radius:99px;font-size:.75rem;background:var(--surface-2);border:1px solid var(--line)}
+.note{margin:14px 0 0;color:var(--muted);font-size:.8rem}
+.lbl{margin:22px 24px 6px;font-weight:700}.phone{max-width:380px;margin:0 24px 24px}.phone .page{display:block;padding:0}.phone .card{margin-bottom:12px}
+.phone .row{grid-template-columns:1fr 1fr;gap:8px}.phone .row.head{display:none}
+
+.row{grid-template-columns:1.1fr .9fr 1.2fr 2.6fr;gap:10px;padding:7px 0}
+.city b{font-size:.95rem;display:inline}.city small{display:inline;margin-left:6px;font-size:.75rem}
+.time b{font-size:1rem}.time small{display:inline;margin-left:4px;font-size:.75rem}
+.pill{padding:1px 8px;font-size:.72rem}.mst small{display:inline;margin:0 0 0 6px;font-size:.75rem}
+.wx{gap:8px;flex-wrap:nowrap;white-space:nowrap;font-size:.8rem}.wx .t{font-size:1rem}.wx small{display:inline;font-size:.78rem}.wx .aq{font-size:.7rem;padding:1px 6px}
+.card{padding:14px}.nw{font-size:1.8rem}.note{margin-top:8px}
+@media(max-width:900px){.page{grid-template-columns:1fr}}
+.row>div{white-space:nowrap}.row{grid-template-columns:1.5fr 1.1fr 1.7fr 3fr}.phone .row>div{white-space:normal}
+.page{grid-template-columns:1fr 1fr}
+.row2{padding:10px 0;border-top:1px solid var(--line)}.row2:first-of-type{border-top:0}
+.row2 .l1{display:grid;grid-template-columns:1.3fr 1fr 1.6fr;gap:10px;align-items:baseline}
+.row2 .city,.row2 .time,.row2 .mst{white-space:nowrap}
+.row2 .wx{margin-top:4px;flex-wrap:wrap;white-space:normal;font-size:.8rem;gap:10px}
+.nw{font-size:2.8rem}.kv{padding:12px 0;font-size:1rem}.card .seg b{font-size:.85rem}
+.big2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.big2 div{background:var(--surface-2);border-radius:var(--r-sm);padding:10px}.big2 small{display:block;color:var(--muted);font-size:.75rem}.big2 b{font-size:1.2rem}
+@media(max-width:900px){.page{grid-template-columns:1fr}.row2 .l1{grid-template-columns:1fr 1fr}}
+.phone .row2 .l1{grid-template-columns:1fr 1fr}.phone .row2 .mst{grid-column:1/3}
+</style></head><body>
+<div class="hd">Personal Dashboard · Home</div><div class="tk"><span><b>S&amp;P 500</b> <small>US</small> 6,012.4 <i class="up">▲ 0.42%</i></span><span><b>Nasdaq</b> 19,210 <i class="dn">▼ 0.18%</i></span><span><b>Sensex</b> 81,330 <i class="up">▲ 0.30%</i></span><span><b>Nifty 50</b> 24,780 <i class="up">▲ 0.28%</i></span><span><b>FTSE 100</b> 8,120 <i class="dn">▼ 0.05%</i></span><span><b>ASX 200</b> 8,350 <i class="up">▲ 0.60%</i></span><span><b>Gold</b> 2,710 <i class="up">▲ 0.9%</i></span><span><b>BTC/USD</b> 91,400 <i class="dn">▼ 1.2%</i></span></div>
+<div class="page"><div class="card"><h3><span>Total net worth</span><span>⚙</span></h3>
+<div class="seg"><b class="on">All</b><b>Mine</b><b>Joint</b><b>Spouse</b><b>Parent</b></div>
+<div class="nw">$ 1,284,500</div><div class="sub">in US dollars · converted at today’s rates</div>
+<div class="kv"><span>🇺🇸 United States</span><span>$ 612,000</span></div>
+<div class="kv"><span>🇮🇳 India</span><span>₹ 28,40,000 (≈ $ 34,100)</span></div>
+<div class="kv"><span>🇬🇧 United Kingdom</span><span>£ 160,000</span></div>
+<div class="big2"><div><small>Assets</small><b class="pos">$ 1,512,000</b></div><div><small>Liabilities</small><b class="neg">$ 227,500</b></div></div>
+<p class="note">Locked? Shows “Unlock your data to see this”.</p></div><div class="card"><h3><span>Markets · time · weather</span><span>⚙ Home settings</span></h3>
+<div class="row2"><div class="l1"><div class="city"><b>New York</b><small>🇺🇸 NYSE · Nasdaq</small></div><div class="time"><b>9:42 AM</b><small>☀️ Sun</small></div><div class="mst"><span class="pill c">Closed</span><small>Opens Mon in 23 h 48 m</small></div></div><div class="wx"><span class="t">41°F ⛅</span><span><small>H 47° · L 35° · Wind 9 mph · Humidity 62%</small></span><span class="aq">AQI 38 · Good</span></div></div><div class="row2"><div class="l1"><div class="city"><b>Mumbai</b><small>🇮🇳 BSE · NSE</small></div><div class="time"><b>8:12 PM</b><small>🌙 Sun</small></div><div class="mst"><span class="pill c">Closed</span><small>Opens Mon in 12 h 03 m</small></div></div><div class="wx"><span class="t">27°C 🌤</span><span><small>H 31° · L 22° · Wind 11 km/h · Humidity 71%</small></span><span class="aq">AQI 142 · Unhealthy for some</span></div></div><div class="row2"><div class="l1"><div class="city"><b>London</b><small>🇬🇧 LSE</small></div><div class="time"><b>2:42 PM</b><small>☀️ Sun</small></div><div class="mst"><span class="pill c">Closed</span><small>Opens Mon in 17 h 18 m</small></div></div><div class="wx"><span class="t">9°C 🌧</span><span><small>H 11° · L 6° · Wind 18 km/h · Humidity 84%</small></span><span class="aq">AQI 24 · Good</span></div></div><div class="row2"><div class="l1"><div class="city"><b>Sydney</b><small>🇦🇺 ASX</small></div><div class="time"><b>1:42 AM</b><small>🌙 Mon</small></div><div class="mst"><span class="pill c">Closed</span><small>Opens today 10:00 AM</small></div></div><div class="wx"><span class="t">19°C ☁️</span><span><small>H 24° · L 16° · Wind 14 km/h · Humidity 66%</small></span><span class="aq">AQI n/a</span></div></div><p class="note">One row per country in your settings, in the city where its main stock exchange is. Regular hours only; public holidays are not included.</p></div></div>
+<div class="lbl">Phone</div><div class="phone"><div class="tk"><span><b>S&amp;P 500</b> 6,012 <i class="up">▲0.4%</i></span><span>…</span></div><div class="page"><div class="card"><h3><span>Total net worth</span><span>⚙</span></h3>
+<div class="seg"><b class="on">All</b><b>Mine</b><b>Joint</b><b>Spouse</b><b>Parent</b></div>
+<div class="nw">$ 1,284,500</div><div class="sub">in US dollars · converted at today’s rates</div>
+<div class="kv"><span>🇺🇸 United States</span><span>$ 612,000</span></div>
+<div class="kv"><span>🇮🇳 India</span><span>₹ 28,40,000 (≈ $ 34,100)</span></div>
+<div class="kv"><span>🇬🇧 United Kingdom</span><span>£ 160,000</span></div>
+<div class="big2"><div><small>Assets</small><b class="pos">$ 1,512,000</b></div><div><small>Liabilities</small><b class="neg">$ 227,500</b></div></div>
+<p class="note">Locked? Shows “Unlock your data to see this”.</p></div><div class="card"><h3><span>New York</span></h3><div class="row" style="padding-top:0"><div class="time"><b>9:42 AM</b><small>☀️ Sun</small></div><div class="mst"><span class="pill c">Closed</span><small>Opens Mon in 23 h 48 m</small></div></div><div class="wx"><span class="t">41°F ⛅</span><small>H 47° · L 35° · Wind 9 mph · Humidity 62% · AQI 38</small></div><p class="note">…one card per country, stacked</p></div></div></div></body></html>
