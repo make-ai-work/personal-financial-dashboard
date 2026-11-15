@@ -5,7 +5,7 @@ import Property from './property/Property.jsx'
 import Portfolio from './portfolio/Portfolio.jsx'
 import Retirement from './retirement/Retirement.jsx'
 import { NavContext } from './nav.jsx'
-import ClockWidget from './components/ClockWidget.jsx'
+import Home from './home/Home.jsx'
 import { AuthProvider, useAuth } from './auth/AuthContext.jsx'
 import { MfaStep, SignIn } from './auth/SignIn.jsx'
 import { ClientIdForm, Setup } from './auth/Setup.jsx'
@@ -16,7 +16,7 @@ import { APP_URL } from './lib/demo.js'
 
 // Add future sections here: each entry becomes a top-level tab.
 const TABS = [
-  { id: 'home', label: 'Home', render: () => <div className="grid"><ClockWidget /></div> },
+  { id: 'home', label: 'Home', wide: true, render: () => <Home /> },
   { id: 'finance', label: 'Finance Dashboard', render: () => <Finance /> },
   { id: 'property', label: '🏠 Property', render: () => <Property /> },
   { id: 'portfolio', label: '📈 Portfolio', render: () => <Portfolio /> },
@@ -81,11 +81,9 @@ function DemoBar() {
   )
 }
 
-const DocsLink = () => <footer className="docs-link"><a href="./docs/branch-flow.html">Docs: how the branches work</a></footer>
-
 function Shell() {
   const auth = useAuth()
-  const [tab, setTab] = useState(() => read('tab', 'finance'))
+  const [tab, setTab] = useState(() => read('tab', 'home'))
   const [theme, setTheme] = useState(() => read('theme', ''))
   const [focus, setFocus] = useState(null)
   const nav = { focus, clearFocus: () => setFocus(null), go: (id, params) => { setTab(id); setFocus(params || null) } }
@@ -116,7 +114,6 @@ function Shell() {
       <>
         {header(null)}
         <main className="page">{auth.setup || auth.reviewing ? <Setup /> : auth.phase === PHASE.mfa ? <MfaStep /> : <SignIn />}</main>
-        <DocsLink />
       </>
     )
   }
@@ -130,8 +127,7 @@ function Shell() {
             <button key={t.id} role="tab" aria-selected={t.id === current.id} className={t.id === current.id ? 'on' : ''} onClick={() => setTab(t.id)}>{t.label}</button>
           ))}
         </nav>
-        <main className="page">{current.render()}</main>
-        <DocsLink />
+        {current.wide ? <main className="wide-page">{current.render()}</main> : <main className="page">{current.render()}</main>}
       </NavContext.Provider>
     </VaultProvider>
   )

@@ -1,0 +1,161 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Home mockup</title>
+<style>
+/* PMO Hub theme tokens. Light = "Warm Paper", dark = "Midnight".
+   Change the look of the whole app here; styles.css only uses these names. */
+:root {
+  color-scheme: light;
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --r: 12px;            /* panels, cards */
+  --r-sm: 8px;          /* buttons, inputs */
+
+  --bg: #f7f4ee;
+  --surface: #fffdf9;
+  --surface-2: #f1ece2;
+  --text: #2b2722;
+  --muted: #7a7266;
+  --line: #e6dfd2;
+  --accent: #0f6e6e;
+  --accent-text: #ffffff;
+  --head: #0f4c4c;      /* top bar */
+  --head-text: #ffffff;
+  --shadow: 0 8px 30px rgba(60, 40, 10, .18);
+
+  /* status */
+  --red: #c8402f; --amber: #d98e04; --green: #3f8f55;
+  --blue: #4a7fb0; --grey: #a39a8b; --done: #7b7466;
+  --on-status: #ffffff; /* glyph colour drawn on top of a status colour */
+
+  /* note labels (the rest reuse status colours) */
+  --purple: #8b6cf0; --pink: #c4467d;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --r: 6px; --r-sm: 5px;
+    --bg: #0f1420; --surface: #181f2e; --surface-2: #212a3d;
+    --text: #e7ebf3; --muted: #9aa5ba; --line: #2a3347;
+    --accent: #6ea8ff; --accent-text: #0b1220;
+    --head: #0a0e17; --head-text: #e7ebf3;
+    --shadow: 0 8px 30px rgba(0, 0, 0, .6);
+    --red: #ff6b6b; --amber: #ffc233; --green: #3ddc84;
+    --blue: #5cb3ff; --grey: #74809a; --done: #8d9ab3;
+    --on-status: #0b1220;
+    --purple: #a58bff; --pink: #f07aa8;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --r: 6px; --r-sm: 5px;
+  --bg: #0f1420; --surface: #181f2e; --surface-2: #212a3d;
+  --text: #e7ebf3; --muted: #9aa5ba; --line: #2a3347;
+  --accent: #6ea8ff; --accent-text: #0b1220;
+  --head: #0a0e17; --head-text: #e7ebf3;
+  --shadow: 0 8px 30px rgba(0, 0, 0, .6);
+  --red: #ff6b6b; --amber: #ffc233; --green: #3ddc84;
+  --blue: #5cb3ff; --grey: #74809a; --done: #8d9ab3;
+  --on-status: #0b1220;
+  --purple: #a58bff; --pink: #f07aa8;
+}
+
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font)}
+button,input,select{font:inherit}button{cursor:pointer}
+.mock{background:var(--surface-2);border-bottom:1px solid var(--line);padding:8px 24px;font-size:.82rem;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.mock .seg button{background:var(--surface);border:1px solid var(--line);padding:3px 10px;font-size:.8rem;color:var(--muted)}.mock .seg button.on{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+header{background:var(--head);color:var(--head-text);padding:10px 24px;display:flex;justify-content:space-between;align-items:center}header h1{font-size:1.05rem;margin:0}
+.btn{background:var(--surface);border:1px solid var(--line);color:var(--text);border-radius:var(--r-sm);padding:6px 14px;font-size:.85rem}.btn.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}.btn.sm{padding:3px 10px;font-size:.78rem}
+header .btn{background:transparent;color:inherit;border-color:currentColor}
+.tabs{background:var(--surface);border-bottom:1px solid var(--line);padding:0 24px;display:flex;gap:4px;overflow-x:auto}.tabs button{background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:12px 14px;white-space:nowrap}.tabs button.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+/* ticker */
+.ticker{background:var(--surface);border-bottom:1px solid var(--line);overflow:hidden;white-space:nowrap;position:relative;min-height:44px;display:flex;align-items:center}
+.track{display:inline-flex;animation:roll 38s linear infinite;padding-left:24px}.ticker:hover .track{animation-play-state:paused}
+@keyframes roll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.tk{display:inline-flex;gap:8px;align-items:baseline;padding:11px 26px 11px 0;font-size:.9rem;border-right:1px solid var(--line);margin-right:26px}.tk small{color:var(--muted);font-size:.72rem}.px{font-variant-numeric:tabular-nums}
+.up{color:var(--green);font-weight:600}.dn{color:var(--red);font-weight:600}
+.tmsg{padding:11px 24px;font-size:.88rem;color:var(--muted)}.tmsg b{color:var(--text)}.tmsg.err{border-left:3px solid var(--amber)}
+.tstate{font-size:.74rem;color:var(--muted);padding:6px 24px 0;display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between}
+@media(prefers-reduced-motion:reduce){.track{animation:none;overflow-x:auto}}
+/* home */
+.page{padding:18px 24px 50px;width:100%}
+.grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:18px;align-items:stretch}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:26px 28px}
+.hello{margin:0;color:var(--muted);font-size:1.15rem}.time{margin:2px 0;font-size:clamp(3.2rem,9vw,6.2rem);font-weight:600;line-height:1.05;letter-spacing:-.02em;font-variant-numeric:tabular-nums}.date{margin:0;color:var(--muted);font-size:1.05rem}
+.wx{display:flex;flex-direction:column;gap:6px}.wx h3{margin:0;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+.wx .big{display:flex;align-items:center;gap:14px;margin:6px 0}.wx .ico{font-size:3.2rem;line-height:1}.wx .t{font-size:3rem;font-weight:600;line-height:1}.wx .c{color:var(--muted)}
+.wx .row{display:flex;gap:16px;flex-wrap:wrap;font-size:.88rem;color:var(--muted)}.wx .row b{color:var(--text)}
+.fc{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px;border-top:1px solid var(--line);padding-top:12px;text-align:center;font-size:.8rem;color:var(--muted)}.fc b{display:block;color:var(--text);font-size:.95rem}
+.link{background:none;border:0;color:var(--accent);padding:0;font-size:.8rem}
+.state{display:none}.state.on{display:block}
+/* settings */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;max-width:760px}
+.p-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);font-weight:600}
+.pad{padding:14px 18px}.rowf{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:10px 0;font-size:.9rem;flex-wrap:wrap}.rowf small{display:block;color:var(--muted);font-size:.74rem;max-width:380px}
+.rowf input,.rowf select{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:6px 9px;width:260px;max-width:100%}
+.sub{font-size:.78rem;color:var(--muted)}.okmsg{color:var(--green);font-size:.82rem}.warn{background:var(--surface-2);border-left:3px solid var(--amber);padding:10px 12px;border-radius:var(--r-sm);font-size:.82rem;margin:12px 0}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{font-size:.74rem;background:var(--surface-2);border:1px solid var(--line);border-radius:99px;padding:2px 10px;color:var(--muted)}
+@media(max-width:800px){.grid{grid-template-columns:1fr}.page{padding:12px 12px 40px}.card{padding:18px 16px}.mock,header,.tabs{padding-left:12px;padding-right:12px}.tstate{padding-left:12px;padding-right:12px}.rowf input,.rowf select{width:100%}}
+
+.grid3{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(250px,.78fr);gap:18px;align-items:stretch}
+.card{padding:22px 24px}
+.ch{margin:0 0 8px;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:600}.ch .sub{text-transform:none;letter-spacing:0;font-weight:400}
+.hello{margin:0 0 6px;font-size:1.05rem;color:var(--muted)}
+.clocks,.mlist{display:flex;flex-direction:column}
+.ck,.mk{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}.ck:first-child,.mk:first-child{border-top:0}
+.fl{font-size:1.5rem;line-height:1}.nm{flex:1;min-width:0}.nm b{display:block;font-size:.95rem}.nm small,.tm small{display:block;color:var(--muted);font-size:.74rem}
+.tm{text-align:right}.tm b{font-size:1.55rem;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{font-size:.7rem;font-weight:700;color:var(--on-status);border-radius:99px;padding:2px 10px}.pill.o{background:var(--green)}.pill.c{background:var(--grey)}
+.fine{margin:10px 0 0;font-size:.72rem;color:var(--muted)}
+.mkts .nm b{font-size:.9rem}
+@media(max-width:1100px){.grid3{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.mkts{grid-column:1/-1}}
+@media(max-width:800px){.grid3{grid-template-columns:1fr}.card{padding:16px}.tm b{font-size:1.35rem}}
+</style></head><body>
+<div class="mock"><b>MOCKUP</b> Show state:
+ <span class="seg"><button class="on" data-s="ok">1 · Normal</button><button data-s="nokey">2 · No API key yet</button><button data-s="err">3 · Prices unavailable</button><button data-s="set">4 · Home settings</button></span>
+ <span>Numbers are made up. Resize to phone width to check. Hover the ticker to pause it.</span></div>
+<header><h1>My Dashboard</h1><span><button class="btn">Dark mode</button> <button class="btn">Account</button></span></header>
+<nav class="tabs"><button class="on">Home</button><button>Finance Dashboard</button><button>🏠 Property</button><button>📈 Portfolio</button><button>🏖️ Retirement</button></nav>
+
+<div id="s-ok" class="state on">
+ <div class="ticker" role="marquee" aria-label="Market ticker"><div class="track"><span class="tk"><b>S&amp;P 500</b> <small>SPY</small> <span class="px">6,412.30</span> <span class="up">▲ 0.42%</span></span><span class="tk"><b>Nasdaq</b> <small>Composite</small> <span class="px">21,980.10</span> <span class="up">▲ 0.71%</span></span><span class="tk"><b>Sensex</b> <small>India</small> <span class="px">84,120.50</span> <span class="dn">▼ 0.18%</span></span><span class="tk"><b>Nifty 50</b> <small>India</small> <span class="px">25,780.20</span> <span class="dn">▼ 0.21%</span></span><span class="tk"><b>FTSE 100</b> <small>UK</small> <span class="px">9,310.40</span> <span class="up">▲ 0.12%</span></span><span class="tk"><b>ASX 200</b> <small>Australia</small> <span class="px">8,860.70</span> <span class="up">▲ 0.30%</span></span><span class="tk"><b>Gold</b> <small>XAU/USD</small> <span class="px">4,120.55</span> <span class="up">▲ 0.35%</span></span><span class="tk"><b>Bitcoin</b> <small>BTC/USD</small> <span class="px">98,450.00</span> <span class="dn">▼ 1.20%</span></span><span class="tk"><b>S&amp;P 500</b> <small>SPY</small> <span class="px">6,412.30</span> <span class="up">▲ 0.42%</span></span><span class="tk"><b>Nasdaq</b> <small>Composite</small> <span class="px">21,980.10</span> <span class="up">▲ 0.71%</span></span><span class="tk"><b>Sensex</b> <small>India</small> <span class="px">84,120.50</span> <span class="dn">▼ 0.18%</span></span><span class="tk"><b>Nifty 50</b> <small>India</small> <span class="px">25,780.20</span> <span class="dn">▼ 0.21%</span></span><span class="tk"><b>FTSE 100</b> <small>UK</small> <span class="px">9,310.40</span> <span class="up">▲ 0.12%</span></span><span class="tk"><b>ASX 200</b> <small>Australia</small> <span class="px">8,860.70</span> <span class="up">▲ 0.30%</span></span><span class="tk"><b>Gold</b> <small>XAU/USD</small> <span class="px">4,120.55</span> <span class="up">▲ 0.35%</span></span><span class="tk"><b>Bitcoin</b> <small>BTC/USD</small> <span class="px">98,450.00</span> <span class="dn">▼ 1.20%</span></span></div></div>
+ <div class="tstate"><span>Prices as of 4:15 PM · refreshed every 30 minutes · indices show the last close when the market is shut</span><span>Source: FCS API</span></div>
+</div>
+<div id="s-nokey" class="state"><div class="ticker"><div class="tmsg"><b>Market ticker is off.</b> Add your FCS API key in <button class="link" data-s="set">Home settings</button> to turn it on.</div></div></div>
+<div id="s-err" class="state"><div class="ticker"><div class="tmsg err"><b>Prices unavailable.</b> The market service did not answer (limit reached or no connection). Showing nothing rather than old numbers. <button class="link">Try again</button></div></div></div>
+
+<div id="home" class="page">
+ <div class="grid3">
+  <div class="card"><h3 class="ch"><span>Time</span><span class="sub">capital city of each country</span></h3>
+   <p class="hello">Good Morning</p>
+   <div class="clocks"><div class="ck"><span class="fl">🇺🇸</span><div class="nm"><b>Washington, D.C.</b><small>United States · ET</small></div><div class="tm"><b>10:42 AM</b><small>Mon 16 Nov</small></div></div><div class="ck"><span class="fl">🇮🇳</span><div class="nm"><b>New Delhi</b><small>India · IST</small></div><div class="tm"><b>9:12 PM</b><small>Mon 16 Nov</small></div></div><div class="ck"><span class="fl">🇬🇧</span><div class="nm"><b>London</b><small>United Kingdom · GMT</small></div><div class="tm"><b>3:42 PM</b><small>Mon 16 Nov</small></div></div><div class="ck"><span class="fl">🇦🇺</span><div class="nm"><b>Canberra</b><small>Australia · AEDT</small></div><div class="tm"><b>2:42 AM</b><small>Tue 17 Nov</small></div></div></div>
+  </div>
+  <div class="card wx"><h3><span>Weather · Austin</span><button class="link" data-s="set">Change</button></h3>
+   <div class="big"><span class="ico">🌤️</span><span class="t">68°F</span></div><div class="c">Partly cloudy</div>
+   <div class="row"><span>High <b>74°</b></span><span>Low <b>55°</b></span><span>Wind <b>8 mph</b></span><span>Humidity <b>52%</b></span></div>
+   <div class="fc"><div>Tue<b>72°</b>☀️</div><div>Wed<b>70°</b>⛅</div><div>Thu<b>63°</b>🌧️</div><div>Fri<b>66°</b>🌤️</div></div>
+  </div>
+  <div class="card mkts"><h3 class="ch"><span>Markets</span><span class="sub">now</span></h3>
+   <div class="mlist"><div class="mk"><span class="fl">🇺🇸</span><div class="nm"><b>NYSE · Nasdaq</b><small>Closes in 5h 18m</small></div><span class="pill o">Open</span></div><div class="mk"><span class="fl">🇮🇳</span><div class="nm"><b>NSE · BSE</b><small>Opens tomorrow in 12h 3m</small></div><span class="pill c">Closed</span></div><div class="mk"><span class="fl">🇬🇧</span><div class="nm"><b>London Stock Exchange</b><small>Closes in 48 min</small></div><span class="pill o">Open</span></div><div class="mk"><span class="fl">🇦🇺</span><div class="nm"><b>ASX</b><small>Opens in 7h 18m</small></div><span class="pill c">Closed</span></div></div>
+   <p class="fine">Regular trading hours only. Public holidays are not included, so a holiday can show as open.</p>
+  </div>
+ </div>
+</div>
+
+<div id="s-set" class="state"><div class="page"><div class="panel">
+ <div class="p-head"><span>Home settings</span><button class="btn sm" data-s="ok">Close</button></div>
+ <div class="pad">
+  <div class="rowf"><span>Weather city<small>Only the city name is sent, to Open-Meteo (free, no key). Your location is never read automatically.</small></span><input value="Austin, Texas"></div>
+  <div class="rowf"><span>Temperature unit</span><select><option>°F (Fahrenheit)</option><option>°C (Celsius)</option></select></div>
+  <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
+  <div class="rowf"><span>FCS API key<small>For the market ticker. Get a free key at fcsapi.com.</small></span><span style="display:flex;gap:6px"><input type="password" value="••••••••••••••••"><button class="btn sm">Show</button></span></div>
+  <div class="rowf"><span>Check the key<small>Fetches one price to confirm it works.</small></span><span><button class="btn">Test</button> <span class="okmsg">✓ Working: S&amp;P 500 6,412.30</span></span></div>
+  <div class="rowf"><span>Refresh prices every<small>Prices are cached so a free key's quota lasts.</small></span><select><option>15 minutes</option><option selected>30 minutes</option><option>60 minutes</option></select></div>
+  <div class="rowf"><span>Indices in the ticker<small>Always: S&amp;P 500 (SPY), Nasdaq, Sensex, Nifty 50, gold, Bitcoin. Plus one main index for each other country in Finance → Settings.</small></span><span class="chips"><span class="chip">🇺🇸 USA · covered</span><span class="chip">🇮🇳 India · covered</span><span class="chip">🇬🇧 UK · FTSE 100</span><span class="chip">🇦🇺 Australia · ASX 200</span></span></div>
+  <div class="warn"><b>Where this is kept.</b> The key and city stay in this browser only (not in your encrypted file, so Home works before you unlock). They are sent only to FCS (the key and the symbols) and Open-Meteo (the city).</div>
+  <div class="warn"><b>In the demo site</b> the ticker would show prices from a snapshot (refreshed every few hours by the site's build) so the key is never in the web page. <i>Decision needed, see my message.</i></div>
+ </div></div></div></div>
+<script>
+function show(s){document.querySelectorAll('.state').forEach(e=>e.classList.toggle('on',e.id==='s-'+s||(s==='ok'&&e.id==='s-ok')||(s==='nokey'&&e.id==='s-nokey')||(s==='err'&&e.id==='s-err')||(s==='set'&&e.id==='s-set')));
+ document.getElementById('home').style.display=s==='set'?'none':'block';
+ document.querySelectorAll('.mock .seg button').forEach(b=>b.classList.toggle('on',b.dataset.s===(s)))}
+document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>show(b.dataset.s));
+</script></body></html>

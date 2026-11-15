@@ -17,7 +17,8 @@
     "test:e2e:auth": "node test/e2e/auth.e2e.mjs",
     "dev:demo": "vite --mode demo",
     "build:demo": "vite build --mode demo --outDir dist-demo",
-    "test:e2e:demo": "node test/e2e/demo.e2e.mjs"
+    "test:e2e:demo": "node test/e2e/demo.e2e.mjs",
+    "test:e2e:home": "node test/e2e/home.e2e.mjs"
   },
   "dependencies": {
     "exceljs": "^4.4.0",
