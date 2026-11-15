@@ -1,10 +1,11 @@
-# Builds the app and publishes it to GitHub Pages whenever main changes.
+# Publishes the DEMO site (sample data) to GitHub Pages whenever the `demo` branch is updated.
+# `main` is the working app and never publishes. To refresh the showcase, merge main into demo (one way only).
 # One-time setup: repository Settings -> Pages -> Build and deployment -> Source: "GitHub Actions".
-name: Deploy to GitHub Pages
+name: Deploy demo to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [demo]
   workflow_dispatch:
 
 permissions:
@@ -29,11 +30,11 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm test        # unit tests must pass before anything is published
-      - run: npm run build
+      - run: npm test           # unit tests must pass before anything is published
+      - run: npm run build:demo # demo mode: sample data, no saving, no sign-in (see .env.demo)
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: dist-demo
       - id: deployment
         uses: actions/deploy-pages@v4

@@ -1,0 +1,111 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Demo mode mockup</title>
+<style>
+/* PMO Hub theme tokens. Light = "Warm Paper", dark = "Midnight".
+   Change the look of the whole app here; styles.css only uses these names. */
+:root {
+  color-scheme: light;
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --r: 12px;            /* panels, cards */
+  --r-sm: 8px;          /* buttons, inputs */
+
+  --bg: #f7f4ee;
+  --surface: #fffdf9;
+  --surface-2: #f1ece2;
+  --text: #2b2722;
+  --muted: #7a7266;
+  --line: #e6dfd2;
+  --accent: #0f6e6e;
+  --accent-text: #ffffff;
+  --head: #0f4c4c;      /* top bar */
+  --head-text: #ffffff;
+  --shadow: 0 8px 30px rgba(60, 40, 10, .18);
+
+  /* status */
+  --red: #c8402f; --amber: #d98e04; --green: #3f8f55;
+  --blue: #4a7fb0; --grey: #a39a8b; --done: #7b7466;
+  --on-status: #ffffff; /* glyph colour drawn on top of a status colour */
+
+  /* note labels (the rest reuse status colours) */
+  --purple: #8b6cf0; --pink: #c4467d;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --r: 6px; --r-sm: 5px;
+    --bg: #0f1420; --surface: #181f2e; --surface-2: #212a3d;
+    --text: #e7ebf3; --muted: #9aa5ba; --line: #2a3347;
+    --accent: #6ea8ff; --accent-text: #0b1220;
+    --head: #0a0e17; --head-text: #e7ebf3;
+    --shadow: 0 8px 30px rgba(0, 0, 0, .6);
+    --red: #ff6b6b; --amber: #ffc233; --green: #3ddc84;
+    --blue: #5cb3ff; --grey: #74809a; --done: #8d9ab3;
+    --on-status: #0b1220;
+    --purple: #a58bff; --pink: #f07aa8;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --r: 6px; --r-sm: 5px;
+  --bg: #0f1420; --surface: #181f2e; --surface-2: #212a3d;
+  --text: #e7ebf3; --muted: #9aa5ba; --line: #2a3347;
+  --accent: #6ea8ff; --accent-text: #0b1220;
+  --head: #0a0e17; --head-text: #e7ebf3;
+  --shadow: 0 8px 30px rgba(0, 0, 0, .6);
+  --red: #ff6b6b; --amber: #ffc233; --green: #3ddc84;
+  --blue: #5cb3ff; --grey: #74809a; --done: #8d9ab3;
+  --on-status: #0b1220;
+  --purple: #a58bff; --pink: #f07aa8;
+}
+
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font)}
+button{font:inherit;cursor:pointer}
+.mock{background:var(--surface-2);border-bottom:1px solid var(--line);padding:8px 24px;font-size:.82rem;color:var(--muted)}
+.demobar{background:var(--surface-2);border-bottom:2px solid var(--amber);padding:9px 24px;display:flex;gap:10px 14px;align-items:center;flex-wrap:wrap;font-size:.86rem}
+.demobar b{color:var(--text)}.pill{font-size:.68rem;font-weight:700;background:var(--amber);color:var(--on-status);border-radius:99px;padding:2px 10px;letter-spacing:.04em}
+.demobar .sp{flex:1}
+.btn{background:var(--surface);border:1px solid var(--line);color:var(--text);border-radius:var(--r-sm);padding:5px 12px;font-size:.84rem}.btn.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+header{background:var(--head);color:var(--head-text);padding:10px 24px;display:flex;justify-content:space-between;align-items:center}header h1{font-size:1.05rem;margin:0}
+header .btn{background:transparent;color:inherit;border-color:currentColor}
+.tabs{background:var(--surface);border-bottom:1px solid var(--line);padding:0 24px;display:flex;gap:4px;overflow-x:auto}
+.tabs button{background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:12px 14px;white-space:nowrap}.tabs button.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.page{max-width:1180px;margin:0 auto;padding:8px 16px 40px}
+.status{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.8rem;color:var(--muted);padding:10px 2px 0}.dot{width:8px;height:8px;border-radius:50%;background:var(--blue)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin:14px 0}
+.p-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);gap:8px;flex-wrap:wrap;font-weight:600}.sub{font-size:.78rem;color:var(--muted);font-weight:400}
+table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{padding:9px 18px;text-align:right;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;white-space:nowrap}th:first-child,td:first-child{text-align:left}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--surface-2)}tr.total td{font-weight:700;background:var(--surface-2)}
+.pos{color:var(--green)}.neg{color:var(--red)}
+.pad{padding:14px 18px}ul{margin:6px 0;padding-left:20px;font-size:.9rem}li{margin:5px 0}.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+h2{font-size:1rem;margin:0 0 6px}code{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--surface-2);padding:1px 5px;border-radius:4px;font-size:.82rem}
+@media(max-width:700px){.cols{grid-template-columns:1fr}.mock,.demobar{padding:8px 14px}header,.tabs{padding-left:10px;padding-right:10px}.page{padding:4px 10px 30px}.panel{box-shadow:none}th,td{padding:9px 8px}th:first-child,td:first-child{padding-left:14px}.hide-sm{display:none}}
+</style></head><body>
+<div class="mock"><b>MOCKUP</b> — demo mode. Everything below the dark header is what a visitor to the GitHub Pages site would see. Resize to phone width to check.</div>
+
+<div class="demobar" role="status">
+  <span class="pill">DEMO</span>
+  <span><b>Sample data.</b> <span class="hide-sm">Change anything you like: it stays in this browser tab and is gone when you reload. Nothing is saved or sent.</span></span>
+  <span class="sp"></span>
+  <button class="btn">Reset sample data</button>
+  <button class="btn primary">Get the app</button>
+</div>
+<header><h1>My Dashboard</h1><span><button class="btn">Dark mode</button></span></header>
+<nav class="tabs"><button>Home</button><button class="on">Finance Dashboard</button><button>🏠 Property</button><button>📈 Portfolio</button><button>🏖️ Retirement</button></nav>
+<div class="page">
+ <div class="status"><span class="dot"></span><span>Sample data · nothing is saved</span><button class="btn" style="padding:2px 10px;font-size:.78rem">Download Excel copy</button></div>
+
+ <div class="panel"><div class="p-head"><span>Summary · All</span><span class="sub">1 USD = ₹ 84 (sample rate)</span></div>
+  <div style="overflow-x:auto"><table><thead><tr><th>Country</th><th>Assets</th><th>Liabilities</th><th>Net worth</th></tr></thead><tbody>
+   <tr><td>🇺🇸 USA</td><td>$ 312,400</td><td class="neg">$ 198,500</td><td class="pos">$ 113,900</td></tr>
+   <tr><td>🇮🇳 India</td><td>₹ 6,850,000</td><td class="neg">₹ 0</td><td class="pos">₹ 6,850,000</td></tr>
+   <tr class="total"><td>Total in USD</td><td>$ 393,952</td><td>$ 198,500</td><td>$ 195,452</td></tr></tbody></table></div></div>
+
+ <div class="cols">
+  <div class="panel"><div class="pad"><h2>What a visitor does not see</h2>
+   <ul><li>The Google setup and sign-in screens</li><li>The passphrase and unlock screens</li><li>“Lock now”, “Change passphrase”, file open and save</li><li>The Account dialog</li></ul>
+   <div class="sub">Everything else works as in the real app: all five tabs, charts, the Monte Carlo analysis, and the three saved versions (kept in the tab only).</div></div></div>
+  <div class="panel"><div class="pad"><h2>Where the sample data comes from</h2>
+   <p style="margin:6px 0;font-size:.9rem">One file in the repository, <code>demo/demo-data.json</code>, with made-up accounts, a property and mortgage, a portfolio and a retirement plan. Edit that file to change the showcase.</p>
+   <div class="sub">“Reset sample data” reloads it. “Get the app” links to the repository README.</div></div></div>
+ </div>
+</div></body></html>

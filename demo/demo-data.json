@@ -1,0 +1,1863 @@
+{
+ "version": 1,
+ "settings": {
+  "countries": [
+   "us",
+   "in"
+  ],
+  "propertyCountries": [
+   "us",
+   "in"
+  ],
+  "portfolioCountries": [
+   "us",
+   "in"
+  ],
+  "concentrationLimit": 10,
+  "rebalanceTol": 5,
+  "priceStaleDays": 30,
+  "parentLabel": "Parent",
+  "autoLockMin": 10,
+  "dueSoonDays": 30
+ },
+ "accounts": [
+  {
+   "id": "us-brokerage",
+   "country": "us",
+   "type": "asset",
+   "name": "Sample Brokerage",
+   "number": "0000-1111-2201",
+   "institution": "Sample Securities",
+   "owner": "joint",
+   "balance": 96000,
+   "mix": [
+    79.7,
+    6,
+    0,
+    14.3
+   ],
+   "maturityDate": "",
+   "maturityValue": null
+  },
+  {
+   "id": "us-401k",
+   "country": "us",
+   "type": "asset",
+   "name": "401(k)",
+   "number": "0000-1111-2202",
+   "institution": "Sample Retirement Co",
+   "owner": "mine",
+   "balance": 184000,
+   "mix": [
+    65.2,
+    0,
+    0,
+    34.8
+   ],
+   "maturityDate": "",
+   "maturityValue": null
+  },
+  {
+   "id": "us-checking",
+   "country": "us",
+   "type": "asset",
+   "name": "Checking",
+   "number": "0000-1111-2203",
+   "institution": "Sample Bank",
+   "owner": "mine",
+   "balance": 8200,
+   "mix": [
+    0,
+    100,
+    0,
+    0
+   ],
+   "maturityDate": "",
+   "maturityValue": null
+  },
+  {
+   "id": "us-savings",
+   "country": "us",
+   "type": "asset",
+   "name": "Savings",
+   "number": "0000-1111-2204",
+   "institution": "Sample Bank",
+   "owner": "joint",
+   "balance": 24000,
+   "mix": [
+    0,
+    100,
+    0,
+    0
+   ],
+   "maturityDate": "",
+   "maturityValue": null
+  },
+  {
+   "id": "us-cd",
+   "country": "us",
+   "type": "asset",
+   "name": "Certificate of deposit",
+   "number": "0000-1111-2205",
+   "institution": "Sample Bank",
+   "owner": "parent",
+   "balance": 20000,
+   "mix": [
+    0,
+    100,
+    0,
+    0
+   ],
+   "maturityDate": "2027-06-30",
+   "maturityValue": 21400
+  },
+  {
+   "id": "us-car",
+   "country": "us",
+   "type": "liability",
+   "name": "Car loan",
+   "number": "0000-1111-2206",
+   "institution": "Sample Auto Finance",
+   "owner": "mine",
+   "balance": 12300,
+   "mix": null,
+   "maturityDate": "",
+   "maturityValue": null
+  },
+  {
+   "id": "in-funds",
+   "country": "in",
+   "type": "asset",
+   "name": "Mutual funds",
+   "number": "0000-3333-4401",
+   "institution": "Sample AMC",
+   "owner": "mine",
+   "balance": 4200000,
+   "mix": [
+    83.3,
+    16.7,
+    0,
+    0
+   ],
+   "maturityDate": "",
+   "maturityValue": null
+  },
+  {
+   "id": "in-fd",
+   "country": "in",
+   "type": "asset",
+   "name": "Fixed deposit",
+   "number": "0000-3333-4402",
+   "institution": "Sample Bank India",
+   "owner": "parent",
+   "balance": 1200000,
+   "mix": [
+    0,
+    100,
+    0,
+    0
+   ],
+   "maturityDate": "2027-03-31",
+   "maturityValue": 1290000
+  },
+  {
+   "id": "in-savings",
+   "country": "in",
+   "type": "asset",
+   "name": "Savings account",
+   "number": "0000-3333-4403",
+   "institution": "Sample Bank India",
+   "owner": "mine",
+   "balance": 450000,
+   "mix": [
+    0,
+    100,
+    0,
+    0
+   ],
+   "maturityDate": "",
+   "maturityValue": null
+  }
+ ],
+ "policies": [
+  {
+   "id": "us-term",
+   "country": "us",
+   "name": "Term life",
+   "number": "POL-0001",
+   "company": "Sample Life Insurance",
+   "owner": "mine",
+   "deathBenefit": 500000,
+   "maturityDate": "2044-01-01",
+   "maturityValue": null
+  },
+  {
+   "id": "in-endow",
+   "country": "in",
+   "name": "Endowment plan",
+   "number": "POL-0002",
+   "company": "Sample Life India",
+   "owner": "mine",
+   "deathBenefit": 3000000,
+   "maturityDate": "2032-04-01",
+   "maturityValue": 5200000
+  }
+ ],
+ "balances": [
+  {
+   "date": "2026-01-05",
+   "accountId": "us-brokerage",
+   "amount": 83100
+  },
+  {
+   "date": "2026-01-05",
+   "accountId": "us-401k",
+   "amount": 159300
+  },
+  {
+   "date": "2026-01-05",
+   "accountId": "us-checking",
+   "amount": 7100
+  },
+  {
+   "date": "2026-01-05",
+   "accountId": "us-savings",
+   "amount": 20800
+  },
+  {
+   "date": "2026-01-05",
+   "accountId": "us-cd",
+   "amount": 17300
+  },
+  {
+   "date": "2026-01-05",
+   "accountId": "us-car",
+   "amount": 15400
+  },
+  {
+   "date": "2026-01-05",
+   "accountId": "in-funds",
+   "amount": 3637200
+  },
+  {
+   "date": "2026-01-05",
+   "accountId": "in-fd",
+   "amount": 1039200
+  },
+  {
+   "date": "2026-01-05",
+   "accountId": "in-savings",
+   "amount": 389700
+  },
+  {
+   "date": "2026-02-05",
+   "accountId": "us-brokerage",
+   "amount": 82800
+  },
+  {
+   "date": "2026-02-05",
+   "accountId": "us-401k",
+   "amount": 158600
+  },
+  {
+   "date": "2026-02-05",
+   "accountId": "us-checking",
+   "amount": 7100
+  },
+  {
+   "date": "2026-02-05",
+   "accountId": "us-savings",
+   "amount": 20700
+  },
+  {
+   "date": "2026-02-05",
+   "accountId": "us-cd",
+   "amount": 17200
+  },
+  {
+   "date": "2026-02-05",
+   "accountId": "us-car",
+   "amount": 15100
+  },
+  {
+   "date": "2026-02-05",
+   "accountId": "in-funds",
+   "amount": 3620400
+  },
+  {
+   "date": "2026-02-05",
+   "accountId": "in-fd",
+   "amount": 1034400
+  },
+  {
+   "date": "2026-02-05",
+   "accountId": "in-savings",
+   "amount": 387900
+  },
+  {
+   "date": "2026-03-05",
+   "accountId": "us-brokerage",
+   "amount": 85800
+  },
+  {
+   "date": "2026-03-05",
+   "accountId": "us-401k",
+   "amount": 164500
+  },
+  {
+   "date": "2026-03-05",
+   "accountId": "us-checking",
+   "amount": 7300
+  },
+  {
+   "date": "2026-03-05",
+   "accountId": "us-savings",
+   "amount": 21500
+  },
+  {
+   "date": "2026-03-05",
+   "accountId": "us-cd",
+   "amount": 17900
+  },
+  {
+   "date": "2026-03-05",
+   "accountId": "us-car",
+   "amount": 14800
+  },
+  {
+   "date": "2026-03-05",
+   "accountId": "in-funds",
+   "amount": 3754800
+  },
+  {
+   "date": "2026-03-05",
+   "accountId": "in-fd",
+   "amount": 1072800
+  },
+  {
+   "date": "2026-03-05",
+   "accountId": "in-savings",
+   "amount": 402300
+  },
+  {
+   "date": "2026-04-05",
+   "accountId": "us-brokerage",
+   "amount": 87200
+  },
+  {
+   "date": "2026-04-05",
+   "accountId": "us-401k",
+   "amount": 167100
+  },
+  {
+   "date": "2026-04-05",
+   "accountId": "us-checking",
+   "amount": 7400
+  },
+  {
+   "date": "2026-04-05",
+   "accountId": "us-savings",
+   "amount": 21800
+  },
+  {
+   "date": "2026-04-05",
+   "accountId": "us-cd",
+   "amount": 18200
+  },
+  {
+   "date": "2026-04-05",
+   "accountId": "us-car",
+   "amount": 14500
+  },
+  {
+   "date": "2026-04-05",
+   "accountId": "in-funds",
+   "amount": 3813600
+  },
+  {
+   "date": "2026-04-05",
+   "accountId": "in-fd",
+   "amount": 1089600
+  },
+  {
+   "date": "2026-04-05",
+   "accountId": "in-savings",
+   "amount": 408600
+  },
+  {
+   "date": "2026-05-05",
+   "accountId": "us-brokerage",
+   "amount": 86800
+  },
+  {
+   "date": "2026-05-05",
+   "accountId": "us-401k",
+   "amount": 166300
+  },
+  {
+   "date": "2026-05-05",
+   "accountId": "us-checking",
+   "amount": 7400
+  },
+  {
+   "date": "2026-05-05",
+   "accountId": "us-savings",
+   "amount": 21700
+  },
+  {
+   "date": "2026-05-05",
+   "accountId": "us-cd",
+   "amount": 18100
+  },
+  {
+   "date": "2026-05-05",
+   "accountId": "us-car",
+   "amount": 14100
+  },
+  {
+   "date": "2026-05-05",
+   "accountId": "in-funds",
+   "amount": 3796800
+  },
+  {
+   "date": "2026-05-05",
+   "accountId": "in-fd",
+   "amount": 1084800
+  },
+  {
+   "date": "2026-05-05",
+   "accountId": "in-savings",
+   "amount": 406800
+  },
+  {
+   "date": "2026-06-05",
+   "accountId": "us-brokerage",
+   "amount": 89900
+  },
+  {
+   "date": "2026-06-05",
+   "accountId": "us-401k",
+   "amount": 172200
+  },
+  {
+   "date": "2026-06-05",
+   "accountId": "us-checking",
+   "amount": 7700
+  },
+  {
+   "date": "2026-06-05",
+   "accountId": "us-savings",
+   "amount": 22500
+  },
+  {
+   "date": "2026-06-05",
+   "accountId": "us-cd",
+   "amount": 18700
+  },
+  {
+   "date": "2026-06-05",
+   "accountId": "us-car",
+   "amount": 13800
+  },
+  {
+   "date": "2026-06-05",
+   "accountId": "in-funds",
+   "amount": 3931200
+  },
+  {
+   "date": "2026-06-05",
+   "accountId": "in-fd",
+   "amount": 1123200
+  },
+  {
+   "date": "2026-06-05",
+   "accountId": "in-savings",
+   "amount": 421200
+  },
+  {
+   "date": "2026-07-05",
+   "accountId": "us-brokerage",
+   "amount": 91200
+  },
+  {
+   "date": "2026-07-05",
+   "accountId": "us-401k",
+   "amount": 174800
+  },
+  {
+   "date": "2026-07-05",
+   "accountId": "us-checking",
+   "amount": 7800
+  },
+  {
+   "date": "2026-07-05",
+   "accountId": "us-savings",
+   "amount": 22800
+  },
+  {
+   "date": "2026-07-05",
+   "accountId": "us-cd",
+   "amount": 19000
+  },
+  {
+   "date": "2026-07-05",
+   "accountId": "us-car",
+   "amount": 13500
+  },
+  {
+   "date": "2026-07-05",
+   "accountId": "in-funds",
+   "amount": 3990000
+  },
+  {
+   "date": "2026-07-05",
+   "accountId": "in-fd",
+   "amount": 1140000
+  },
+  {
+   "date": "2026-07-05",
+   "accountId": "in-savings",
+   "amount": 427500
+  },
+  {
+   "date": "2026-08-05",
+   "accountId": "us-brokerage",
+   "amount": 90800
+  },
+  {
+   "date": "2026-08-05",
+   "accountId": "us-401k",
+   "amount": 174100
+  },
+  {
+   "date": "2026-08-05",
+   "accountId": "us-checking",
+   "amount": 7800
+  },
+  {
+   "date": "2026-08-05",
+   "accountId": "us-savings",
+   "amount": 22700
+  },
+  {
+   "date": "2026-08-05",
+   "accountId": "us-cd",
+   "amount": 18900
+  },
+  {
+   "date": "2026-08-05",
+   "accountId": "us-car",
+   "amount": 13200
+  },
+  {
+   "date": "2026-08-05",
+   "accountId": "in-funds",
+   "amount": 3973200
+  },
+  {
+   "date": "2026-08-05",
+   "accountId": "in-fd",
+   "amount": 1135200
+  },
+  {
+   "date": "2026-08-05",
+   "accountId": "in-savings",
+   "amount": 425700
+  },
+  {
+   "date": "2026-09-05",
+   "accountId": "us-brokerage",
+   "amount": 93900
+  },
+  {
+   "date": "2026-09-05",
+   "accountId": "us-401k",
+   "amount": 180000
+  },
+  {
+   "date": "2026-09-05",
+   "accountId": "us-checking",
+   "amount": 8000
+  },
+  {
+   "date": "2026-09-05",
+   "accountId": "us-savings",
+   "amount": 23500
+  },
+  {
+   "date": "2026-09-05",
+   "accountId": "us-cd",
+   "amount": 19600
+  },
+  {
+   "date": "2026-09-05",
+   "accountId": "us-car",
+   "amount": 12900
+  },
+  {
+   "date": "2026-09-05",
+   "accountId": "in-funds",
+   "amount": 4107600
+  },
+  {
+   "date": "2026-09-05",
+   "accountId": "in-fd",
+   "amount": 1173600
+  },
+  {
+   "date": "2026-09-05",
+   "accountId": "in-savings",
+   "amount": 440100
+  },
+  {
+   "date": "2026-10-05",
+   "accountId": "us-brokerage",
+   "amount": 95200
+  },
+  {
+   "date": "2026-10-05",
+   "accountId": "us-401k",
+   "amount": 182500
+  },
+  {
+   "date": "2026-10-05",
+   "accountId": "us-checking",
+   "amount": 8100
+  },
+  {
+   "date": "2026-10-05",
+   "accountId": "us-savings",
+   "amount": 23800
+  },
+  {
+   "date": "2026-10-05",
+   "accountId": "us-cd",
+   "amount": 19800
+  },
+  {
+   "date": "2026-10-05",
+   "accountId": "us-car",
+   "amount": 12600
+  },
+  {
+   "date": "2026-10-05",
+   "accountId": "in-funds",
+   "amount": 4166400
+  },
+  {
+   "date": "2026-10-05",
+   "accountId": "in-fd",
+   "amount": 1190400
+  },
+  {
+   "date": "2026-10-05",
+   "accountId": "in-savings",
+   "amount": 446400
+  },
+  {
+   "date": "2026-11-05",
+   "accountId": "us-brokerage",
+   "amount": 96000
+  },
+  {
+   "date": "2026-11-05",
+   "accountId": "us-401k",
+   "amount": 184000
+  },
+  {
+   "date": "2026-11-05",
+   "accountId": "us-checking",
+   "amount": 8200
+  },
+  {
+   "date": "2026-11-05",
+   "accountId": "us-savings",
+   "amount": 24000
+  },
+  {
+   "date": "2026-11-05",
+   "accountId": "us-cd",
+   "amount": 20000
+  },
+  {
+   "date": "2026-11-05",
+   "accountId": "us-car",
+   "amount": 12300
+  },
+  {
+   "date": "2026-11-05",
+   "accountId": "in-funds",
+   "amount": 4200000
+  },
+  {
+   "date": "2026-11-05",
+   "accountId": "in-fd",
+   "amount": 1200000
+  },
+  {
+   "date": "2026-11-05",
+   "accountId": "in-savings",
+   "amount": 450000
+  }
+ ],
+ "rates": [
+  {
+   "date": "2026-01-05",
+   "from": "USD",
+   "to": "INR",
+   "rate": 82.9
+  },
+  {
+   "date": "2026-02-05",
+   "from": "USD",
+   "to": "INR",
+   "rate": 83.01
+  },
+  {
+   "date": "2026-03-05",
+   "from": "USD",
+   "to": "INR",
+   "rate": 83.12
+  },
+  {
+   "date": "2026-04-05",
+   "from": "USD",
+   "to": "INR",
+   "rate": 83.23
+  },
+  {
+   "date": "2026-05-05",
+   "from": "USD",
+   "to": "INR",
+   "rate": 83.34
+  },
+  {
+   "date": "2026-06-05",
+   "from": "USD",
+   "to": "INR",
+   "rate": 83.45
+  },
+  {
+   "date": "2026-07-05",
+   "from": "USD",
+   "to": "INR",
+   "rate": 83.56
+  },
+  {
+   "date": "2026-08-05",
+   "from": "USD",
+   "to": "INR",
+   "rate": 83.67
+  },
+  {
+   "date": "2026-09-05",
+   "from": "USD",
+   "to": "INR",
+   "rate": 83.78
+  },
+  {
+   "date": "2026-10-05",
+   "from": "USD",
+   "to": "INR",
+   "rate": 83.89
+  },
+  {
+   "date": "2026-11-05",
+   "from": "USD",
+   "to": "INR",
+   "rate": 84
+  }
+ ],
+ "properties": [
+  {
+   "id": "prop-home",
+   "name": "Maple Street home",
+   "country": "us",
+   "address": "14 Maple St, Sampleville",
+   "type": "primary",
+   "owner": "joint",
+   "purchaseDate": "2019-06-03",
+   "purchasePrice": 320000,
+   "bedrooms": 3,
+   "bathrooms": 2,
+   "sizeSqft": 1850,
+   "taxYear": 4800,
+   "insuranceYear": 1500,
+   "hoaMonth": null,
+   "taxDue": "2026-12-15",
+   "notes": ""
+  },
+  {
+   "id": "prop-flat",
+   "name": "City flat",
+   "country": "in",
+   "address": "Sample Nagar, Pune",
+   "type": "investment",
+   "owner": "mine",
+   "purchaseDate": "2018-02-14",
+   "purchasePrice": 5200000,
+   "bedrooms": 2,
+   "bathrooms": 2,
+   "sizeSqft": 1100,
+   "taxYear": null,
+   "insuranceYear": null,
+   "hoaMonth": null,
+   "taxDue": "",
+   "notes": ""
+  }
+ ],
+ "propertyValues": [
+  {
+   "id": "50eb6dd4-3217-4c4a-9da9-a1ebd7f03845",
+   "propertyId": "prop-home",
+   "date": "2019-06-03",
+   "value": 320000,
+   "source": "purchase",
+   "notes": ""
+  },
+  {
+   "id": "6fef85de-5554-4d40-acf3-a587cfbcae2e",
+   "propertyId": "prop-flat",
+   "date": "2018-02-14",
+   "value": 5200000,
+   "source": "purchase",
+   "notes": ""
+  },
+  {
+   "id": "v1",
+   "propertyId": "prop-home",
+   "date": "2025-11-12",
+   "value": 385000,
+   "source": "own",
+   "notes": ""
+  },
+  {
+   "id": "v2",
+   "propertyId": "prop-home",
+   "date": "2026-03-10",
+   "value": 392000,
+   "source": "zillow",
+   "notes": ""
+  },
+  {
+   "id": "v3",
+   "propertyId": "prop-home",
+   "date": "2026-10-12",
+   "value": 405000,
+   "source": "zillow",
+   "notes": ""
+  },
+  {
+   "id": "v4",
+   "propertyId": "prop-flat",
+   "date": "2025-11-20",
+   "value": 7100000,
+   "source": "agent",
+   "notes": ""
+  },
+  {
+   "id": "v5",
+   "propertyId": "prop-flat",
+   "date": "2026-10-18",
+   "value": 7500000,
+   "source": "agent",
+   "notes": ""
+  }
+ ],
+ "loans": [
+  {
+   "id": "loan-home",
+   "propertyId": "prop-home",
+   "lender": "Sample Lender",
+   "number": "LN-0001",
+   "originalAmount": 256000,
+   "startDate": "2019-06-03",
+   "termYears": 30,
+   "rate": 3.25,
+   "rateType": "fixed",
+   "monthlyPayment": 1820,
+   "escrow": 640,
+   "paymentDay": 1,
+   "notes": ""
+  }
+ ],
+ "loanUpdates": [
+  {
+   "id": "lu0",
+   "loanId": "loan-home",
+   "date": "2026-06-01",
+   "balance": 219900,
+   "principal": 500,
+   "interest": 590,
+   "escrow": 640,
+   "notes": ""
+  },
+  {
+   "id": "lu1",
+   "loanId": "loan-home",
+   "date": "2026-07-01",
+   "balance": 219400,
+   "principal": 500,
+   "interest": 589,
+   "escrow": 640,
+   "notes": ""
+  },
+  {
+   "id": "lu2",
+   "loanId": "loan-home",
+   "date": "2026-08-01",
+   "balance": 218900,
+   "principal": 500,
+   "interest": 588,
+   "escrow": 640,
+   "notes": ""
+  },
+  {
+   "id": "lu3",
+   "loanId": "loan-home",
+   "date": "2026-09-01",
+   "balance": 218400,
+   "principal": 500,
+   "interest": 587,
+   "escrow": 640,
+   "notes": ""
+  },
+  {
+   "id": "lu4",
+   "loanId": "loan-home",
+   "date": "2026-10-01",
+   "balance": 217900,
+   "principal": 500,
+   "interest": 586,
+   "escrow": 640,
+   "notes": ""
+  },
+  {
+   "id": "lu5",
+   "loanId": "loan-home",
+   "date": "2026-11-01",
+   "balance": 217400,
+   "principal": 500,
+   "interest": 585,
+   "escrow": 640,
+   "notes": ""
+  }
+ ],
+ "portfolios": [
+  {
+   "id": "pf-brokerage",
+   "name": "Sample Brokerage",
+   "accountId": "us-brokerage",
+   "reconciled": true,
+   "openingBalance": 96000,
+   "targets": {
+    "equities": 60,
+    "bonds": 25,
+    "cash": 10,
+    "metals": 5
+   }
+  },
+  {
+   "id": "pf-401k",
+   "name": "401(k)",
+   "accountId": "us-401k",
+   "reconciled": true,
+   "openingBalance": 184000,
+   "targets": null
+  },
+  {
+   "id": "pf-funds",
+   "name": "Mutual funds",
+   "accountId": "in-funds",
+   "reconciled": true,
+   "openingBalance": 4200000,
+   "targets": null
+  }
+ ],
+ "holdings": [
+  {
+   "ticker": "VTI",
+   "type": "etf",
+   "cls": "equities",
+   "mix": null,
+   "sector": "Broad market",
+   "geo": "US",
+   "trackBy": "units",
+   "units": 160,
+   "price": 250,
+   "value": null,
+   "priceDate": "2026-11-15",
+   "notes": "",
+   "id": "h1",
+   "portfolioId": "pf-brokerage",
+   "name": "Total US Stock Market ETF"
+  },
+  {
+   "ticker": "VXUS",
+   "type": "etf",
+   "cls": "equities",
+   "mix": null,
+   "sector": "Broad market",
+   "geo": "International",
+   "trackBy": "units",
+   "units": 300,
+   "price": 60,
+   "value": null,
+   "priceDate": "2026-11-15",
+   "notes": "",
+   "id": "h2",
+   "portfolioId": "pf-brokerage",
+   "name": "Total International Stock ETF"
+  },
+  {
+   "ticker": "STC",
+   "type": "stock",
+   "cls": "equities",
+   "mix": null,
+   "sector": "Technology",
+   "geo": "US",
+   "trackBy": "units",
+   "units": 40,
+   "price": 225,
+   "value": null,
+   "priceDate": "2026-11-15",
+   "notes": "",
+   "id": "h3",
+   "portfolioId": "pf-brokerage",
+   "name": "Sample Tech Co"
+  },
+  {
+   "ticker": "BND",
+   "type": "etf",
+   "cls": "bonds",
+   "mix": null,
+   "sector": "Bonds",
+   "geo": "US",
+   "trackBy": "units",
+   "units": 160,
+   "price": 75,
+   "value": null,
+   "priceDate": "2026-11-15",
+   "notes": "",
+   "id": "h4",
+   "portfolioId": "pf-brokerage",
+   "name": "Total Bond Market ETF"
+  },
+  {
+   "ticker": "SGOV",
+   "type": "etf",
+   "cls": "cash",
+   "mix": null,
+   "sector": "Cash",
+   "geo": "US",
+   "trackBy": "units",
+   "units": 50,
+   "price": 100,
+   "value": null,
+   "priceDate": "2026-11-15",
+   "notes": "",
+   "id": "h5",
+   "portfolioId": "pf-brokerage",
+   "name": "Treasury Bill ETF"
+  },
+  {
+   "ticker": "SPXFUND",
+   "type": "fund",
+   "cls": "equities",
+   "mix": null,
+   "sector": "Broad market",
+   "geo": "US",
+   "trackBy": "units",
+   "units": 120,
+   "price": 1000,
+   "value": null,
+   "priceDate": "2026-11-15",
+   "notes": "",
+   "id": "h6",
+   "portfolioId": "pf-401k",
+   "name": "S&P 500 Index Fund"
+  },
+  {
+   "ticker": "BONDFUND",
+   "type": "fund",
+   "cls": "bonds",
+   "mix": null,
+   "sector": "Bonds",
+   "geo": "US",
+   "trackBy": "units",
+   "units": 640,
+   "price": 100,
+   "value": null,
+   "priceDate": "2026-11-15",
+   "notes": "",
+   "id": "h7",
+   "portfolioId": "pf-401k",
+   "name": "Total Bond Fund"
+  },
+  {
+   "ticker": "NIFTYIDX",
+   "type": "fund",
+   "cls": "equities",
+   "mix": null,
+   "sector": "Broad market",
+   "geo": "India",
+   "trackBy": "units",
+   "units": 21000,
+   "price": 100,
+   "value": null,
+   "priceDate": "2026-11-15",
+   "notes": "",
+   "id": "h8",
+   "portfolioId": "pf-funds",
+   "name": "Nifty 50 Index Fund"
+  },
+  {
+   "ticker": "FLEXICAP",
+   "type": "fund",
+   "cls": "equities",
+   "mix": null,
+   "sector": "Broad market",
+   "geo": "India",
+   "trackBy": "units",
+   "units": 14000,
+   "price": 100,
+   "value": null,
+   "priceDate": "2026-11-15",
+   "notes": "",
+   "id": "h9",
+   "portfolioId": "pf-funds",
+   "name": "Flexi-cap Fund"
+  },
+  {
+   "ticker": "LIQUID",
+   "type": "fund",
+   "cls": "cash",
+   "mix": null,
+   "sector": "Cash",
+   "geo": "India",
+   "trackBy": "units",
+   "units": 7000,
+   "price": 100,
+   "value": null,
+   "priceDate": "2026-11-15",
+   "notes": "",
+   "id": "h10",
+   "portfolioId": "pf-funds",
+   "name": "Liquid Fund"
+  },
+  {
+   "ticker": "",
+   "type": "unallocated",
+   "cls": "unallocated",
+   "mix": null,
+   "sector": "",
+   "geo": "",
+   "trackBy": "value",
+   "units": null,
+   "price": null,
+   "value": 12000,
+   "priceDate": "2026-11-15",
+   "notes": "",
+   "id": "b5aaf3a4-71ef-4af9-bc16-db36f10b69d5",
+   "portfolioId": "pf-brokerage",
+   "name": "Unallocated (difference when linked)"
+  }
+ ],
+ "retirement": {
+  "plan": {
+   "age": 38,
+   "retAge": 62,
+   "life": 95,
+   "currency": "USD",
+   "ac": 18000,
+   "g": 3,
+   "spend": 70000,
+   "tax": 12,
+   "selected": [
+    "us-brokerage",
+    "us-401k",
+    "in-funds"
+   ],
+   "adjustment": 0,
+   "eqOverride": null,
+   "income": [
+    {
+     "id": "inc-ss",
+     "name": "Social Security",
+     "amt": 22000,
+     "cur": "USD",
+     "from": 67,
+     "to": ""
+    },
+    {
+     "id": "inc-pf",
+     "name": "Provident fund pension",
+     "amt": 600000,
+     "cur": "INR",
+     "from": 60,
+     "to": ""
+    }
+   ],
+   "y": 4.4,
+   "inf": 3.2,
+   "prem": 4.5,
+   "asOf": "2026-11-15"
+  },
+  "mc": {
+   "w": null,
+   "ret": {
+    "equities": null,
+    "bonds": null,
+    "cash": 0.5,
+    "metals": 1
+   },
+   "vol": {
+    "equities": 17,
+    "bonds": 7,
+    "cash": 1.5,
+    "metals": 15
+   },
+   "cor": {
+    "eqbd": 0.1,
+    "eqcash": 0,
+    "eqmt": 0.05,
+    "bdcash": 0.2,
+    "bdmt": 0.1,
+    "cashmt": 0
+   },
+   "rule": "fixed",
+   "cut": 25,
+   "target": 85,
+   "n": 5000,
+   "seed": 12345
+  },
+  "versions": [
+   {
+    "id": "ver-1",
+    "name": "Base case",
+    "savedAt": "2026-11-10",
+    "plan": {
+     "age": 38,
+     "retAge": 62,
+     "life": 95,
+     "currency": "USD",
+     "ac": 18000,
+     "g": 3,
+     "spend": 70000,
+     "tax": 12,
+     "selected": [
+      "us-brokerage",
+      "us-401k",
+      "in-funds"
+     ],
+     "adjustment": 0,
+     "eqOverride": null,
+     "income": [
+      {
+       "id": "inc-ss",
+       "name": "Social Security",
+       "amt": 22000,
+       "cur": "USD",
+       "from": 67,
+       "to": ""
+      },
+      {
+       "id": "inc-pf",
+       "name": "Provident fund pension",
+       "amt": 600000,
+       "cur": "INR",
+       "from": 60,
+       "to": ""
+      }
+     ],
+     "y": 4.4,
+     "inf": 3.2,
+     "prem": 4.5,
+     "asOf": "2026-11-15"
+    },
+    "mc": {
+     "w": null,
+     "ret": {
+      "equities": null,
+      "bonds": null,
+      "cash": 0.5,
+      "metals": 1
+     },
+     "vol": {
+      "equities": 17,
+      "bonds": 7,
+      "cash": 1.5,
+      "metals": 15
+     },
+     "cor": {
+      "eqbd": 0.1,
+      "eqcash": 0,
+      "eqmt": 0.05,
+      "bdcash": 0.2,
+      "bdmt": 0.1,
+      "cashmt": 0
+     },
+     "rule": "fixed",
+     "cut": 25,
+     "target": 85,
+     "n": 5000,
+     "seed": 12345
+    },
+    "summary": {
+     "succ": 0.7392,
+     "medRet": 1530769.5,
+     "safe": 61267.08984375,
+     "medEnd": 1600493.125,
+     "savings": 330000,
+     "med50": [
+      [
+       38,
+       330000
+      ],
+      [
+       39,
+       359190
+      ],
+      [
+       40,
+       391331
+      ],
+      [
+       41,
+       424768
+      ],
+      [
+       42,
+       461714
+      ],
+      [
+       43,
+       495208
+      ],
+      [
+       44,
+       533635
+      ],
+      [
+       45,
+       571938
+      ],
+      [
+       46,
+       610316
+      ],
+      [
+       47,
+       649619
+      ],
+      [
+       48,
+       695378
+      ],
+      [
+       49,
+       743991
+      ],
+      [
+       50,
+       791018
+      ],
+      [
+       51,
+       837715
+      ],
+      [
+       52,
+       892043
+      ],
+      [
+       53,
+       945818
+      ],
+      [
+       54,
+       1002165
+      ],
+      [
+       55,
+       1051865
+      ],
+      [
+       56,
+       1106805
+      ],
+      [
+       57,
+       1174313
+      ],
+      [
+       58,
+       1247567
+      ],
+      [
+       59,
+       1312719
+      ],
+      [
+       60,
+       1377785
+      ],
+      [
+       61,
+       1438875
+      ],
+      [
+       62,
+       1530770
+      ],
+      [
+       63,
+       1524659
+      ],
+      [
+       64,
+       1513709
+      ],
+      [
+       65,
+       1486482
+      ],
+      [
+       66,
+       1480377
+      ],
+      [
+       67,
+       1447840
+      ],
+      [
+       68,
+       1463862
+      ],
+      [
+       69,
+       1475237
+      ],
+      [
+       70,
+       1465441
+      ],
+      [
+       71,
+       1471738
+      ],
+      [
+       72,
+       1475449
+      ],
+      [
+       73,
+       1475794
+      ],
+      [
+       74,
+       1466628
+      ],
+      [
+       75,
+       1472785
+      ],
+      [
+       76,
+       1474333
+      ],
+      [
+       77,
+       1473387
+      ],
+      [
+       78,
+       1482041
+      ],
+      [
+       79,
+       1495412
+      ],
+      [
+       80,
+       1506048
+      ],
+      [
+       81,
+       1515342
+      ],
+      [
+       82,
+       1530578
+      ],
+      [
+       83,
+       1540078
+      ],
+      [
+       84,
+       1530447
+      ],
+      [
+       85,
+       1520586
+      ],
+      [
+       86,
+       1533507
+      ],
+      [
+       87,
+       1535847
+      ],
+      [
+       88,
+       1556001
+      ],
+      [
+       89,
+       1553187
+      ],
+      [
+       90,
+       1554647
+      ],
+      [
+       91,
+       1552324
+      ],
+      [
+       92,
+       1579428
+      ],
+      [
+       93,
+       1585887
+      ],
+      [
+       94,
+       1597599
+      ],
+      [
+       95,
+       1600493
+      ]
+     ]
+    }
+   },
+   {
+    "id": "ver-2",
+    "name": "Retire at 65",
+    "savedAt": "2026-11-12",
+    "plan": {
+     "age": 38,
+     "retAge": 65,
+     "life": 95,
+     "currency": "USD",
+     "ac": 18000,
+     "g": 3,
+     "spend": 65000,
+     "tax": 12,
+     "selected": [
+      "us-brokerage",
+      "us-401k",
+      "in-funds"
+     ],
+     "adjustment": 0,
+     "eqOverride": null,
+     "income": [
+      {
+       "id": "inc-ss",
+       "name": "Social Security",
+       "amt": 22000,
+       "cur": "USD",
+       "from": 67,
+       "to": ""
+      },
+      {
+       "id": "inc-pf",
+       "name": "Provident fund pension",
+       "amt": 600000,
+       "cur": "INR",
+       "from": 60,
+       "to": ""
+      }
+     ],
+     "y": 4.4,
+     "inf": 3.2,
+     "prem": 4.5,
+     "asOf": "2026-11-15"
+    },
+    "mc": {
+     "w": null,
+     "ret": {
+      "equities": null,
+      "bonds": null,
+      "cash": 0.5,
+      "metals": 1
+     },
+     "vol": {
+      "equities": 17,
+      "bonds": 7,
+      "cash": 1.5,
+      "metals": 15
+     },
+     "cor": {
+      "eqbd": 0.1,
+      "eqcash": 0,
+      "eqmt": 0.05,
+      "bdcash": 0.2,
+      "bdmt": 0.1,
+      "cashmt": 0
+     },
+     "rule": "fixed",
+     "cut": 25,
+     "target": 85,
+     "n": 5000,
+     "seed": 12345
+    },
+    "summary": {
+     "succ": 0.9,
+     "medRet": 1773998.25,
+     "safe": 71089.78271484375,
+     "medEnd": 2805625.75,
+     "savings": 330000,
+     "med50": [
+      [
+       38,
+       330000
+      ],
+      [
+       39,
+       359190
+      ],
+      [
+       40,
+       391331
+      ],
+      [
+       41,
+       424768
+      ],
+      [
+       42,
+       461714
+      ],
+      [
+       43,
+       495208
+      ],
+      [
+       44,
+       533635
+      ],
+      [
+       45,
+       571938
+      ],
+      [
+       46,
+       610316
+      ],
+      [
+       47,
+       649619
+      ],
+      [
+       48,
+       695378
+      ],
+      [
+       49,
+       743991
+      ],
+      [
+       50,
+       791018
+      ],
+      [
+       51,
+       837715
+      ],
+      [
+       52,
+       892043
+      ],
+      [
+       53,
+       945818
+      ],
+      [
+       54,
+       1002165
+      ],
+      [
+       55,
+       1051865
+      ],
+      [
+       56,
+       1106805
+      ],
+      [
+       57,
+       1174313
+      ],
+      [
+       58,
+       1247567
+      ],
+      [
+       59,
+       1312719
+      ],
+      [
+       60,
+       1377785
+      ],
+      [
+       61,
+       1438875
+      ],
+      [
+       62,
+       1530770
+      ],
+      [
+       63,
+       1618423
+      ],
+      [
+       64,
+       1708673
+      ],
+      [
+       65,
+       1773998
+      ],
+      [
+       66,
+       1778821
+      ],
+      [
+       67,
+       1782304
+      ],
+      [
+       68,
+       1799935
+      ],
+      [
+       69,
+       1826823
+      ],
+      [
+       70,
+       1849117
+      ],
+      [
+       71,
+       1873640
+      ],
+      [
+       72,
+       1911075
+      ],
+      [
+       73,
+       1926858
+      ],
+      [
+       74,
+       1937883
+      ],
+      [
+       75,
+       1972678
+      ],
+      [
+       76,
+       1994012
+      ],
+      [
+       77,
+       2017841
+      ],
+      [
+       78,
+       2077026
+      ],
+      [
+       79,
+       2095017
+      ],
+      [
+       80,
+       2119344
+      ],
+      [
+       81,
+       2174027
+      ],
+      [
+       82,
+       2218742
+      ],
+      [
+       83,
+       2289403
+      ],
+      [
+       84,
+       2332954
+      ],
+      [
+       85,
+       2355325
+      ],
+      [
+       86,
+       2390338
+      ],
+      [
+       87,
+       2435731
+      ],
+      [
+       88,
+       2483838
+      ],
+      [
+       89,
+       2523538
+      ],
+      [
+       90,
+       2556976
+      ],
+      [
+       91,
+       2583770
+      ],
+      [
+       92,
+       2629968
+      ],
+      [
+       93,
+       2699578
+      ],
+      [
+       94,
+       2768567
+      ],
+      [
+       95,
+       2805626
+      ]
+     ]
+    }
+   }
+  ]
+ }
+}

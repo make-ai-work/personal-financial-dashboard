@@ -12,6 +12,7 @@ import { ClientIdForm, Setup } from './auth/Setup.jsx'
 import { shortId } from './lib/google.js'
 import { Modal } from './finance/ui.jsx'
 import { PHASE } from './lib/auth.js'
+import { APP_URL } from './lib/demo.js'
 
 // Add future sections here: each entry becomes a top-level tab.
 const TABS = [
@@ -48,11 +49,11 @@ function Account() {
         <Modal title="Account" onClose={() => setOpen(false)} footer={<><button className="btn" onClick={() => setOpen(false)}>Close</button><button className="btn primary" onClick={signOut}>Sign out</button></>}>
           <p className="note">Signed in as <b>{auth.user.name}</b> ({auth.user.email}). This is a demo sign-in, not a real Google account.</p>
           <div className="acctrow">
-            <div><b>Google connection</b><div className="hint">{auth.clientId ? <>Client ID <code>{shortId(auth.clientId)}</code></> : 'Not set up (demo sign-in)'}</div></div>
-            <button className="btn sm" onClick={() => setEditId(true)}>{auth.clientId ? 'Change' : 'Set up'}</button>
+            <div><b>Google connection</b><div className="hint">{auth.demo ? 'Not available in the demo' : auth.clientId ? <>Client ID <code>{shortId(auth.clientId)}</code></> : 'Not set up (demo sign-in)'}</div></div>
+            <button className="btn sm" disabled={auth.demo} title={auth.demo ? 'Not available in the demo' : undefined} onClick={() => setEditId(true)}>{auth.clientId ? 'Change' : 'Set up'}</button>
           </div>
           <label className="check">
-            <input type="checkbox" checked={auth.mfaRequired} onChange={(e) => auth.setMfaRequired(e.target.checked)} /> Preview the two-step verification screen at sign-in
+            <input type="checkbox" disabled={auth.demo} checked={auth.mfaRequired} onChange={(e) => auth.setMfaRequired(e.target.checked)} /> Preview the two-step verification screen at sign-in
           </label>
           <p className="note">Two-step verification is built into the sign-in flow but is on hold: nothing is enforced, and any 6-digit code passes.</p>
         </Modal>
@@ -63,6 +64,20 @@ function Account() {
         </Modal>
       )}
     </>
+  )
+}
+
+// Shown on every screen of the demo site.
+function DemoBar() {
+  const vault = useVault()
+  return (
+    <div className="demobar" role="status">
+      <span className="pill">DEMO</span>
+      <span><b>Sample data.</b> <span className="hide-sm">Change anything you like: it stays in this browser tab and is gone when you reload. Nothing is saved or sent.</span></span>
+      <span className="sp" />
+      <button className="btn" onClick={() => vault.resetDemo()}>Reset sample data</button>
+      <a className="btn primary" href={APP_URL} target="_blank" rel="noreferrer">Get the app</a>
+    </div>
   )
 }
 
@@ -108,6 +123,7 @@ function Shell() {
   return (
     <VaultProvider>
       <NavContext.Provider value={nav}>
+        {auth.demo && <DemoBar />}
         {header(<Account />)}
         <nav className="tabs" role="tablist">
           {TABS.map((t) => (
