@@ -9,5 +9,3 @@ dist
 *.wvault
 dist-demo
 
-# Written by the demo build (scripts/fetch-ticker-snapshot.mjs); never committed
-public/ticker-snapshot.json

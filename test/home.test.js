@@ -342,3 +342,32 @@ test('place weather: uses the built-in coordinates (no city lookup) and adds the
   const noAir = await loadPlaceWeather(EXCHANGE_CITIES.in, 'C', { fetchImpl: make(false), delays: [] })
   assert.equal(noAir.temp, 27); assert.equal(noAir.aqi, null)
 })
+
+// ---- demo: token from the public key ----
+import { buildRequests as build2, fetchToken, demoAuth, forgetToken, tokenUrl, explainError as explain2 } from '../src/lib/ticker.js'
+
+test('token: asked with only the public key; requests then carry jwt_token and no access_key', () => {
+  assert.equal(new URL(tokenUrl('PUB')).pathname, '/forex/jwt_token'); assert.equal(new URL(tokenUrl('PUB')).searchParams.get('public_key'), 'PUB')
+  const urls = build2(tickerItems(['us']), { token: 'TKN' }).map((r) => new URL(r.url))
+  assert.ok(urls.length === 3 && urls.every((u) => u.searchParams.get('jwt_token') === 'TKN' && !u.searchParams.has('access_key')))
+  assert.equal(new URL(build2(tickerItems(['us']), 'KEY')[0].url).searchParams.get('access_key'), 'KEY')
+})
+
+test('token: a good answer is read, a refused domain and a network failure are explained, and the token is reused', async () => {
+  const good = (n) => async () => ({ json: async () => ({ status: true, code: 200, response: { jwt_token: 'T' + n, expiry: Math.floor(Date.now() / 1000) + 86400 } }) })
+  const t = await fetchToken('PUB', { fetchImpl: good(1) })
+  assert.equal(t.token, 'T1'); assert.ok(t.expiresAt > Date.now() + 80_000_000)
+  await assert.rejects(fetchToken('PUB', { fetchImpl: async () => ({ json: async () => ({ status: false, code: 101, msg: 'Add Allowed domains for your key, Public key without _token' }) }) }), /allowed-domain list/)
+  await assert.rejects(fetchToken('PUB', { fetchImpl: async () => { throw new Error('x') } }), /Could not reach/)
+  forgetToken()
+  let calls = 0
+  const counting = async () => { calls++; return good(calls)() }
+  assert.equal((await demoAuth('PUB', { fetchImpl: counting })).token, 'T1')
+  assert.equal((await demoAuth('PUB', { fetchImpl: counting })).token, 'T1'); assert.equal(calls, 1)
+  forgetToken(); assert.equal((await demoAuth('PUB', { fetchImpl: counting })).token, 'T2')
+  forgetToken()
+})
+
+test('a free plan refusing index prices (code 403) is explained like code 105', () => {
+  assert.match(explain2(403, 'You are trying to access stock/index data without an active subscription'), /does not include index prices/)
+})

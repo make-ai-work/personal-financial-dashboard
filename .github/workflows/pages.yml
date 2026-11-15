@@ -1,17 +1,14 @@
-# Publishes the DEMO site (sample data) to GitHub Pages whenever the `demo` branch is updated, and every 6 hours so the
-# demo's market prices stay current. `main` is the working app and never publishes. To refresh the showcase, merge main
+# Publishes the DEMO site (sample data) to GitHub Pages whenever the `demo` branch is updated. `main` is the working app and never publishes. To refresh the showcase, merge main
 # into demo (one way only).
 #
-# Market prices: the repository secret FCS_API_KEY (Settings -> Secrets and variables -> Actions) is used only at build
-# time to write a price snapshot; it is never placed in the site. Without the secret the demo shows "Prices unavailable".
+# Market prices: the demo's page asks FCS API for a 24-hour token using only the PUBLIC key in .env.demo (VITE_FCS_PUBLIC_KEY).
+# The site's domain must be listed in the FCS dashboard (Security -> Allowed Domains). No secret key is used anywhere.
 # One-time setup: repository Settings -> Pages -> Build and deployment -> Source: "GitHub Actions".
 name: Deploy demo to GitHub Pages
 
 on:
   push:
     branches: [demo]
-  schedule:
-    - cron: '17 */6 * * *'   # scheduled runs always use the default branch's copy of this file, so the job checks out `demo` itself
   workflow_dispatch:
 
 permissions:
@@ -39,11 +36,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test           # unit tests must pass before anything is published
-      - name: Price snapshot for the demo ticker
-        run: node scripts/fetch-ticker-snapshot.mjs
-        env:
-          FCS_API_KEY: ${{ secrets.FCS_API_KEY }}
-      - run: npm run build:demo # demo mode: sample data, no saving (see .env.demo); includes the snapshot above
+      - run: npm run build:demo # demo mode: sample data, no saving, public market-data key (see .env.demo)
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

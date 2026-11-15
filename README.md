@@ -96,10 +96,11 @@ sign-in switched off and a **Demo Mode (skip sign in)** button; the app is fully
   `main` never publishes. To refresh the showcase: merge `main` into `demo` (one way only).
 - To change the sample data, edit `demo/build-demo-data.mjs` and run `node demo/build-demo-data.mjs` (it uses the app's own
   functions, so the file always matches the data model). Dates are moved forward each time the demo opens so it never looks stale.
-- **Demo ticker prices** come from a snapshot written at build time, so your FCS key never reaches the page. Add your key as a repository
-  secret named `FCS_API_KEY` (**Settings → Secrets and variables → Actions → New repository secret**; never commit it or paste it into a
-  chat). The workflow also runs every 6 hours to refresh the snapshot. Without the secret the demo says "Prices unavailable". The
-  snapshot needs an FCS stock plan for index prices; on a free key only gold and Bitcoin appear.
+- **Demo ticker prices** come straight from FCS API. The page asks FCS for a 24-hour token using only the **public** key in `.env.demo`
+  (`VITE_FCS_PUBLIC_KEY`; it is public by design and only works from websites you list). One-time setup in the FCS dashboard:
+  **Security → Allowed Domains (Public Key)**: add `saurskr.github.io` (and `localhost` to try it locally) and set **Token Expiry** to
+  86400. No secret key is used anywhere. Each visit costs about four FCS calls (token + one per price group), and the free plan has 500 a
+  month, so a busy demo can run out (the ticker then says so). Index prices need an FCS stock plan; on a free key only gold and Bitcoin appear.
 - One-time setup: repository **Settings → Pages → Build and deployment → Source: GitHub Actions**. The site is then at
   `https://<user>.github.io/<repo>/`. Assets use relative paths (`base: './'`), so any build works at a sub-path or any static host.
 - `.github/workflows/ci.yml` runs the tests and both builds on every pull request and push to `main`.
