@@ -13,6 +13,14 @@ npm run build && npm run test:e2e && npm run test:e2e:countries && npm run test:
                      # end-to-end browser tests (need Playwright + Chromium)
 ```
 
+## Deploy (GitHub Pages)
+
+`.github/workflows/pages.yml` runs the unit tests, builds, and publishes `dist/` whenever `main` changes. One-time setup:
+repository **Settings → Pages → Build and deployment → Source: GitHub Actions**. The site is then at
+`https://<user>.github.io/<repo>/`. Assets use relative paths (`base: './'`), so the same build works at any sub-path
+and inside an Android wrapper. This address is what each person adds as an "Authorized JavaScript origin"
+(just the origin, e.g. `https://<user>.github.io`, without the path) in their Google Cloud project.
+
 ## Tabs
 
 - **Home** – clock and greeting.
