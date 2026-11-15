@@ -1,5 +1,10 @@
 // File access. Chrome/Edge can open a file and save back to the same file (File System Access API).
 // Other browsers fall back to a file input for opening and a download for saving.
+// In the Android app the vault lives in the app's private folder (see appstorage.js); it is represented by APP_HANDLE.
+import { APP_FILE, appVault, isNativeApp } from './appstorage.js'
+
+export const APP_HANDLE = { kind: 'app', name: APP_FILE }
+export const isAppHandle = (h) => h?.kind === 'app'
 
 export const hasFS = () =>
   typeof window !== 'undefined' && 'showSaveFilePicker' in window && 'showOpenFilePicker' in window
@@ -35,23 +40,31 @@ export async function pickExcel() {
 }
 
 // Returns a writable handle, or null when the browser can only download.
-export async function pickNewVaultHandle(suggestedName) {
+// In the app there is nothing to pick: the vault goes in the app's folder. An existing vault is never overwritten by accident.
+export async function pickNewVaultHandle(suggestedName, { replace = false } = {}) {
+  if (isNativeApp()) {
+    if (!replace && (await appVault.exists())) throw new Error('A vault is already stored in this app. Open it, or delete it first.')
+    return APP_HANDLE
+  }
   if (!hasFS()) return null
   return window.showSaveFilePicker({ suggestedName, types: VAULT_TYPES })
 }
 
 export async function readHandle(handle) {
+  if (isAppHandle(handle)) return appVault.read()
   const file = await handle.getFile()
   return new Uint8Array(await file.arrayBuffer())
 }
 
 export async function writeHandle(handle, bytes) {
+  if (isAppHandle(handle)) return appVault.write(bytes)
   const w = await handle.createWritable()
   await w.write(bytes)
   await w.close()
 }
 
 export async function ensurePermission(handle, mode = 'readwrite') {
+  if (isAppHandle(handle)) return true
   const opts = { mode }
   if ((await handle.queryPermission(opts)) === 'granted') return true
   return (await handle.requestPermission(opts)) === 'granted'
@@ -86,6 +99,7 @@ async function idbRun(mode, fn) {
     req.onerror = () => reject(req.error)
   })
 }
-export const rememberHandle = (h) => idbRun('readwrite', (s) => s.put(h, 'vault')).catch(() => {})
-export const recallHandle = () => idbRun('readonly', (s) => s.get('vault')).catch(() => null)
-export const forgetHandle = () => idbRun('readwrite', (s) => s.delete('vault')).catch(() => {})
+// The app's vault needs no remembering: it is found in the app's folder.
+export const rememberHandle = (h) => (isAppHandle(h) ? undefined : idbRun('readwrite', (s) => s.put(h, 'vault')).catch(() => {}))
+export const recallHandle = async () => (isNativeApp() ? ((await appVault.exists()) ? APP_HANDLE : null) : idbRun('readonly', (s) => s.get('vault')).catch(() => null))
+export const forgetHandle = () => (isNativeApp() ? undefined : idbRun('readwrite', (s) => s.delete('vault')).catch(() => {}))

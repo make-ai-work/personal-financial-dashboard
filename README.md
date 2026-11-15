@@ -47,6 +47,33 @@ you unlock your data. It persists between visits on this device but is **not enc
   holiday can show as open.
 - The FCS symbols are in one file, `src/lib/ticker.js`.
 
+## Android app
+
+The Android app is this same web app packaged with [Capacitor](https://capacitorjs.com) (one codebase). **First version: your data is
+kept in the app's own private storage**; Google Drive comes later. The project is in `android/`.
+
+**What you need:** [Android Studio](https://developer.android.com/studio) (it brings its own JDK and the Android SDK) and Node.js
+**22 or newer** (Capacitor 8's tooling; the web app itself only needs 18).
+
+```bash
+npm install
+npm run android:sync     # builds the web app and copies it into android/
+npm run android:open     # opens the project in Android Studio; press Run to start it on an emulator or a plugged-in phone
+```
+
+After changing the web app, run `npm run android:sync` again before Run.
+
+- **Where the data is:** one encrypted vault file in the app's private folder (not visible to other apps or the file manager), saved safely
+  (a complete temporary copy is written first). **Uninstalling the app or clearing its data deletes it**, so use *Export backup*
+  (the phone's share sheet) now and then; backups are encrypted. Android's automatic cloud backup is switched off for the app.
+- **App id:** `io.github.saurskr.dashboard` (in `capacitor.config.json` and `android/app/build.gradle`). Change both before publishing if
+  you want a different one: Google Play never lets it change after release.
+- **Release to Google Play:** in Android Studio, *Build → Generate Signed App Bundle*. Create a signing key once and **keep it safe and
+  out of git**; losing it means you cannot update the app.
+- **Status:** the project builds from `npm run android:sync`; the storage code is covered by unit tests with an in-memory stand-in for the
+  phone's folder. The app has not yet been compiled or run on a device or emulator by this repository's authors, so expect a first
+  round of fixes when you run it.
+
 ## Demo site (GitHub Pages)
 
 The public site is a **demo** with made-up sample data from `demo/demo-data.json`. The sign-in page is shown with Google
@@ -167,5 +194,5 @@ Retirement shows the key results and two charts with the detailed assumptions fo
 - [x] Step 6: demo mode (sample data, sign-in page with Demo Mode) published from the `demo` branch
 - [x] Step 7: run on your own computer with `npm start`
 - [x] Step 8: Home rebuild: clocks for each country, weather, markets open/closed, FCS market ticker
-- [ ] Next: Android app (Capacitor)
+- [ ] Android app (Capacitor): project and private storage in place; screens, back button and device testing next
 - [ ] Then: real Google sign-in, two-step verification, Google Drive storage (web and Android)

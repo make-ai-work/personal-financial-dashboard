@@ -1,0 +1,8 @@
+{
+  "appId": "io.github.saurskr.dashboard",
+  "appName": "My Dashboard",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": false
+  }
+}
