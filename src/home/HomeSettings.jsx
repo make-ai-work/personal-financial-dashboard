@@ -33,7 +33,7 @@ export default function HomeSettings({ countries, onClose, onSaved }) {
         <select value={unit} onChange={(e) => setUnit(e.target.value)} aria-label="Temperature unit"><option value="">Automatic (°F in the US, °C elsewhere)</option><option value="F">°F (Fahrenheit)</option><option value="C">°C (Celsius)</option></select></div>
       <hr className="sep" />
       {IS_DEMO ? (
-        <div className="warn"><b>Market ticker.</b> The demo shows a snapshot of prices taken when the site was built, so no API key is needed (or stored) here.</div>
+        <div className="warn"><b>Market ticker.</b> The demo gets prices from FCS API with a short-lived token, so no API key is needed (or stored) here.</div>
       ) : (
         <>
           <div className="rowf"><span>FCS API key<small>For the market ticker. Get a key at fcsapi.com.</small></span>

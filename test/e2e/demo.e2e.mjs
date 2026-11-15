@@ -21,11 +21,26 @@ await ctx.route('**/api.frankfurter.dev/**', (r) => {
   const symbols = u.searchParams.get('symbols').split(',')
   r.fulfill({ json: { base, date: '2026-11-14', rates: Object.fromEntries(symbols.map((s) => [s, PER_USD[s] / PER_USD[base]])) } })
 })
-const snap = { mode: 'ok' } // ok | missing
-const q = (id, price, change, changePct) => ({ id, price, change, changePct, at: 1794606199 })
-await ctx.route(/ticker-snapshot\.json/, (r) => snap.mode === 'missing'
-  ? r.fulfill({ status: 404, body: 'not found' })
-  : r.fulfill({ json: { generatedAt: '2026-11-15T06:17:00Z', problems: [], quotes: [q('spx', 6412.3, 26.8, 0.42), q('ixic', 21980.1, 155.2, 0.71), q('sensex', 84120.5, -151.4, -0.18), q('nifty', 25780.2, -54.1, -0.21), q('ftse', 9310.4, 11.2, 0.12), q('gold', 4120.55, 14.4, 0.35), q('btc', 98450, -1196, -1.2)] } }))
+const fcs = { mode: 'ok', tokenCalls: 0, urls: [] } // ok | refused (domain not allowed)
+const row = (ticker, c, ch, chp) => ({ ticker, update: 1794606199, active: { c, ch, chp, tm: '2026-11-16 10:00:00' }, previous: { c: c - ch } })
+await ctx.route(/api-v4\.fcsapi\.com/, (route) => {
+  const u = new URL(route.request().url())
+  fcs.urls.push(u)
+  const ok = (response) => route.fulfill({ json: { status: true, code: 200, msg: 'Successfully', response, info: { credit_count: 1 } } })
+  if (u.pathname.endsWith('/jwt_token')) {
+    fcs.tokenCalls++
+    if (fcs.mode === 'refused') return route.fulfill({ json: { status: false, code: 101, msg: 'Add Allowed domains for your key, Public key without _token param needs Allowed Domains' } })
+    return ok({ jwt_token: 'TOKEN123', public_key: u.searchParams.get('public_key'), expiry: 1794863040, expires_in: 86400 })
+  }
+  if (u.searchParams.get('jwt_token') !== 'TOKEN123') return route.fulfill({ json: { status: false, code: 101, msg: 'Invalid token' } })
+  if (u.pathname === '/stock/latest') {
+    const all = { 'SP:SPX': row('SP:SPX', 6412.3, 26.8, 0.42), 'NASDAQ:IXIC': row('NASDAQ:IXIC', 21980.1, 155.2, 0.71), 'BSE:SENSEX': row('BSE:SENSEX', 84120.5, -151.4, -0.18), 'NSE:NIFTY': row('NSE:NIFTY', 25780.2, -54.1, -0.21) }
+    return ok(u.searchParams.get('symbol').split(',').map((x) => all[x]).filter(Boolean))
+  }
+  if (u.pathname === '/forex/latest') return ok([row('FX:XAUUSD', 4120.55, 14.4, 0.35)])
+  if (u.pathname === '/crypto/latest') return ok([row('COINBASE:BTCUSD', 98450, -1196, -1.2)])
+  return route.fulfill({ json: { status: false, code: 404, msg: 'unknown' } })
+})
 const meteoCalls = []
 await ctx.route(/geocoding-api\.open-meteo\.com/, (r) => { meteoCalls.push(r.request().url()); r.abort('failed') }) // never needed: the cities are built in
 await ctx.route(/air-quality-api\.open-meteo\.com/, (r) => r.fulfill({ json: { current: { us_aqi: 61 } } }))
@@ -34,7 +49,7 @@ const page = await ctx.newPage()
 await page.clock.setFixedTime(new Date('2026-11-15T12:00:00'))
 const errors = []
 page.on('pageerror', (e) => errors.push(e.message))
-page.on('console', (m) => m.type() === 'error' && !(snap.mode === 'missing' && /404/.test(m.text())) && errors.push(m.text())) // the missing-snapshot step expects one 404
+page.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
 const step = (s) => console.log('•', s)
 const dialog = () => page.getByRole('dialog')
 const topTab = (name) => page.getByRole('tab', { name })
@@ -61,14 +76,19 @@ try {
   await page.getByText('Sample data.', { exact: false }).first().waitFor()
   assert.equal(await page.getByRole('button', { name: 'Lock now' }).count(), 0)
 
-  step('Home is the landing page: the ticker shows the site\'s price snapshot (no key anywhere), each country shows its exchange city with weather and the net worth card shows the sample data')
+  step('Home is the landing page: the ticker gets prices with a token made from the public key (no secret anywhere), each country shows its exchange city with weather and the net worth card shows the sample data')
   await page.getByRole('heading', { name: /^Markets · time · weather/ }).waitFor()
   const tkr = page.getByRole('marquee', { name: 'Market ticker' })
   await tkr.waitFor()
   const tt = await tkr.innerText()
   for (const label of ['S&P 500', 'Nasdaq', 'Sensex', 'Nifty 50', 'Gold', 'Bitcoin']) assert.ok(tt.includes(label), label)
   assert.ok(!tt.includes('FTSE'), 'the sample uses USA and India only')
-  await page.getByText(/Snapshot from .* refreshed a few times a day/).waitFor()
+  await page.getByText(/Prices as of .* refreshed every 30 minutes/).waitFor()
+  assert.ok(tt.includes('6,412.30') || (await tkr.innerText()).includes('6,412.30'))
+  assert.equal(fcs.tokenCalls, 1, 'one token')
+  const tokenUrl = fcs.urls.find((u) => u.pathname.endsWith('/jwt_token'))
+  assert.equal(tokenUrl.searchParams.get('public_key'), '0mrrYgZnCDhbOR4XtRPKDYWCAccKpz04J')
+  assert.ok(fcs.urls.filter((u) => u.pathname.endsWith('/latest')).every((u) => u.searchParams.get('jwt_token') === 'TOKEN123' && !u.searchParams.has('access_key')))
   await page.getByTestId('row-us').getByText('55°F').waitFor()
   assert.match(await page.getByTestId('row-us').innerText(), /New York[\s\S]*AQI 61 · Moderate/)
   assert.equal(meteoCalls.length, 0, 'the cities are built in: no city lookup')
@@ -79,7 +99,7 @@ try {
   await nwCard.getByTestId('networth').getByText(/^\$\s?41,000$/).waitFor() // the sample "Spouse IRA"
   await nwCard.getByRole('button', { name: 'All' }).click()
   await page.getByRole('button', { name: '⚙ Home settings' }).click()
-  await dialog().getByText(/snapshot of prices taken when the site was built/).waitFor()
+  await dialog().getByText(/short-lived token, so no API key is needed/).waitFor()
   assert.equal(await dialog().getByLabel('FCS API key').count(), 0, 'no key field in the demo')
   await dialog().getByLabel('Temperature unit').selectOption('C'); await dialog().getByRole('button', { name: 'Save' }).click()
   await page.getByTestId('row-us').getByText('55°C').waitFor()
@@ -89,13 +109,12 @@ try {
   await demoBtn().waitFor()
   assert.equal(await page.getByRole('tab').count(), 0)
 
-  step('without a snapshot the ticker says prices are unavailable, and the rest of Home still works')
-  snap.mode = 'missing'
+  step('if FCS refuses the website, the ticker says so and the rest of Home still works')
+  fcs.mode = 'refused'
   await page.reload(); await demoBtn().waitFor(); await enter(); await topTab('Home').click()
-  await page.getByText('Prices unavailable.').waitFor()
-  await page.getByText(/price snapshot has not been generated yet/).waitFor()
+  await page.getByText(/not on the allowed-domain list of the FCS key/).first().waitFor()
   await page.getByTestId('row-us').waitFor()
-  snap.mode = 'ok'
+  fcs.mode = 'ok'
 
   step('phone: banner and tabs fit, no sideways scrolling')
   await page.setViewportSize({ width: 390, height: 844 })
