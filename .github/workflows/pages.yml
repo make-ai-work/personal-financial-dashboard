@@ -1,14 +1,20 @@
-# Publishes the DEMO site (sample data) to GitHub Pages whenever the `demo` branch is updated. `main` is the working app and never publishes. To refresh the showcase, merge main
+# Publishes the DEMO site (sample data) to GitHub Pages whenever the `demo` branch is updated, and every 6 hours so the
+# demo's index prices stay current. `main` is the working app and never publishes. To refresh the showcase, merge main
 # into demo (one way only).
 #
 # Market prices: the demo's page asks FCS API for a 24-hour token using only the PUBLIC key in .env.demo (VITE_FCS_PUBLIC_KEY).
-# The site's domain must be listed in the FCS dashboard (Security -> Allowed Domains). No secret key is used anywhere.
+# The site's domain must be listed in the FCS dashboard (Security -> Allowed Domains). No secret key is used for FCS.
+# Index prices: the repository secret ALPHAVANTAGE_API_KEY (Settings -> Secrets and variables -> Actions) is used only at build
+# time to write an index snapshot (ETF stand-ins; the free plan allows 25 requests a day, so a snapshot under 5 hours old is
+# reused). The key is never placed in the site. Without the secret the demo simply shows no index prices.
 # One-time setup: repository Settings -> Pages -> Build and deployment -> Source: "GitHub Actions".
 name: Deploy demo to GitHub Pages
 
 on:
   push:
     branches: [demo]
+  schedule:
+    - cron: '17 */6 * * *'   # scheduled runs always use the default branch's copy of this file, so the job checks out `demo` itself
   workflow_dispatch:
 
 permissions:
@@ -36,6 +42,11 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test           # unit tests must pass before anything is published
+      - name: Index snapshot for the demo ticker (Alpha Vantage)
+        run: node scripts/fetch-av-snapshot.mjs
+        env:
+          ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }}
+          PREVIOUS_SNAPSHOT_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/av-snapshot.json
       - run: npm run build:demo # demo mode: sample data, no saving, public market-data key (see .env.demo)
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

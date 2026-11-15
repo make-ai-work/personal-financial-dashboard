@@ -41,6 +41,10 @@ await ctx.route(/api-v4\.fcsapi\.com/, (route) => {
   if (u.pathname === '/crypto/latest') return ok([row('COINBASE:BTCUSD', 98450, -1196, -1.2)])
   return route.fulfill({ json: { status: false, code: 404, msg: 'unknown' } })
 })
+const av = { mode: 'ok' } // ok | missing
+await ctx.route(/av-snapshot\.json/, (r) => av.mode === 'missing' ? r.fulfill({ status: 404, body: 'not found' }) : r.fulfill({ json: { generatedAt: '2026-11-15T06:17:00Z', problems: [], quotes: [
+  { id: 'spx', price: 754.37, change: -2.75, changePct: -0.3632, at: 1794606199, via: 'SPY ETF' }, { id: 'ixic', price: 679.89, change: -8.28, changePct: -1.2032, at: 1794606199, via: 'QQQ ETF' },
+  { id: 'nifty', price: 286.66, change: -1.38, changePct: -0.4, at: 1794606199, via: 'Nifty BeES ETF' }, { id: 'ftse', price: 1063.8, change: 4.2, changePct: 0.3964, at: 1794606199, via: 'ISF ETF' }] } }))
 const meteoCalls = []
 await ctx.route(/geocoding-api\.open-meteo\.com/, (r) => { meteoCalls.push(r.request().url()); r.abort('failed') }) // never needed: the cities are built in
 await ctx.route(/air-quality-api\.open-meteo\.com/, (r) => r.fulfill({ json: { current: { us_aqi: 61 } } }))
@@ -49,7 +53,7 @@ const page = await ctx.newPage()
 await page.clock.setFixedTime(new Date('2026-11-15T12:00:00'))
 const errors = []
 page.on('pageerror', (e) => errors.push(e.message))
-page.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
+page.on('console', (m) => m.type() === 'error' && !(av.mode === 'missing' && /404/.test(m.text())) && errors.push(m.text())) // the missing-snapshot step expects one
 const step = (s) => console.log('•', s)
 const dialog = () => page.getByRole('dialog')
 const topTab = (name) => page.getByRole('tab', { name })
@@ -81,10 +85,14 @@ try {
   const tkr = page.getByRole('marquee', { name: 'Market ticker' })
   await tkr.waitFor()
   const tt = await tkr.innerText()
-  for (const label of ['S&P 500', 'Nasdaq', 'Sensex', 'Nifty 50', 'Gold', 'Bitcoin']) assert.ok(tt.includes(label), label)
+  for (const label of ['S&P 500', 'Nasdaq', 'Nifty 50', 'Gold', 'Bitcoin']) assert.ok(tt.includes(label), label) // no Sensex stand-in on the free plan
   assert.ok(!tt.includes('FTSE'), 'the sample uses USA and India only')
   await page.getByText(/Prices as of .* refreshed every 30 minutes/).waitFor()
-  assert.ok(tt.includes('6,412.30') || (await tkr.innerText()).includes('6,412.30'))
+  const full = await tkr.innerText()
+  assert.ok(/S&P 500\s*SPY ETF\s*754\.37/.test(full) && full.includes('Nifty BeES ETF') && /Gold[\s\S]*4,120\.55/.test(full) && /Bitcoin[\s\S]*98,450/.test(full), 'index ETFs from the Alpha Vantage snapshot, gold and Bitcoin from FCS')
+  assert.ok(!fcs.urls.some((u) => u.pathname === '/stock/latest'), 'the demo does not ask FCS for indices')
+  assert.ok((await tkr.locator('.track .set').first().evaluate((e) => e.getBoundingClientRect().width)) >= 1280, 'the strip is longer than the screen')
+  await page.getByText(/Alpha Vantage \(index ETFs\)/).waitFor()
   assert.equal(fcs.tokenCalls, 1, 'one token')
   const tokenUrl = fcs.urls.find((u) => u.pathname.endsWith('/jwt_token'))
   assert.equal(tokenUrl.searchParams.get('public_key'), '0mrrYgZnCDhbOR4XtRPKDYWCAccKpz04J')
@@ -108,6 +116,13 @@ try {
   await page.reload()
   await demoBtn().waitFor()
   assert.equal(await page.getByRole('tab').count(), 0)
+
+  step('without the index snapshot the ticker still shows gold and Bitcoin, with a note')
+  av.mode = 'missing'
+  await page.reload(); await demoBtn().waitFor(); await enter(); await topTab('Home').click()
+  await page.getByText('Index prices are not available in this demo yet.').waitFor()
+  await page.getByText(/Gold/).first().waitFor()
+  av.mode = 'ok'
 
   step('if FCS refuses the website, the ticker says so and the rest of Home still works')
   fcs.mode = 'refused'
