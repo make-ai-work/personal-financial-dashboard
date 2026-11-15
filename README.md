@@ -21,6 +21,35 @@ repository **Settings → Pages → Build and deployment → Source: GitHub Acti
 and inside an Android wrapper. This address is what each person adds as an "Authorized JavaScript origin"
 (just the origin, e.g. `https://<user>.github.io`, without the path) in their Google Cloud project.
 
+## How the branches work
+
+**One codebase, three deployments, each with its own data storage.**
+
+```mermaid
+flowchart TD
+  F["Feature branches<br/>claude/… (one per piece of work)"] -- "pull request + tests" --> M["main<br/>one codebase"]
+  M -- "merge main into demo<br/>(one way only)" --> D["Demo (planned)<br/>GitHub Pages"]
+  M -- "download / clone" --> L["Local or self-hosted<br/>npm start, or any static web host"]
+  M -- "release tag" --> A["Android app (planned)<br/>Google Play"]
+  D --> SD(["Sample data<br/>demo/demo-data.json, read only"])
+  L --> SL(["Your data<br/>encrypted file or Google Drive"])
+  A --> SA(["Your data<br/>app storage or Google Drive"])
+```
+
+| Deployment | Built from | Data lives in |
+|---|---|---|
+| **Local or self-hosted** | `main` (download it, or host it anywhere) | an encrypted file you keep, or your own Google Drive |
+| **Demo** | `demo`, updated from `main`, on GitHub Pages | sample data in `demo/demo-data.json`; nothing saved, no sign-in |
+| **Android** | `main`, on a release tag | an encrypted file in app storage, or your Google Drive |
+
+- New work starts from `main` on its own branch and returns by pull request. Code flows **one way** into `demo`, never back.
+- Demo mode, local storage and Google Drive are settings inside `main`, not separate copies of the app.
+- Google sign-in on Android uses a client ID registered for the Android app, different from the web one; this is decided when
+  the Android app is built.
+
+A picture version of this, which also ships with the site, is in
+[`public/docs/branch-flow.html`](public/docs/branch-flow.html) (served at `/docs/branch-flow.html`).
+
 ## Tabs
 
 - **Home** – clock and greeting.
@@ -75,7 +104,7 @@ Retirement shows the key results and two charts with the detailed assumptions fo
 - Chrome/Edge save straight back to the file. Other browsers open via a file picker and save by
   downloading the encrypted file.
 - Settings → *Export decrypted Excel copy* writes a plain, **unencrypted** workbook
-  (`Items`, `Insurance`, `Balances`, `Rates`, `Pets`, `PetRecords` (legacy, see below), `Property`, `PropertyValues`, `Loans`, `LoanUpdates`, `Portfolios`, `Holdings`, `Settings` sheets). Settings → *Import from Excel*
+  (`Items`, `Insurance`, `Balances`, `Rates`, `Property`, `PropertyValues`, `Loans`, `LoanUpdates`, `Portfolios`, `Holdings`, `Settings` sheets). Settings → *Import from Excel*
   reads that same layout.
 - The exchange rate is fetched live from the Frankfurter API (ECB rates); only the two currency
   codes are sent. The rate in use is saved with each update.
@@ -85,18 +114,8 @@ Retirement shows the key results and two charts with the detailed assumptions fo
 
 - [x] Step 1: project scaffold, grid layout, clock + greeting widget
 - [x] Step 2: Finance Dashboard (encrypted file, accounts, insurance, summary, charts)
-- [x] Step 3: Pets tab (later retired, see below)
-- [x] Step 4: generic country lists (1-5 per section) and the Property tab
-- [x] Step 5: Portfolio tab (holdings, allocation, rebalancing), linked to Finance accounts
-- [x] Step 6: Retirement tab (Plan + Monte Carlo with 3 saved versions), placeholder Google sign-in, phone layout
-- [ ] Next: real Google sign-in, two-step verification, Google Drive storage
-
-## Retired: Pets tab
-
-The Pets tab (profiles, vaccinations, medication, vet visits, weight, reminders) was removed from the app because it
-did not fit a finance dashboard. The complete working code, with its tests and mockup, is kept on the protected
-branch **`archive/pets-tab`** (a snapshot of `main` before removal). To bring it back, restore `src/pets/`,
-`src/lib/pets.js` and the tab entry in `src/App.jsx` from that branch.
-
-Pet data already saved in an encrypted file or Excel backup is kept untouched (just not shown), so restoring the tab
-shows it again.
+- [x] Step 3: generic country lists (1-5 per section) and the Property tab
+- [x] Step 4: Portfolio tab (holdings, allocation, rebalancing), linked to Finance accounts
+- [x] Step 5: Retirement tab (Plan + Monte Carlo with 3 saved versions), placeholder Google sign-in, phone layout
+- [ ] Next: demo mode + `demo` branch on GitHub Pages, local-run polish (`npm start`), Android app (Capacitor)
+- [ ] Then: real Google sign-in, two-step verification, Google Drive storage (web and Android)
