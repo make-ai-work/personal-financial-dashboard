@@ -55,10 +55,28 @@ export function parseForecast(json, unit) {
   }
 }
 
+// One request, with a time limit and plain-language failures (a hung or blocked request must never leave "Loading…" forever).
+export async function getJson(url, fetchImpl = fetch, timeoutMs = 15_000) {
+  const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null
+  const timer = ctl ? setTimeout(() => ctl.abort(), timeoutMs) : null
+  let res
+  try {
+    res = await fetchImpl(url, ctl ? { signal: ctl.signal } : undefined)
+  } catch (e) {
+    throw new Error(e?.name === 'AbortError'
+      ? 'The weather service (Open-Meteo) did not answer in time. Try again.'
+      : 'Could not reach the weather service (Open-Meteo). Check your connection, and that no ad or privacy blocker is stopping open-meteo.com.')
+  } finally {
+    if (timer) clearTimeout(timer)
+  }
+  if (!res.ok) throw new Error(res.status === 429 ? 'The weather service is limiting requests right now. Try again in a minute.' : `The weather service answered with an error (HTTP ${res.status}). Try again later.`)
+  try { return await res.json() } catch { throw new Error('The weather service sent something unreadable. Try again later.') }
+}
+
 export async function loadWeather(city, unit, fetchImpl = fetch) {
-  const g = parseGeocode(await (await fetchImpl(geocodeUrl(city))).json(), city)
-  if (!g) throw new Error(`Could not find “${city}”. Try a nearby larger city.`)
-  const f = parseForecast(await (await fetchImpl(forecastUrl({ lat: g.lat, lon: g.lon, unit }))).json(), unit)
-  if (!f) throw new Error('The weather service sent something unexpected.')
+  const g = parseGeocode(await getJson(geocodeUrl(city), fetchImpl), city)
+  if (!g) throw new Error(`Could not find “${city}”. Try the city name alone, or a nearby larger city.`)
+  const f = parseForecast(await getJson(forecastUrl({ lat: g.lat, lon: g.lon, unit }), fetchImpl), unit)
+  if (!f) throw new Error('The weather service sent something unexpected. Try again later.')
   return { place: g.name, ...f, fetchedAt: Date.now() }
 }
