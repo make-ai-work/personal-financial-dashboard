@@ -1,0 +1,101 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Finance layout mockup</title><style>
+/* PMO Hub theme tokens. Light = "Warm Paper", dark = "Midnight".
+   Change the look of the whole app here; styles.css only uses these names. */
+:root {
+  color-scheme: light;
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --r: 12px;            /* panels, cards */
+  --r-sm: 8px;          /* buttons, inputs */
+
+  --bg: #f7f4ee;
+  --surface: #fffdf9;
+  --surface-2: #f1ece2;
+  --text: #2b2722;
+  --muted: #7a7266;
+  --line: #e6dfd2;
+  --accent: #0f6e6e;
+  --accent-text: #ffffff;
+  --head: #0f4c4c;      /* top bar */
+  --head-text: #ffffff;
+  --shadow: 0 8px 30px rgba(60, 40, 10, .18);
+
+  /* status */
+  --red: #c8402f; --amber: #d98e04; --green: #3f8f55;
+  --blue: #4a7fb0; --grey: #a39a8b; --done: #7b7466;
+  --on-status: #ffffff; /* glyph colour drawn on top of a status colour */
+
+  /* note labels (the rest reuse status colours) */
+  --purple: #8b6cf0; --pink: #c4467d;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --r: 6px; --r-sm: 5px;
+    --bg: #0f1420; --surface: #181f2e; --surface-2: #212a3d;
+    --text: #e7ebf3; --muted: #9aa5ba; --line: #2a3347;
+    --accent: #6ea8ff; --accent-text: #0b1220;
+    --head: #0a0e17; --head-text: #e7ebf3;
+    --shadow: 0 8px 30px rgba(0, 0, 0, .6);
+    --red: #ff6b6b; --amber: #ffc233; --green: #3ddc84;
+    --blue: #5cb3ff; --grey: #74809a; --done: #8d9ab3;
+    --on-status: #0b1220;
+    --purple: #a58bff; --pink: #f07aa8;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --r: 6px; --r-sm: 5px;
+  --bg: #0f1420; --surface: #181f2e; --surface-2: #212a3d;
+  --text: #e7ebf3; --muted: #9aa5ba; --line: #2a3347;
+  --accent: #6ea8ff; --accent-text: #0b1220;
+  --head: #0a0e17; --head-text: #e7ebf3;
+  --shadow: 0 8px 30px rgba(0, 0, 0, .6);
+  --red: #ff6b6b; --amber: #ffc233; --green: #3ddc84;
+  --blue: #5cb3ff; --grey: #74809a; --done: #8d9ab3;
+  --on-status: #0b1220;
+  --purple: #a58bff; --pink: #f07aa8;
+}
+
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px}
+.hd{background:var(--head);color:var(--head-text);padding:12px 24px;font-weight:600;display:flex;justify-content:space-between}
+.tabs{display:flex;gap:22px;padding:10px 24px;border-bottom:1px solid var(--line);background:var(--surface);color:var(--muted)}.tabs b{color:var(--accent);border-bottom:2px solid var(--accent);padding-bottom:8px}
+.sub{display:flex;gap:22px;padding:10px 24px;color:var(--muted)}.sub b{color:var(--accent)}
+.fb{display:flex;gap:10px;align-items:center;padding:0 24px 12px}.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}.seg i{font-style:normal;padding:4px 12px;color:var(--muted)}.seg i.on{background:var(--accent);color:var(--accent-text)}
+.page{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;padding:0 24px 24px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);margin-bottom:14px;box-shadow:var(--shadow)}
+.ph{display:flex;justify-content:space-between;align-items:center;padding:12px 16px}.ph .t{font-weight:700}.ph .t small{font-weight:400;color:var(--muted);margin-left:6px}
+.ph .tog{display:flex;align-items:center;gap:8px;cursor:pointer}.chev{display:inline-block;width:18px;color:var(--muted)}
+.kp{display:grid;grid-template-columns:repeat(3,1fr);padding:0 16px 14px;gap:10px}.kp small{display:block;color:var(--muted);font-size:.72rem;text-transform:uppercase}.kp b{font-size:1.25rem}
+.pos{color:var(--green)}.neg{color:var(--red)}
+table{width:100%;border-collapse:collapse;font-size:.86rem}th{background:var(--surface-2);color:var(--muted);font-size:.7rem;text-transform:uppercase;text-align:left;padding:7px 12px}td{padding:9px 12px;border-top:1px solid var(--line)}
+.chip{font-size:.72rem;border-radius:99px;padding:1px 9px;background:var(--surface-2);border:1px solid var(--line)}
+.col{opacity:.95}.right{position:sticky;top:8px}
+.btn{border:1px solid var(--line);border-radius:8px;padding:4px 12px;background:var(--surface);font-size:.8rem}
+.perf{width:100%}.perf th,.perf td{text-align:right}.perf th:first-child,.perf td:first-child{text-align:left}
+.sel td{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.note{color:var(--muted);font-size:.78rem;padding:8px 16px 14px}
+.lbl{margin:18px 24px 6px;font-weight:700}
+.phone{max-width:390px;margin:0 24px 30px}.phone .page{display:block;padding:0}
+</style></head><body><div class="hd"><span>My Dashboard</span><span class="btn">Demo user</span></div><div class="tabs"><span>Home</span><b>Finance Dashboard</b><span>Property</span><span>Portfolio</span><span>Retirement</span></div><div class="sub"><span>Summary</span><b>🇺🇸 USA</b><span>🇮🇳 India</span><span>Settings</span></div><div class="fb">Show: <span class="seg"><i class="on">All</i><i>Mine</i><i>Joint</i><i>Spouse</i><i>Parent</i></span><span class="btn">Hide account numbers</span></div><div class="page"><div class="col"><div class="panel"><div class="ph"><span class="t">🇺🇸 USA <small>USD</small></span><span><span class="btn">Update date 11/15/2026</span> <span class="btn" style="background:var(--accent);color:var(--accent-text)">Save update</span></span></div>
+<div class="kp"><div><small>Net worth · All</small><b class="pos">$ 360,900</b></div><div><small>Assets</small><b>$ 373,200</b></div><div><small>Liabilities</small><b class="neg">$ 12,300</b></div></div></div>
+<div class="panel"><div class="ph"><span class="tog"><span class="chev">▾</span><span class="t">Assets<small>$ 373,200</small></span></span><span class="btn">+ Add</span></div><table><thead><tr><th>Account name</th><th>Bank</th><th>Owner</th><th>Current balance</th><th>Asset mix</th><th>Maturity</th></tr></thead><tbody>
+<tr><td><b>Sample Brokerage</b></td><td>Sample Securities</td><td><span class="chip">Joint</span></td><td><b>$ 96,000</b></td><td>Eq 80 · Cash 7</td><td>—</td></tr>
+<tr><td><b>401(k)</b></td><td>Sample Retirement Co</td><td><span class="chip">Mine</span></td><td><b>$ 184,000</b></td><td>Eq 65 · Bonds 35</td><td>—</td></tr>
+<tr><td><b>Checking</b></td><td>Sample Bank</td><td><span class="chip">Mine</span></td><td><b>$ 8,200</b></td><td>Cash 100</td><td>—</td></tr>
+<tr><td><b>Spouse IRA</b></td><td>Sample Retirement Co</td><td><span class="chip">Spouse</span></td><td><b>$ 41,000</b></td><td>n/a</td><td>—</td></tr></tbody></table></div><div class="panel"><div class="ph"><span class="tog"><span class="chev">▾</span><span class="t">Liabilities<small>$ 12,300</small></span></span><span class="btn">+ Add</span></div><table><thead><tr><th>Account</th><th>Lender</th><th>Owner</th><th>Balance</th></tr></thead><tbody><tr><td><b>Car loan</b></td><td>Sample Auto Finance</td><td><span class="chip">Mine</span></td><td class="neg"><b>$ 12,300</b></td></tr></tbody></table></div><div class="panel"><div class="ph"><span class="tog"><span class="chev">▸</span><span class="t">Insurance<small>not counted in net worth</small></span></span><span class="btn">+ Add</span></div></div></div><div class="right"><div class="panel"><div class="ph"><span class="t">Net worth by month <small>USD</small></span><span class="seg"><i class="on">Net worth</i><i>Assets &amp; liabilities</i></span></div><svg viewBox="0 0 520 200" width="100%" style="display:block"><g stroke="var(--line)"><line x1="40" x2="510" y1="30" y2="30"/><line x1="40" x2="510" y1="80" y2="80"/><line x1="40" x2="510" y1="130" y2="130"/><line x1="40" x2="510" y1="180" y2="180"/></g><polyline fill="none" stroke="var(--accent)" stroke-width="2.5" points="40,160 90,165 130,130 170,120 210,125 250,95 290,80 330,84 370,55 410,42 450,34 500,26"/><g fill="var(--accent)"><circle cx="500" cy="26" r="4"/><circle cx="40" cy="160" r="4"/></g><g fill="var(--muted)" font-size="10"><text x="4" y="34">440K</text><text x="4" y="84">400K</text><text x="4" y="134">380K</text><text x="4" y="184">360K</text></g></svg></div>
+<div class="panel"><div class="ph"><span class="t">Performance</span></div><table class="perf"><thead><tr><th>Period</th><th>Change</th><th>%</th><th>Net worth then</th></tr></thead><tbody>
+<tr><td>1 M</td><td class="pos">+ $ 3,100</td><td class="pos">+0.7%</td><td>$ 419,400</td></tr>
+<tr><td>3 M</td><td class="pos">+ $ 9,800</td><td class="pos">+2.3%</td><td>$ 412,700</td></tr>
+<tr><td>6 M</td><td class="pos">+ $ 28,600</td><td class="pos">+7.3%</td><td>$ 393,900</td></tr>
+<tr class="sel"><td>1 Y</td><td class="pos">+ $ 61,400</td><td class="pos">+17.0%</td><td>$ 361,100</td></tr>
+<tr><td>5 Y</td><td style="color:var(--muted)">—</td><td style="color:var(--muted)">—</td><td style="color:var(--muted)">not enough history</td></tr>
+<tr><td>10 Y</td><td style="color:var(--muted)">—</td><td style="color:var(--muted)">—</td><td style="color:var(--muted)">not enough history</td></tr></tbody></table>
+<div class="note">Change in net worth between the update nearest that long ago and now, for the country and owner you are viewing. Click a period to mark it on the chart.</div></div></div></div><div class="lbl">Phone: the three sections start collapsed (tap to open); chart and Performance below</div><div class="phone"><div class="page"><div class="panel"><div class="ph"><span class="tog"><span class="chev">▸</span><span class="t">Assets<small>$ 373,200</small></span></span><span class="btn">+ Add</span></div></div><div class="panel"><div class="ph"><span class="tog"><span class="chev">▸</span><span class="t">Liabilities<small>$ 12,300</small></span></span><span class="btn">+ Add</span></div></div><div class="panel"><div class="ph"><span class="tog"><span class="chev">▸</span><span class="t">Insurance<small>not counted</small></span></span><span class="btn">+ Add</span></div></div><div class="panel"><div class="ph"><span class="t">Net worth by month</span></div><svg viewBox="0 0 520 200" width="100%" style="display:block"><g stroke="var(--line)"><line x1="40" x2="510" y1="30" y2="30"/><line x1="40" x2="510" y1="80" y2="80"/><line x1="40" x2="510" y1="130" y2="130"/><line x1="40" x2="510" y1="180" y2="180"/></g><polyline fill="none" stroke="var(--accent)" stroke-width="2.5" points="40,160 90,165 130,130 170,120 210,125 250,95 290,80 330,84 370,55 410,42 450,34 500,26"/><g fill="var(--accent)"><circle cx="500" cy="26" r="4"/><circle cx="40" cy="160" r="4"/></g><g fill="var(--muted)" font-size="10"><text x="4" y="34">440K</text><text x="4" y="84">400K</text><text x="4" y="134">380K</text><text x="4" y="184">360K</text></g></svg></div><div class="panel"><div class="ph"><span class="t">Performance</span></div><table class="perf"><thead><tr><th>Period</th><th>Change</th><th>%</th><th>Net worth then</th></tr></thead><tbody>
+<tr><td>1 M</td><td class="pos">+ $ 3,100</td><td class="pos">+0.7%</td><td>$ 419,400</td></tr>
+<tr><td>3 M</td><td class="pos">+ $ 9,800</td><td class="pos">+2.3%</td><td>$ 412,700</td></tr>
+<tr><td>6 M</td><td class="pos">+ $ 28,600</td><td class="pos">+7.3%</td><td>$ 393,900</td></tr>
+<tr class="sel"><td>1 Y</td><td class="pos">+ $ 61,400</td><td class="pos">+17.0%</td><td>$ 361,100</td></tr>
+<tr><td>5 Y</td><td style="color:var(--muted)">—</td><td style="color:var(--muted)">—</td><td style="color:var(--muted)">not enough history</td></tr>
+<tr><td>10 Y</td><td style="color:var(--muted)">—</td><td style="color:var(--muted)">—</td><td style="color:var(--muted)">not enough history</td></tr></tbody></table>
+<div class="note">Change in net worth between the update nearest that long ago and now, for the country and owner you are viewing. Click a period to mark it on the chart.</div></div></div></div></body></html>
