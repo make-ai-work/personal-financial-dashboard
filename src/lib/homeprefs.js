@@ -24,4 +24,7 @@ export const homePrefs = {
   setCountries: (list) => write('home.countries', JSON.stringify(list)),
   quotes: () => json('home.quotes'), setQuotes: (v) => write('home.quotes', JSON.stringify(v)),
   weather: () => json('home.weather'), setWeather: (v) => write('home.weather', JSON.stringify(v)),
+  // a city's coordinates, remembered after the first lookup so the weather needs one request, not two
+  geo: (city) => (json('home.geo') || {})[String(city).trim().toLowerCase()] || null,
+  setGeo: (city, place) => write('home.geo', JSON.stringify({ ...(json('home.geo') || {}), [String(city).trim().toLowerCase()]: place })),
 }

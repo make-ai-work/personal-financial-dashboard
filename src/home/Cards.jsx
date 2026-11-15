@@ -74,7 +74,7 @@ export function WeatherCard({ countries, version, onSettings }) {
       running.current = true
       setState((s) => ({ ...s, loading: true, error: '' }))
       try {
-        const data = { ...(await loadWeather(city, unit)), city, unit }
+        const data = { ...(await loadWeather(city, unit, { geo: { get: homePrefs.geo, set: homePrefs.setGeo } })), city, unit }
         homePrefs.setWeather(data)
         if (live) setState({ data, error: '', loading: false })
       } catch (e) {

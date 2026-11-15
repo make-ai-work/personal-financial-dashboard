@@ -69,7 +69,7 @@ try {
   assert.ok(!tt.includes('FTSE'), 'the sample uses USA and India only')
   await page.getByText(/Snapshot from .* refreshed a few times a day/).waitFor()
   await page.getByLabel('Weather', { exact: true }).getByText('55°F').waitFor()
-  assert.ok(meteoCalls[0].includes('name=New%20York'))
+  assert.equal(meteoCalls.length, 0, 'New York is built in: only the forecast is requested, no city lookup')
   assert.equal(await page.getByLabel('Time', { exact: true }).locator('.ck').count(), 2)
   await page.getByRole('button', { name: '⚙ Home settings' }).click()
   await dialog().getByText(/snapshot of prices taken when the site was built/).waitFor()

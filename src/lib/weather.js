@@ -56,27 +56,53 @@ export function parseForecast(json, unit) {
 }
 
 // One request, with a time limit and plain-language failures (a hung or blocked request must never leave "Loading…" forever).
-export async function getJson(url, fetchImpl = fetch, timeoutMs = 15_000) {
+// `step` says which request it was, so a failure message shows whether the city lookup or the forecast was the one that stalled.
+// Network trouble, timeouts and server errors are marked `transient` so the caller can try again.
+export async function getJson(url, fetchImpl = fetch, timeoutMs = 20_000, step = 'weather request') {
   const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null
   const timer = ctl ? setTimeout(() => ctl.abort(), timeoutMs) : null
+  const fail = (message, transient) => Object.assign(new Error(message), { transient })
   let res
   try {
     res = await fetchImpl(url, ctl ? { signal: ctl.signal } : undefined)
   } catch (e) {
-    throw new Error(e?.name === 'AbortError'
-      ? 'The weather service (Open-Meteo) did not answer in time. Try again.'
-      : 'Could not reach the weather service (Open-Meteo). Check your connection, and that no ad or privacy blocker is stopping open-meteo.com.')
+    throw fail(e?.name === 'AbortError'
+      ? `The weather service (Open-Meteo) did not answer in time (${step}). Try again.`
+      : `Could not reach the weather service (Open-Meteo) (${step}). Check your connection, and that no ad or privacy blocker or private DNS is stopping open-meteo.com.`, true)
   } finally {
     if (timer) clearTimeout(timer)
   }
-  if (!res.ok) throw new Error(res.status === 429 ? 'The weather service is limiting requests right now. Try again in a minute.' : `The weather service answered with an error (HTTP ${res.status}). Try again later.`)
-  try { return await res.json() } catch { throw new Error('The weather service sent something unreadable. Try again later.') }
+  if (!res.ok) throw fail(res.status === 429 ? 'The weather service is limiting requests right now. Try again in a minute.' : `The weather service answered with an error (HTTP ${res.status}, ${step}). Try again later.`, res.status >= 500 || res.status === 429)
+  try { return await res.json() } catch { throw fail(`The weather service sent something unreadable (${step}). Try again later.`, true) }
 }
 
-export async function loadWeather(city, unit, fetchImpl = fetch) {
-  const g = parseGeocode(await getJson(geocodeUrl(city), fetchImpl), city)
-  if (!g) throw new Error(`Could not find “${city}”. Try the city name alone, or a nearby larger city.`)
-  const f = parseForecast(await getJson(forecastUrl({ lat: g.lat, lon: g.lon, unit }), fetchImpl), unit)
+// Try again a couple of times, with a short wait, when the failure was only network trouble.
+export async function withRetry(fn, delays = [1000, 3000]) {
+  for (let i = 0; ; i++) {
+    try { return await fn() } catch (e) {
+      if (!e?.transient || i >= delays.length) throw e
+      await new Promise((r) => setTimeout(r, delays[i]))
+    }
+  }
+}
+
+// Big, common places need no lookup at all (one request instead of two). Used for the demo's default city.
+const BUILTIN_PLACES = {
+  'new york': { name: 'New York', region: 'New York', country: 'United States', lat: 40.7143, lon: -74.006 },
+}
+const placeKey = (city) => String(city).trim().toLowerCase()
+
+// opts: a fetch function (older callers) or { fetchImpl, geo: { get(city), set(city, place) }, delays }
+export async function loadWeather(city, unit, opts = {}) {
+  const o = typeof opts === 'function' ? { fetchImpl: opts } : opts
+  const fetchImpl = o.fetchImpl || fetch
+  let g = BUILTIN_PLACES[placeKey(city)] || o.geo?.get(city) || null
+  if (!g) {
+    g = parseGeocode(await withRetry(() => getJson(geocodeUrl(city), fetchImpl, 20_000, 'looking up the city'), o.delays), city)
+    if (!g) throw new Error(`Could not find “${city}”. Try the city name alone, or a nearby larger city.`)
+    o.geo?.set(city, g) // the city's coordinates do not change: ask once, remember
+  }
+  const f = parseForecast(await withRetry(() => getJson(forecastUrl({ lat: g.lat, lon: g.lon, unit }), fetchImpl, 20_000, 'getting the forecast'), o.delays), unit)
   if (!f) throw new Error('The weather service sent something unexpected. Try again later.')
   return { place: g.name, ...f, fetchedAt: Date.now() }
 }

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { clockFor, clocksFor, greeting } from '../src/lib/clocks.js'
 import { duration, marketStatus, marketsFor } from '../src/lib/markets.js'
 import { buildRequests, explainError, fetchQuotes, groupsToRefresh, mergeCache, parseQuotes, tickerItems } from '../src/lib/ticker.js'
-import { describe, forecastUrl, geocodeUrl, getJson, loadWeather, parseForecast, parseGeocode, splitPlace } from '../src/lib/weather.js'
+import { describe, forecastUrl, geocodeUrl, getJson, loadWeather, parseForecast, parseGeocode, splitPlace, withRetry } from '../src/lib/weather.js'
 
 const MON_15_42Z = new Date('2026-11-16T15:42:00Z') // Monday afternoon in London, morning in New York
 
@@ -218,4 +218,45 @@ test('weather: loadWeather end to end with a fake service (name searched, qualif
   assert.equal(w.place, 'Austin'); assert.equal(w.temp, 68); assert.ok(seen[1].includes('latitude=30.27'), 'the Texas match was used')
   await assert.rejects(loadWeather('Nowhere', 'C', async () => res({})), /Could not find “Nowhere”/)
   await assert.rejects(loadWeather('Austin', 'C', async (u) => (u.includes('geocoding') ? res({ results: [{ name: 'A', latitude: 1, longitude: 2 }] }) : res({}))), /unexpected/)
+})
+
+const forecastBody = { current: { temperature_2m: 55.2, relative_humidity_2m: 60, weather_code: 3, wind_speed_10m: 6.1 }, daily: { time: ['2026-11-16', '2026-11-17', '2026-11-18', '2026-11-19', '2026-11-20'], weather_code: [3, 61, 2, 0, 1], temperature_2m_max: [58, 56, 55, 54, 57], temperature_2m_min: [44, 45, 43, 41, 42] } }
+
+test('weather: a failure names the step that stalled', async () => {
+  await assert.rejects(getJson('u', async () => { throw new TypeError('x') }, 1000, 'looking up the city'), /\(looking up the city\)/)
+  await assert.rejects(getJson('u', async () => res({}, 503), 1000, 'getting the forecast'), /HTTP 503, getting the forecast/)
+})
+
+test('weather: network trouble is retried, other failures are not', async () => {
+  let n = 0
+  assert.equal(await withRetry(async () => { if (++n < 3) throw Object.assign(new Error('x'), { transient: true }); return 'ok' }, [0, 0]), 'ok')
+  assert.equal(n, 3)
+  let m = 0
+  await assert.rejects(withRetry(async () => { m++; throw Object.assign(new Error('x'), { transient: true }) }, [0, 0]), /x/)
+  assert.equal(m, 3) // the first try and two retries
+  let k = 0
+  await assert.rejects(withRetry(async () => { k++; throw new Error('permanent') }, [0, 0]), /permanent/)
+  assert.equal(k, 1)
+})
+
+test('weather: a flaky service that fails twice and then answers still gives the weather', async () => {
+  let calls = 0
+  const flaky = async () => { calls++; if (calls <= 2) throw new TypeError('Failed to fetch'); return res(forecastBody) }
+  const w = await loadWeather('New York', 'F', { fetchImpl: flaky, delays: [0, 0] })
+  assert.equal(w.temp, 55); assert.equal(calls, 3)
+})
+
+test('weather: New York needs no city lookup, and other cities are looked up once and remembered', async () => {
+  const urls = []
+  const svc = async (url) => { urls.push(url); return url.includes('geocoding') ? res({ results: [{ name: 'Pune', admin1: 'Maharashtra', country: 'India', latitude: 18.52, longitude: 73.86 }] }) : res(forecastBody) }
+  await loadWeather('New York', 'F', svc)
+  assert.equal(urls.length, 1); assert.ok(urls[0].includes('latitude=40.7143')) // forecast only
+  urls.length = 0
+  const store = new Map()
+  const geo = { get: (c) => store.get(c) || null, set: (c, g) => store.set(c, g) }
+  await loadWeather('Pune', 'C', { fetchImpl: svc, geo })
+  assert.equal(urls.length, 2); assert.ok(urls[0].includes('geocoding'))
+  urls.length = 0
+  await loadWeather('Pune', 'C', { fetchImpl: svc, geo })
+  assert.equal(urls.length, 1); assert.ok(urls[0].includes('latitude=18.52')) // the second time: no lookup
 })
