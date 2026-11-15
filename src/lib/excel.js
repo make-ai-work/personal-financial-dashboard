@@ -1,4 +1,4 @@
-// Plain Excel export/import in the flat layout. The Pets / PetRecords sheets are legacy data from the retired Pets tab, kept so backups round-trip.
+// Plain Excel export/import in the flat layout.
 // The export is NOT encrypted. Loaded lazily because exceljs is large.
 import { COUNTRIES, OWNERS, MIX } from './format.js'
 import { emptyData, uid } from './model.js'
@@ -13,9 +13,6 @@ const load = async () => {
 
 const ITEMS = ['ID', 'Country', 'Type', 'Name', 'Account number', 'Institution', 'Owner', 'Current balance',
   ...MIX.map((m) => `${m.label} %`), 'Maturity date', 'Value at maturity']
-const PETS = ['ID', 'Name', 'Species', 'Breed', 'Sex', 'Neutered', 'Birth date', 'Icon', 'Microchip', 'Vet', 'Vet phone',
-  'Insurance', 'Insurance renews', 'Food', 'Allergies', 'Notes']
-const PET_RECORDS = ['ID', 'Pet ID', 'Type', 'Name / reason', 'Date', 'Dose', 'Repeat', 'Next due', 'Ends on', 'Last given', 'Vet', 'Cost', 'Weight kg', 'Notes']
 const PROPERTY = ['ID', 'Name', 'Country', 'Address', 'Type', 'Owner', 'Purchase date', 'Purchase price', 'Bedrooms', 'Bathrooms', 'Size sq ft',
   'Property tax / year', 'Insurance / year', 'HOA / month', 'Next tax due', 'Notes']
 const PROPERTY_VALUES = ['ID', 'Property ID', 'Date', 'Value', 'Source', 'Notes']
@@ -46,14 +43,6 @@ export async function exportWorkbook(data) {
   ]))
   sheet(wb, 'Balances', ['Date', 'Account ID', 'Amount'], data.balances.map((b) => [b.date, b.accountId, b.amount]))
   sheet(wb, 'Rates', ['Date', 'From', 'To', 'Rate'], data.rates.map((r) => [r.date, r.from, r.to, r.rate]))
-  sheet(wb, 'Pets', PETS, data.pets.map((p) => [
-    p.id, p.name, p.species, p.breed || '', p.sex || '', p.neutered || '', p.birthDate || '', p.icon || '', p.microchip || '',
-    p.vet || '', p.vetPhone || '', p.insurance || '', p.insuranceRenews || '', p.food || '', p.allergies || '', p.notes || '',
-  ]))
-  sheet(wb, 'PetRecords', PET_RECORDS, data.petRecords.map((r) => [
-    r.id, r.petId, r.type, r.name || '', r.date || '', r.dose || '', r.repeat || '', r.nextDue || '', r.endDate || '',
-    r.lastGiven || '', r.vet || '', r.cost ?? null, r.weightKg ?? null, r.notes || '',
-  ]))
   sheet(wb, 'Property', PROPERTY, data.properties.map((p) => [
     p.id, p.name, p.country, p.address || '', p.type, p.owner, p.purchaseDate || '', p.purchasePrice ?? null, p.bedrooms ?? null, p.bathrooms ?? null,
     p.sizeSqft ?? null, p.taxYear ?? null, p.insuranceYear ?? null, p.hoaMonth ?? null, p.taxDue || '', p.notes || '',
@@ -82,8 +71,6 @@ export async function exportWorkbook(data) {
     ['parentLabel', data.settings.parentLabel],
     ['autoLockMin', data.settings.autoLockMin],
     ['dueSoonDays', data.settings.dueSoonDays],
-    ['petCurrency', data.settings.petCurrency ?? ''],
-    ['weightUnit', data.settings.weightUnit ?? ''],
   ])
   return new Uint8Array(await wb.xlsx.writeBuffer())
 }
@@ -158,32 +145,6 @@ export async function importWorkbook(buffer) {
   }
   for (const r of readRows(wb.getWorksheet('Rates'))) {
     if (r.Date && r.From && r.To && num(r.Rate) > 0) data.rates.push({ date: String(r.Date), from: r.From, to: r.To, rate: num(r.Rate) })
-  }
-  const petIds = new Set()
-  for (const r of readRows(wb.getWorksheet('Pets'))) {
-    if (!r.Name) {
-      warnings.push('Skipped a pet row with no name.')
-      continue
-    }
-    const id = r.ID && !petIds.has(String(r.ID)) ? String(r.ID) : uid()
-    petIds.add(id)
-    data.pets.push({
-      id, name: String(r.Name), species: String(r.Species || 'other'), breed: String(r.Breed ?? ''),
-      sex: String(r.Sex ?? ''), neutered: String(r.Neutered ?? ''), birthDate: String(r['Birth date'] ?? ''), icon: String(r.Icon ?? ''),
-      microchip: String(r.Microchip ?? ''), vet: String(r.Vet ?? ''), vetPhone: String(r['Vet phone'] ?? ''), insurance: String(r.Insurance ?? ''),
-      insuranceRenews: String(r['Insurance renews'] ?? ''), food: String(r.Food ?? ''), allergies: String(r.Allergies ?? ''), notes: String(r.Notes ?? ''),
-    })
-  }
-  for (const r of readRows(wb.getWorksheet('PetRecords'))) {
-    if (!petIds.has(String(r['Pet ID'])) || !['vaccine', 'medication', 'visit', 'weight'].includes(r.Type)) {
-      warnings.push(`Skipped pet record "${r['Name / reason'] || r.Type || '(blank)'}": unknown pet or type.`)
-      continue
-    }
-    data.petRecords.push({
-      id: r.ID ? String(r.ID) : uid(), petId: String(r['Pet ID']), type: r.Type, name: String(r['Name / reason'] ?? ''), date: String(r.Date ?? ''),
-      dose: String(r.Dose ?? ''), repeat: String(r.Repeat ?? ''), nextDue: String(r['Next due'] ?? ''), endDate: String(r['Ends on'] ?? ''),
-      lastGiven: String(r['Last given'] ?? ''), vet: String(r.Vet ?? ''), cost: num(r.Cost), weightKg: num(r['Weight kg']), notes: String(r.Notes ?? ''),
-    })
   }
   const propIds = new Set()
   const typeKeys = PROPERTY_TYPES.map((t) => t.key)
@@ -264,9 +225,7 @@ export async function importWorkbook(buffer) {
     if (r.Key === 'priceStaleDays' && num(r.Value) > 0) data.settings.priceStaleDays = num(r.Value)
     if (r.Key === 'parentLabel' && r.Value) data.settings.parentLabel = String(r.Value)
     if (r.Key === 'autoLockMin' && num(r.Value) != null) data.settings.autoLockMin = num(r.Value)
-    if ((r.Key === 'dueSoonDays' || r.Key === 'petSoonDays') && num(r.Value) > 0) data.settings.dueSoonDays = num(r.Value) // petSoonDays: older exports
-    if (r.Key === 'petCurrency' && COUNTRIES[r.Value]) data.settings.petCurrency = r.Value // legacy Pets settings, kept
-    if (r.Key === 'weightUnit' && ['kg', 'lb'].includes(r.Value)) data.settings.weightUnit = r.Value
+    if (r.Key === 'dueSoonDays' && num(r.Value) > 0) data.settings.dueSoonDays = num(r.Value)
   }
   return { data, warnings }
 }

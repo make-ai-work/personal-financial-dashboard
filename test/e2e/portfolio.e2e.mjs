@@ -205,7 +205,7 @@ try {
   await subtab(/USA/).click()
   await panelOf(P).getByRole('button', { name: 'Open in Finance' }).click()
   await page.getByText('Assets').first().waitFor()
-  assert.ok(await page.locator('.subtabs button.on', { hasText: 'USA' }).isVisible())
+  await page.locator('.subtabs button.on', { hasText: 'USA' }).waitFor() // waits for the tab to switch
   await financeRow('Brokerage').getByRole('button', { name: 'Open portfolio' }).click()
   await page.getByText('linked to Finance: Brokerage · Schwab').waitFor()
   await page.screenshot({ path: `${OUT}/usa.png`, fullPage: true })

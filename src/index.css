@@ -131,7 +131,7 @@ td.act { text-align: right !important; padding-right: 12px; }
 .widget-title { margin: 0 0 12px; font-size: .85rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
 .greeting { margin: 0; color: var(--muted); } .time { margin: 4px 0; font-size: 3rem; font-weight: 600; } .date { margin: 0; color: var(--muted); }
 
-/* Shared pieces first used by the (retired) Pets tab */
+/* Shared pieces (status pills, reminders, details) */
 .subpage { padding-top: 14px; }
 .st { font-size: .68rem; padding: 1px 8px; border-radius: 99px; color: var(--on-status); font-weight: 600; white-space: nowrap; }
 .s-over { background: var(--red); } .s-soon { background: var(--amber); } .s-ok { background: var(--green); } .s-na { background: var(--grey); }
