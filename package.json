@@ -11,7 +11,9 @@
     "test:e2e": "node test/e2e/finance.e2e.mjs",
     "test:e2e:countries": "node test/e2e/countries.e2e.mjs",
     "test:e2e:property": "node test/e2e/property.e2e.mjs",
-    "test:e2e:portfolio": "node test/e2e/portfolio.e2e.mjs"
+    "test:e2e:portfolio": "node test/e2e/portfolio.e2e.mjs",
+    "test:e2e:retirement": "node test/e2e/retirement.e2e.mjs",
+    "test:e2e:auth": "node test/e2e/auth.e2e.mjs"
   },
   "dependencies": {
     "exceljs": "^4.4.0",

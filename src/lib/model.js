@@ -8,6 +8,7 @@
 // property data in ./property.js; portfolios / holdings in ./portfolio.js
 
 import { sanitizeCountries } from './countries.js'
+import { defaultRetirement, normalizeRetirement } from './retirement.js'
 
 export const uid = () => crypto.randomUUID()
 
@@ -26,6 +27,7 @@ export const emptyData = () => ({
   loanUpdates: [],
   portfolios: [],
   holdings: [],
+  retirement: defaultRetirement(),
 })
 
 export function normalizeData(d) {
@@ -52,6 +54,7 @@ export function normalizeData(d) {
     loanUpdates: d?.loanUpdates || [],
     portfolios: d?.portfolios || [],
     holdings: d?.holdings || [],
+    retirement: normalizeRetirement(d?.retirement),
   }
 }
 
@@ -81,6 +84,7 @@ export function removeAccount(d, id) {
     balances: d.balances.filter((b) => b.accountId !== id),
     portfolios: d.portfolios.filter((p) => !gone.has(p.id)),
     holdings: d.holdings.filter((h) => !gone.has(h.portfolioId)),
+    retirement: { ...d.retirement, plan: { ...d.retirement.plan, selected: d.retirement.plan.selected.filter((x) => x !== id) } },
   }
 }
 

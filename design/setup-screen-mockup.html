@@ -1,0 +1,165 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Setup screen mockup</title>
+<style>
+/* PMO Hub theme tokens. Light = "Warm Paper", dark = "Midnight".
+   Change the look of the whole app here; styles.css only uses these names. */
+:root {
+  color-scheme: light;
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --r: 12px;            /* panels, cards */
+  --r-sm: 8px;          /* buttons, inputs */
+
+  --bg: #f7f4ee;
+  --surface: #fffdf9;
+  --surface-2: #f1ece2;
+  --text: #2b2722;
+  --muted: #7a7266;
+  --line: #e6dfd2;
+  --accent: #0f6e6e;
+  --accent-text: #ffffff;
+  --head: #0f4c4c;      /* top bar */
+  --head-text: #ffffff;
+  --shadow: 0 8px 30px rgba(60, 40, 10, .18);
+
+  /* status */
+  --red: #c8402f; --amber: #d98e04; --green: #3f8f55;
+  --blue: #4a7fb0; --grey: #a39a8b; --done: #7b7466;
+  --on-status: #ffffff; /* glyph colour drawn on top of a status colour */
+
+  /* note labels (the rest reuse status colours) */
+  --purple: #8b6cf0; --pink: #c4467d;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --r: 6px; --r-sm: 5px;
+    --bg: #0f1420; --surface: #181f2e; --surface-2: #212a3d;
+    --text: #e7ebf3; --muted: #9aa5ba; --line: #2a3347;
+    --accent: #6ea8ff; --accent-text: #0b1220;
+    --head: #0a0e17; --head-text: #e7ebf3;
+    --shadow: 0 8px 30px rgba(0, 0, 0, .6);
+    --red: #ff6b6b; --amber: #ffc233; --green: #3ddc84;
+    --blue: #5cb3ff; --grey: #74809a; --done: #8d9ab3;
+    --on-status: #0b1220;
+    --purple: #a58bff; --pink: #f07aa8;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --r: 6px; --r-sm: 5px;
+  --bg: #0f1420; --surface: #181f2e; --surface-2: #212a3d;
+  --text: #e7ebf3; --muted: #9aa5ba; --line: #2a3347;
+  --accent: #6ea8ff; --accent-text: #0b1220;
+  --head: #0a0e17; --head-text: #e7ebf3;
+  --shadow: 0 8px 30px rgba(0, 0, 0, .6);
+  --red: #ff6b6b; --amber: #ffc233; --green: #3ddc84;
+  --blue: #5cb3ff; --grey: #74809a; --done: #8d9ab3;
+  --on-status: #0b1220;
+  --purple: #a58bff; --pink: #f07aa8;
+}
+
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font)}
+button,input{font:inherit}button{cursor:pointer}
+header{background:var(--head);color:var(--head-text);padding:10px 24px;display:flex;justify-content:space-between;align-items:center}
+header h1{font-size:1.05rem;margin:0}
+.btn{background:var(--surface);border:1px solid var(--line);color:var(--text);border-radius:var(--r-sm);padding:6px 14px;font-size:.88rem}
+.btn.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.sm{padding:3px 10px;font-size:.78rem}
+.mock{background:var(--surface-2);border-bottom:1px solid var(--line);padding:8px 24px;font-size:.82rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.mock .seg button{background:var(--surface);border:1px solid var(--line);padding:3px 10px;font-size:.8rem;color:var(--muted)}.mock .seg button.on{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+.page{max-width:1180px;margin:0 auto;padding:22px 16px 60px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.center{max-width:600px;margin:10px auto;padding:26px 24px}
+.center h2{margin:0 0 6px;text-align:center}.note{color:var(--muted);font-size:.86rem;margin:0 0 14px}.center>.note{text-align:center}
+.steps{text-align:center;font-size:.75rem;color:var(--muted);margin-bottom:12px}.steps b{color:var(--accent)}
+.field{display:block;margin:14px 0 4px;font-size:.82rem;color:var(--muted)}
+.field input{display:block;width:100%;margin-top:4px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 10px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem}
+.field input.bad{border-color:var(--red)}.field input.good{border-color:var(--green)}
+.hint{font-size:.76rem;color:var(--muted);margin:4px 0 0}.err{color:var(--red);font-size:.82rem;margin-top:6px}.ok{color:var(--green);font-size:.82rem;margin-top:6px}
+.warn{background:var(--surface-2);border-left:3px solid var(--amber);padding:10px 12px;border-radius:var(--r-sm);font-size:.82rem;margin:14px 0}
+.okbox{background:var(--surface-2);border-left:3px solid var(--green);padding:10px 12px;border-radius:var(--r-sm);font-size:.84rem;margin:14px 0}
+.row{display:flex;gap:8px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-top:16px}
+.link{background:none;border:0;color:var(--accent);padding:2px 0;font-size:.84rem}
+details{border:1px solid var(--line);border-radius:var(--r-sm);margin:14px 0;background:var(--bg)}
+summary{cursor:pointer;color:var(--accent);padding:10px 12px;font-size:.88rem;font-weight:600}
+details ol{margin:0;padding:0 14px 12px 32px;font-size:.84rem;line-height:1.55}details li{margin:5px 0}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--surface-2);padding:1px 5px;border-radius:4px;font-size:.8rem;word-break:break-all}
+.copy{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:.88rem;margin:12px 0}.kv span{color:var(--muted)}
+.state{display:none}.state.on{display:block}
+.pill{font-size:.68rem;padding:1px 9px;border-radius:99px;color:var(--on-status);font-weight:600;vertical-align:middle}.p-ok{background:var(--green)}.p-wait{background:var(--amber)}
+@media(max-width:640px){.kv{grid-template-columns:1fr}.row{flex-direction:column-reverse;align-items:stretch}.row .btn{width:100%}.row .link{text-align:center}.page{padding:10px}.center{padding:18px 14px;margin:0}.panel{box-shadow:none}header{padding:8px 14px}.mock{padding:8px 14px}}
+</style></head><body>
+<header><h1>My Dashboard</h1><button class="btn" onclick="var r=document.documentElement;r.dataset.theme=(r.dataset.theme==='dark'?'light':'dark')">Light / dark</button></header>
+<div class="mock"><b>MOCKUP</b> Show state:
+ <span class="seg"><button class="on" data-s="ask">1 · First run</button><button data-s="bad">2 · Mistake</button><button data-s="saved">3 · Saved</button><button data-s="account">4 · Change later</button></span>
+ <span style="color:var(--muted)">Try typing in the box in state 1. Resize to phone width to check.</span></div>
+<div class="page">
+
+<!-- 1 and 2: ask -->
+<div class="state on" id="s-ask"><div class="panel center">
+ <div class="steps"><b>Setup</b> › Sign in › Open your data</div>
+ <h2>Connect your Google account</h2>
+ <p class="note">Sign in with Google and saving to Google Drive need a free “client ID” from Google. You only do this once; it is not a password and it is not secret.</p>
+
+ <label class="field" for="cid">OAuth client ID
+  <input id="cid" autocomplete="off" spellcheck="false" placeholder="1234567890-abcdefg.apps.googleusercontent.com"></label>
+ <div class="hint" id="hint">It ends in <code>.apps.googleusercontent.com</code>.</div>
+ <div id="msg"></div>
+
+ <details open><summary>How do I get one? (about 5 minutes)</summary>
+  <ol>
+   <li>Open <b>Google Cloud Console</b> and create a project (any name).</li>
+   <li><b>APIs &amp; Services › Library:</b> enable the <b>Google Drive API</b>.</li>
+   <li><b>OAuth consent screen:</b> choose <i>External</i>, add yourself as a test user.</li>
+   <li><b>Credentials › Create credentials › OAuth client ID</b>, type <b>Web application</b>.</li>
+   <li>Under <b>Authorized JavaScript origins</b> add this address:
+    <div class="copy"><code id="origin">https://dashboard.example.com</code><button class="btn sm" id="copyo">Copy</button></div></li>
+   <li>Create it, then copy the <b>Client ID</b> (not the secret) into the box above.</li>
+  </ol></details>
+
+ <div class="warn"><b>Never paste a client secret here.</b> This app does not need one. Only the client ID goes in the box.</div>
+ <div class="kv"><span>Permissions it will ask for</span><div>Your name and email (to sign you in), and access only to the files this app creates in your Drive. It cannot see your other files.</div></div>
+
+ <div class="row"><button class="link" id="skip">Skip for now, use the demo sign-in</button><button class="btn primary" id="save" disabled>Save and continue</button></div>
+</div></div>
+
+<!-- 3: saved -->
+<div class="state" id="s-saved"><div class="panel center">
+ <div class="steps">Setup ✓ › <b>Sign in</b> › Open your data</div>
+ <h2>Google is set up</h2>
+ <div class="okbox">Client ID saved in this browser. <span class="pill p-wait">sign-in on hold</span></div>
+ <div class="kv"><span>Client ID</span><code>1234567890-abcdefg.apps.googleusercontent.com</code><span>This address</span><code>https://dashboard.example.com</code><span>Drive access</span><div>App files only</div></div>
+ <p class="note" style="text-align:left">Real Google sign-in is not switched on yet, so the next screen still uses the demo button. Nothing is sent to Google.</p>
+ <div class="row"><button class="link">Change client ID</button><button class="btn primary">Continue to sign in</button></div>
+</div></div>
+
+<!-- 4: change later -->
+<div class="state" id="s-account"><div class="panel center">
+ <h2>Account</h2>
+ <p class="note">Signed in as <b>Demo user</b> (demo@example.com).</p>
+ <div class="kv" style="grid-template-columns:1fr auto;align-items:center;border-top:1px solid var(--line);padding-top:12px">
+  <div><b>Google connection</b><div class="hint">Client ID <code>1234567890-abcdefg…</code></div></div><button class="btn sm">Change</button>
+  <div><b>Two-step verification</b><div class="hint">Built in, not enforced yet</div></div><label><input type="checkbox"> Preview</label>
+ </div>
+ <div class="row"><button class="btn">Close</button><button class="btn primary">Sign out</button></div>
+</div></div>
+
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const RE=/^[0-9]{6,}-[a-z0-9]{8,}\.apps\.googleusercontent\.com$/i;
+function show(s){document.querySelectorAll('.state').forEach(e=>e.classList.toggle('on',e.id==='s-'+(s==='bad'?'ask':s)));document.querySelectorAll('.mock .seg button').forEach(b=>b.classList.toggle('on',b.dataset.s===s));
+ if(s==='bad'){$('cid').value='my-client-secret-GOCSPX-abc123';check()} if(s==='ask'){$('cid').value='';check()}}
+function check(){const v=$('cid').value.trim(),i=$('cid');
+ i.className='';$('msg').innerHTML='';$('save').disabled=true;
+ if(!v)return;
+ if(/GOCSPX|client_secret/i.test(v)){i.className='bad';$('msg').innerHTML='<div class="err">That looks like a client <b>secret</b>. Do not paste it here: use the Client ID instead, which ends in .apps.googleusercontent.com.</div>';return}
+ if(!RE.test(v)){i.className='bad';$('msg').innerHTML='<div class="err">That does not look like a client ID. It should look like 1234567890-abcdefg.apps.googleusercontent.com.</div>';return}
+ i.className='good';$('msg').innerHTML='<div class="ok">Looks right.</div>';$('save').disabled=false}
+$('cid').addEventListener('input',check);
+document.querySelectorAll('.mock .seg button').forEach(b=>b.onclick=()=>show(b.dataset.s));
+$('save').onclick=()=>show('saved');$('copyo').onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText($('origin').textContent);$('copyo').textContent='Copied';setTimeout(()=>$('copyo').textContent='Copy',1200)};
+$('origin').textContent=location.origin.startsWith('http')?location.origin:'https://dashboard.example.com';
+document.querySelector('#s-ask details').open=!matchMedia('(max-width:640px)').matches;
+</script></body></html>

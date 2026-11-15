@@ -62,7 +62,7 @@ export function FirstRun() {
         <button onClick={importExcel}>
           Import from an Excel file<small>For a workbook exported from this app (Items / Insurance / Balances / Rates sheets). The original is left untouched, so delete or secure it yourself afterwards.</small>
         </button>
-        <button disabled>Save to Google Drive<small>Coming in a later step.</small></button>
+        <button disabled>Save to Google Drive<small>Needs the real Google sign-in, which is on hold.</small></button>
       </div>
       {(v.error || err) && <div className="err">{v.error || err}</div>}
     </div>

@@ -14,7 +14,7 @@ const server = spawn('npx', ['vite', 'preview', '--port', '4176', '--strictPort'
 await new Promise((r) => setTimeout(r, 2500))
 const browser = await chromium.launch()
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true })
-await ctx.addInitScript(() => { delete window.showSaveFilePicker; delete window.showOpenFilePicker })
+await ctx.addInitScript(() => { delete window.showSaveFilePicker; delete window.showOpenFilePicker; localStorage.setItem('auth.demo', '1') }) // start signed in
 // Deterministic rates per USD: INR 84, GBP 0.8, AUD 1.5, CHF 0.9 (cross rates derived from the requested base)
 const PER_USD = { USD: 1, INR: 84, GBP: 0.8, AUD: 1.5, CHF: 0.9 }
 const fetched = []

@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Retirement mockup</title>
+<style>
+/* Tokens from pmo-hub public/theme.css (Warm Paper / Midnight) */
+:root{color-scheme:light;--font:'Segoe UI',system-ui,-apple-system,sans-serif;--r:12px;--r-sm:8px;
+--bg:#f7f4ee;--surface:#fffdf9;--surface-2:#f1ece2;--text:#2b2722;--muted:#7a7266;--line:#e6dfd2;
+--accent:#0f6e6e;--accent-text:#fff;--head:#0f4c4c;--head-text:#fff;--shadow:0 8px 30px rgba(60,40,10,.18);
+--purple:#8b6cf0;--red:#c8402f;--amber:#d98e04;--green:#3f8f55;--blue:#4a7fb0;--grey:#a39a8b;--on-status:#fff}
+:root[data-theme="dark"]{--purple:#a58bff;color-scheme:dark;--r:6px;--r-sm:5px;--bg:#0f1420;--surface:#181f2e;--surface-2:#212a3d;
+--text:#e7ebf3;--muted:#9aa5ba;--line:#2a3347;--accent:#6ea8ff;--accent-text:#0b1220;--head:#0a0e17;--head-text:#e7ebf3;
+--shadow:0 8px 30px rgba(0,0,0,.6);--red:#ff6b6b;--amber:#ffc233;--green:#3ddc84;--blue:#5cb3ff;--grey:#74809a;--on-status:#0b1220}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--purple:#a58bff;color-scheme:dark;--r:6px;--r-sm:5px;--bg:#0f1420;--surface:#181f2e;--surface-2:#212a3d;
+--text:#e7ebf3;--muted:#9aa5ba;--line:#2a3347;--accent:#6ea8ff;--accent-text:#0b1220;--head:#0a0e17;--head-text:#e7ebf3;
+--shadow:0 8px 30px rgba(0,0,0,.6);--red:#ff6b6b;--amber:#ffc233;--green:#3ddc84;--blue:#5cb3ff;--grey:#74809a;--on-status:#0b1220}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font)}
+header{background:var(--head);color:var(--head-text);padding:10px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{font-size:1.05rem;margin:0}
+.file{font-size:.8rem;opacity:.85}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px}
+button{font:inherit;cursor:pointer}
+.btn{background:transparent;border:1px solid currentColor;color:inherit;border-radius:var(--r-sm);padding:5px 12px;font-size:.85rem}
+.btn.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+nav{background:var(--surface);border-bottom:1px solid var(--line);padding:0 24px;display:flex;gap:4px;overflow-x:auto}
+nav button{background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:12px 14px;white-space:nowrap}
+nav button.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+main{max-width:1180px;margin:0 auto;padding:22px 16px 60px}
+.mock{display:none}.mock.on{display:block}
+.note{color:var(--muted);font-size:.85rem;margin:0 0 16px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.p-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);gap:8px;flex-wrap:wrap}
+.title{display:flex;align-items:center;gap:10px;font-weight:600}
+.cur{font-size:.75rem;background:var(--surface-2);color:var(--muted);padding:2px 8px;border-radius:99px}
+.pos{color:var(--green)}.neg{color:var(--red)}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 18px}
+@media(max-width:560px){.kpis{grid-template-columns:1fr}}
+.kpi small{display:block;color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em}
+.kpi b{font-size:1.3rem;font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th,td{padding:10px 18px;text-align:right;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--surface-2)}
+tr.total td{font-weight:700;background:var(--surface-2)}
+td small{display:block;color:var(--muted);font-size:.72rem}
+.fx{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;background:var(--surface-2);font-size:.82rem;color:var(--muted);gap:8px;flex-wrap:wrap}
+.fx b{color:var(--text)}
+.tag{font-size:.65rem;padding:1px 7px;border-radius:99px;color:var(--on-status);background:var(--blue);margin-left:6px}
+.cols{display:grid;grid-template-columns:1fr 1fr}
+@media(max-width:700px){.cols{grid-template-columns:1fr}}
+.col{padding:14px 18px}.col+.col{border-left:1px solid var(--line)}
+@media(max-width:700px){.col+.col{border-left:0;border-top:1px solid var(--line)}}
+.col h3{margin:0 0 8px;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;display:flex;justify-content:space-between}
+.col h3.a{color:var(--green)}.col h3.l{color:var(--red)}
+.row{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:.92rem}
+.row small{display:block;color:var(--muted);font-size:.72rem}
+.row .v{font-variant-numeric:tabular-nums;white-space:nowrap}
+.add{margin-top:10px;width:100%;background:transparent;border:1px dashed var(--line);color:var(--muted);border-radius:var(--r-sm);padding:6px}
+.chart{padding:10px 18px 16px}
+.chart svg{width:100%;height:auto;display:block}
+.legend{display:flex;gap:16px;font-size:.78rem;color:var(--muted);padding:0 18px 12px;flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:3px;margin-right:6px;vertical-align:middle;border-radius:2px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden}
+.seg button{background:var(--surface);border:0;color:var(--muted);padding:4px 10px;font-size:.8rem}
+.seg button.on{background:var(--accent);color:var(--accent-text)}
+.upd{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.upd input{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:4px 8px;font:inherit;font-size:.85rem}
+.center{max-width:520px;margin:30px auto;text-align:center;padding:28px 24px}
+.center h2{margin:0 0 6px}
+.choice{display:grid;gap:10px;margin:20px 0 6px;text-align:left}
+.choice button{background:var(--surface-2);border:1px solid var(--line);color:var(--text);border-radius:var(--r-sm);padding:12px 14px;text-align:left}
+.choice button small{display:block;color:var(--muted);margin-top:2px}
+.choice button.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+.choice button.primary small{color:inherit;opacity:.85}
+.choice button[disabled]{opacity:.55;cursor:not-allowed}
+
+.chip{font-size:.65rem;padding:1px 8px;border-radius:99px;color:var(--on-status);margin-left:6px;vertical-align:middle;font-weight:600}
+.c-mine{background:var(--accent);color:var(--accent-text)}.c-joint{background:var(--amber)}.c-parent{background:var(--purple)}
+.radios{display:flex;gap:8px;margin-top:6px}
+.radios label{flex:1;border:1px solid var(--line);border-radius:var(--r-sm);padding:8px;text-align:center;background:var(--bg);color:var(--text);font-size:.85rem;margin:0}
+.radios label.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.radios small{display:block;color:var(--muted);font-size:.7rem}
+.field{display:block;margin:12px 0;font-size:.8rem;color:var(--muted)}
+.field input{display:block;width:100%;margin-top:4px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 8px;font:inherit}
+.bar2{padding:10px 24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.8rem;color:var(--muted)}
+
+.tblw{overflow-x:auto}
+.tblw table{min-width:900px;font-size:.84rem}
+.tblw th,.tblw td{padding:9px 10px;white-space:nowrap}
+.t-a td:nth-child(-n+4),.t-a th:nth-child(-n+4),.t-a td:nth-child(6),.t-a th:nth-child(6),.t-a td:nth-child(7),.t-a th:nth-child(7),
+.t-l td:nth-child(-n+4),.t-l th:nth-child(-n+4),
+.t-p td:nth-child(-n+4),.t-p th:nth-child(-n+4),.t-p td:nth-child(6),.t-p th:nth-child(6){text-align:left}
+.tblw td.w{white-space:normal}
+.mix{display:flex;height:9px;border-radius:99px;overflow:hidden;min-width:110px;background:var(--surface-2)}
+.mix i{display:block}
+.m-eq{background:var(--blue)}.m-cash{background:var(--green)}.m-pm{background:var(--amber)}.m-bd{background:var(--purple)}
+.mixtxt{font-size:.68rem;color:var(--muted);margin-top:3px}
+.soon{background:var(--amber)}
+.mixleg{display:flex;gap:14px;flex-wrap:wrap;padding:8px 12px;font-size:.75rem;color:var(--muted);border-top:1px solid var(--line)}
+.mixleg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.sub{font-size:.78rem;color:var(--muted);font-weight:400}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.four{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(max-width:560px){.two{grid-template-columns:1fr}.four{grid-template-columns:1fr 1fr}}
+.field select{display:block;width:100%;margin-top:4px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 8px;font:inherit}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+
+.pw{display:block;width:100%;margin-top:4px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 10px;font:inherit}
+.meter{display:flex;gap:4px;margin-top:6px}.meter i{flex:1;height:5px;border-radius:99px;background:var(--surface-2)}.meter i.on{background:var(--green)}
+.err{color:var(--red);font-size:.82rem;margin-top:8px}
+.warn{background:var(--surface-2);border-left:3px solid var(--amber);padding:10px 12px;border-radius:var(--r-sm);font-size:.82rem;text-align:left;margin:14px 0}
+.steps{display:flex;gap:8px;justify-content:center;font-size:.75rem;color:var(--muted);margin-bottom:14px}
+.steps b{color:var(--accent)}
+.lock{font-size:2.2rem}
+
+.page{max-width:1180px;margin:0 auto;padding:18px 16px 60px}
+.pg{display:none}.pg.on{display:block}
+td.l,th.l{text-align:left}
+.pcard{display:grid;grid-template-columns:1.4fr repeat(4,1fr);gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);align-items:center;cursor:pointer}
+.pcard:hover{background:var(--surface-2)}
+@media(max-width:900px){.pcard{grid-template-columns:1fr 1fr}}
+.pcard small,.kv small{display:block;color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em}
+.pcard b{font-variant-numeric:tabular-nums}
+.pcard .nm{font-weight:600}.pcard .nm span{display:block;color:var(--muted);font-weight:400;font-size:.8rem}
+.kv{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:14px 18px}
+@media(max-width:800px){.kv{grid-template-columns:1fr 1fr}}
+.kv b{font-weight:600}
+.src{font-size:.68rem;background:var(--surface-2);color:var(--muted);border-radius:99px;padding:1px 8px;margin-left:4px}
+.field{display:block;margin:10px 0;font-size:.8rem;color:var(--muted)}
+.field input,.field select,.field textarea{display:block;width:100%;margin-top:4px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 8px;font:inherit}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.f3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:600px){.f2,.f3{grid-template-columns:1fr}}
+.mw{max-width:600px;margin:0 auto 16px}
+.pad{padding:14px 18px}.sub{font-size:.78rem;color:var(--muted);font-weight:400}
+.foot2{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--line)}
+.chart{padding:10px 18px 6px}.chart svg{width:100%;height:auto;display:block}
+.legend{display:flex;gap:16px;font-size:.78rem;color:var(--muted);padding:2px 18px 12px;flex-wrap:wrap}.legend i{display:inline-block;width:12px;height:3px;margin-right:6px;vertical-align:middle;border-radius:2px}
+.fx{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;background:var(--surface-2);font-size:.82rem;color:var(--muted);gap:8px;flex-wrap:wrap}.fx b{color:var(--text)}
+.tag{font-size:.65rem;padding:1px 7px;border-radius:99px;color:var(--on-status);background:var(--blue);margin-left:6px}
+.ltv{height:7px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin-top:4px;width:100%}.ltv i{display:block;height:100%;background:var(--accent)}
+
+.bar{display:flex;height:22px;border-radius:99px;overflow:hidden;background:var(--surface-2);margin:6px 0 10px}
+.bar i{display:block;height:100%}
+.alloc{padding:14px 18px}
+.leg{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.82rem}
+.leg span{display:flex;align-items:center;gap:6px}.leg i{display:inline-block;width:10px;height:10px;border-radius:2px}
+.leg b{font-variant-numeric:tabular-nums}
+.warnrow{background:var(--surface-2);border-left:3px solid var(--amber);padding:9px 14px;font-size:.84rem;margin:8px 18px}
+.okrow{border-left:3px solid var(--green);background:var(--surface-2);padding:9px 14px;font-size:.84rem;margin:8px 18px}
+.drift-bar{position:relative;height:8px;background:var(--surface-2);border-radius:99px;min-width:140px}
+.drift-bar .tg{position:absolute;top:-3px;width:2px;height:14px;background:var(--text)}
+.drift-bar .cu{position:absolute;top:0;height:8px;border-radius:99px;background:var(--accent)}
+.st{font-size:.68rem;padding:1px 8px;border-radius:99px;color:var(--on-status);font-weight:600;white-space:nowrap}
+.s-over{background:var(--red)}.s-soon{background:var(--amber)}.s-ok{background:var(--green)}.s-na{background:var(--grey)}
+.chiplink{font-size:.7rem;background:var(--surface-2);color:var(--muted);border-radius:99px;padding:2px 10px;border:1px solid var(--line)}
+.tbl-in input{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:4px 6px;font:inherit;width:110px;text-align:right}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:900px){.two{grid-template-columns:1fr}}
+.mix{display:flex;height:9px;border-radius:99px;overflow:hidden;min-width:110px;background:var(--surface-2)}.mix i{display:block}
+.m-equities{background:var(--blue)}.m-cash{background:var(--green)}.m-metals{background:var(--amber)}.m-bonds{background:var(--purple)}
+.mixtxt{font-size:.68rem;color:var(--muted);margin-top:3px}
+.sw{font-size:.82rem;color:var(--muted)}
+select.s,input.s{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:4px 8px;font:inherit}
+
+.page{max-width:1180px;margin:0 auto;padding:18px 16px 60px}
+.cols{display:grid;grid-template-columns:minmax(340px,440px) 1fr;gap:16px;align-items:start}
+@media(max-width:900px){.cols{grid-template-columns:1fr}}
+.rowf{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:7px 0;font-size:.88rem}
+.rowf small{display:block;color:var(--muted);font-size:.72rem}
+.rowf input,.rowf select,.inl input,.inl select{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:5px 7px;font:inherit;font-size:.85rem}
+.rowf input{width:118px;text-align:right}
+.pad{padding:12px 18px}.sub{font-size:.78rem;color:var(--muted);font-weight:400}
+.src{font-size:.68rem;background:var(--surface-2);color:var(--muted);border-radius:99px;padding:1px 8px;margin-left:4px}
+.src.auto{background:var(--accent);color:var(--accent-text)}
+.chk{display:grid;grid-template-columns:auto 1fr auto;gap:2px 10px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line);font-size:.86rem}
+.chk .sec{grid-column:2;display:flex;gap:6px;align-items:center}
+.chk .amt{grid-row:1;grid-column:3;font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}
+.chk input{grid-row:1/3}
+.chk.off{opacity:.55}
+.kpis3{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;padding:14px 18px}
+.kpi small{display:block;color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em}
+.kpi b{font-size:1.25rem;font-variant-numeric:tabular-nums}
+.warnrow{background:var(--surface-2);border-left:3px solid var(--amber);padding:9px 14px;font-size:.84rem;margin:8px 18px}
+.okrow{border-left:3px solid var(--green);background:var(--surface-2);padding:9px 14px;font-size:.84rem;margin:8px 18px}
+.badrow{border-left:3px solid var(--red);background:var(--surface-2);padding:9px 14px;font-size:.84rem;margin:8px 18px}
+.chart{padding:10px 18px 6px}.chart svg{width:100%;height:auto;display:block}
+.legend{display:flex;gap:16px;font-size:.78rem;color:var(--muted);padding:2px 18px 12px;flex-wrap:wrap}.legend i{display:inline-block;width:12px;height:3px;margin-right:6px;vertical-align:middle;border-radius:2px}
+tr.cur td{background:var(--surface-2);font-weight:600}
+.srcrow{display:grid;grid-template-columns:1fr 1fr 1fr 28px;gap:6px;align-items:end;margin:8px 0;padding-bottom:8px;border-bottom:1px dashed var(--line)}
+.srcrow .nm{grid-column:1/4}
+.cols>div{min-width:0}
+.srcrow label span input{flex:1;min-width:0;width:auto}
+.srcrow label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:block}
+.srcrow label input,.srcrow label select{margin-top:2px}
+.srcrow input,.srcrow select{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:4px 6px;font:inherit;font-size:.82rem}
+.hd{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.x{background:none;border:0;color:var(--red);cursor:pointer}
+</style>
+</head>
+<body>
+<header><h1>My Dashboard</h1><span><button class="btn" onclick="var r=document.documentElement;r.dataset.theme=(r.dataset.theme==='dark'?'light':'dark')">Light / dark</button></span></header>
+<nav id="tabs"><button>Home</button><button>Finance Dashboard</button><button>🐾 Pets</button><button>🏠 Property</button><button>📈 Portfolio</button><button class="on">🏖️ Retirement</button></nav>
+<nav id="sub" style="background:transparent;padding:0 24px"><button class="on">Plan</button><button>Settings</button></nav>
+<div class="page">
+<p class="note">MOCKUP ONLY — fake accounts and numbers, but every result is calculated live from your inputs with the planner's formulas (plus the fixes listed in my message). Change anything on the left.</p>
+<div class="cols">
+<div>
+ <div class="panel"><div class="p-head"><div class="title">Your situation</div></div><div class="pad">
+  <div class="rowf"><span>Current age</span><input id="age" type="number" value="35"></div>
+  <div class="rowf"><span>Retirement age</span><input id="retAge" type="number" value="65"></div>
+  <div class="rowf"><span>Plan to age</span><input id="life" type="number" value="95"></div>
+  <div class="rowf"><span>Annual contribution <small>in plan currency, <span id="ccy1"></span></small></span><input id="ac" type="number" value="20000"></div>
+  <div class="rowf"><span>Contribution growth / yr (%)</span><input id="g" type="number" value="3" step="0.1"></div>
+  <div class="rowf"><span>Spending in retirement <small>today's money, per year</small></span><input id="spend" type="number" value="80000"></div>
+  <div class="rowf"><span>Effective tax on withdrawals (%)</span><input id="tax" type="number" value="12"></div>
+  <div class="rowf"><span>Plan currency</span><select id="pccy"><option>🇺🇸 USD</option><option>🇮🇳 INR</option></select></div>
+ </div></div>
+
+ <div class="panel"><div class="p-head"><div class="title">Savings used for the plan <span class="src auto">from Finance</span></div></div><div class="pad">
+  <div class="sub" style="margin-bottom:6px">Tick the Finance asset accounts that are your retirement money. Balances update when Finance does, and everything is converted to USD at today's rate (1 USD = ₹ 84).</div>
+  <div id="accts"></div>
+  <div class="rowf" style="margin-top:10px"><span>Adjustment <small>add or subtract money not in Finance</small></span><input id="adj" type="number" value="0"></div>
+  <div class="rowf"><b>Invested savings today</b><b id="cs"></b></div>
+  <div class="rowf"><span>Equity share of portfolio <small id="eqsrc"></small></span><span class="inl"><input id="we" type="number" value="" style="width:70px;text-align:right" placeholder="auto"> %</span></div>
+  <div class="sub">Leave blank to use the asset mix of the ticked accounts (from your Portfolio holdings where an account is linked).</div>
+ </div></div>
+
+ <div class="panel"><div class="p-head"><div class="title">Income in retirement</div><button class="btn" id="addsrc">+ Add source</button></div><div class="pad">
+  <div class="sub">Each source is in today's money, grows with inflation, and runs between its start and end age.</div>
+  <div id="srcs"></div>
+ </div></div>
+
+ <div class="panel"><div class="p-head"><div class="title">Market conditions <span class="sub">you update these</span></div></div><div class="pad">
+  <div class="rowf"><span>10-yr government bond yield (%)</span><input id="y" type="number" value="4.7" step="0.05"></div>
+  <div class="rowf"><span>Inflation, CPI (%)</span><input id="inf" type="number" value="3.7" step="0.05"></div>
+  <div class="rowf"><span>Equity return above inflation (%)</span><input id="prem" type="number" value="4.5" step="0.1"></div>
+  <div class="rowf"><span>These figures are from <small>so you know how fresh they are</small></span><input id="asof" type="date" value="2026-09-30" style="width:140px"></div>
+  <div id="stale"></div>
+  <div class="sub">Bond return is assumed equal to the yield; equity return is inflation plus the premium. The starting values are the original planner's placeholders, not live data.</div>
+ </div></div>
+</div>
+
+<div>
+ <div class="panel"><div class="p-head"><div class="title">Results <span class="sub" id="rsub"></span></div></div>
+  <div class="kpis3" id="kpis"></div><div id="verdict"></div></div>
+ <div class="panel"><div class="p-head"><div class="title">Portfolio path <span class="sub">nominal money</span></div></div>
+  <div class="chart" id="chart"></div>
+  <div class="legend"><span><i style="background:var(--accent)"></i>Projected portfolio</span><span><i style="background:var(--grey)"></i>Retirement age</span></div></div>
+ <div class="panel"><div class="p-head"><div class="title">Sensitivity to the 10-year yield</div></div>
+  <div class="tblw"><table id="sens"></table></div><div class="pad sub">Each row changes only the yield, applied to the bond share in both the saving and the retirement phases.</div></div>
+ <div class="panel"><div class="pad sub">Estimates only, not financial advice. Saved in your encrypted file; nothing is sent anywhere.</div></div>
+</div>
+</div>
+</div>
+<script>
+const $=id=>document.getElementById(id), num=id=>parseFloat($(id).value)||0;
+const FX={USD:1,INR:84}, SYM={USD:'$ ',INR:'₹ '};
+let pc='USD';
+const fmt=n=>(n<0?'-':'')+SYM[pc]+Math.round(Math.abs(n)).toLocaleString('en-US');
+const ACC=[ // fake Finance asset accounts
+ {n:'Brokerage · Schwab',own:'joint',cur:'USD',bal:96000,eq:81.3,on:true,link:true},
+ {n:'401(k) · Fidelity',own:'mine',cur:'USD',bal:194000,eq:74.2,on:true,link:true},
+ {n:'Mutual funds · Zerodha',own:'mine',cur:'INR',bal:4150000,eq:80,on:true,link:false},
+ {n:'Checking · Chase',own:'mine',cur:'USD',bal:8200,eq:0,on:false,link:false},
+ {n:'Savings · HDFC',own:'mine',cur:'INR',bal:650000,eq:0,on:false,link:false},
+ {n:'Fixed deposit · SBI',own:'parent',cur:'INR',bal:900000,eq:0,on:false,link:false}];
+const SRC=[{n:'Social Security',amt:24000,cur:'USD',from:67,to:''},{n:'Provident fund pension',amt:120000,cur:'INR',from:60,to:''}];
+const toPlan=(v,c)=>v/FX[c]*FX[pc];
+function drawAccts(){ $('accts').innerHTML=ACC.map((a,i)=>`<label class="chk ${a.on?'':'off'}"><input type="checkbox" data-i="${i}" ${a.on?'checked':''}><span>${a.n}</span><span class="amt">${a.cur==='USD'?'$ ':'₹ '}${a.bal.toLocaleString(a.cur==='INR'?'en-IN':'en-US')}</span><span class="sec"><span class="chip c-${a.own==='mine'?'mine':a.own==='joint'?'joint':'parent'}">${a.own==='mine'?'Mine':a.own==='joint'?'Joint':'Parent'}</span>${a.link?'<span class="src">📈 from holdings</span>':a.eq?'<span class="src">asset mix</span>':'<span class="src">cash</span>'}</span></label>`).join('');
+ document.querySelectorAll('#accts input').forEach(el=>el.onchange=()=>{ACC[el.dataset.i].on=el.checked;drawAccts();render()}) }
+function drawSrcs(){ $('srcs').innerHTML=SRC.map((s,i)=>`<div class="srcrow"><label class="nm">Source<input data-k="n" data-i="${i}" value="${s.n}"></label><button class="x" data-del="${i}" title="Remove">✕</button><label>Per year (today's money)<span style="display:flex;gap:4px"><input data-k="amt" data-i="${i}" type="number" value="${s.amt}" style="text-align:right"><select data-k="cur" data-i="${i}" style="width:76px"><option ${s.cur==='USD'?'selected':''}>USD</option><option ${s.cur==='INR'?'selected':''}>INR</option></select></span></label><label>From age<input data-k="from" data-i="${i}" type="number" value="${s.from}"></label><label>To age<input data-k="to" data-i="${i}" type="number" value="${s.to}" placeholder="life"></label></div>`).join('')||'<div class="sub">No income sources: all spending is funded from savings.</div>';
+ document.querySelectorAll('#srcs [data-k]').forEach(el=>el.oninput=()=>{const s=SRC[el.dataset.i],k=el.dataset.k;s[k]=(k==='n'||k==='cur')?el.value:(el.value===''?'':parseFloat(el.value));render()});
+ document.querySelectorAll('#srcs [data-del]').forEach(el=>el.onclick=()=>{SRC.splice(el.dataset.del,1);drawSrcs();render()}) }
+$('addsrc').onclick=()=>{SRC.push({n:'New source',amt:0,cur:pc,from:67,to:''});drawSrcs();render()};
+function params(over={}){ pc=$('pccy').value.slice(-3);
+ const sel=ACC.filter(a=>a.on), sav=sel.reduce((s,a)=>s+toPlan(a.bal,a.cur),0)+num('adj');
+ const eqAuto=sel.length?sel.reduce((s,a)=>s+toPlan(a.bal,a.cur)*a.eq/100,0)/Math.max(1,sel.reduce((s,a)=>s+toPlan(a.bal,a.cur),0))*100:0;
+ const we=($('we').value===''?eqAuto:num('we'))/100;
+ const p={age:num('age'),retAge:num('retAge'),life:num('life'),cs:sav,ac:num('ac'),g:num('g')/100,spend:num('spend'),tax:num('tax')/100,we,wb:1-we,y:num('y')/100,inf:num('inf')/100,prem:num('prem')/100,eqAuto,...over};
+ p.r=p.we*(p.inf+p.prem)+p.wb*p.y; return p }
+function run(p){ const N=Math.max(0,p.retAge-p.age),R=Math.max(0,p.life-p.retAge); let bal=p.cs,c=p.ac; const path=[{age:p.age,bal}];
+ for(let t=0;t<N;t++){bal=bal*(1+p.r)+c;c*=1+p.g;path.push({age:p.age+t+1,bal})} const balRet=bal; const gross=[];
+ for(let k=0;k<R;k++){const age=p.retAge+k,f=Math.pow(1+p.inf,N+k),need=p.spend*f;
+  const inc=SRC.reduce((s,x)=>s+((age>=x.from&&(x.to===''||age<=x.to))?toPlan(x.amt,x.cur)*f:0),0); gross.push(Math.max(0,need-inc)/(1-p.tax))}
+ let needed=0; for(let k=R-1;k>=0;k--) needed=needed/(1+p.r)+gross[k];
+ let b=balRet,dep=null; for(let k=0;k<R;k++){b-=gross[k]; if(b<0&&dep===null)dep=p.retAge+k; b=Math.max(0,b)*(1+p.r); path.push({age:p.retAge+k+1,bal:b})} // end-of-year points, so ages line up
+ let F=0; for(let t=0;t<N;t++)F+=Math.pow(1+p.g,t)*Math.pow(1+p.r,N-1-t);
+ const sf=needed-balRet, extra=sf>0&&F>0?sf/F:0; return{N,R,balRet,needed,sf,extra,dep,path} }
+function render(){ const p=params(),o=run(p),ok=o.sf<=0;
+ $('ccy1').textContent=pc; $('cs').textContent=fmt(p.cs);
+ $('eqsrc').textContent=$('we').value===''?`auto: ${p.eqAuto.toFixed(1)}% from your accounts`:'typed by you';
+ const days=Math.round((new Date('2026-11-14')-new Date($('asof').value))/864e5);
+ $('stale').innerHTML=days>30?`<div class="warnrow" style="margin:6px 0">Market figures are ${days} days old. Update them before relying on the result.</div>`:'';
+ $('rsub').textContent=`in ${pc}, converted at today's rate`;
+ $('kpis').innerHTML=[[fmt(o.needed),'Nest egg needed at retirement'],[fmt(o.balRet),'Projected balance at retirement'],[fmt(o.balRet/Math.pow(1+p.inf,o.N)),"Projected, in today's money"],[(ok?'+ ':'− ')+fmt(Math.abs(o.sf)),ok?'Surplus vs need':'Shortfall vs need',ok?'pos':'neg'],[fmt(o.extra),'Extra saving per year to close the gap',o.extra>0?'neg':'pos'],[(p.r*100).toFixed(2)+'%','Blended nominal return']].map(([v,l,c])=>`<div class="kpi"><small>${l}</small><b class="${c||''}">${v}</b></div>`).join('');
+ $('verdict').innerHTML=(o.dep!==null?`<div class="badrow">At these assumptions the portfolio runs out around age <b>${o.dep}</b>, before the plan age of ${p.life}.</div>`:`<div class="okrow">At these assumptions the portfolio lasts through age <b>${p.life}</b>.</div>`)+(ok?'':`<div class="warnrow">Closing the gap would take about <b>${fmt(o.extra)}</b> more saved each year, growing with your contribution growth rate.</div>`);
+ // chart
+ const W=640,H=230,L=70,Rr=14,T=14,B=28,pts=o.path,max=Math.max(...pts.map(d=>d.bal),1),mx=Math.ceil(max/ (Math.pow(10,Math.floor(Math.log10(max)))))*Math.pow(10,Math.floor(Math.log10(max)));
+ const x=a=>L+(a-pts[0].age)/(pts[pts.length-1].age-pts[0].age||1)*(W-L-Rr), y=v=>T+(1-v/mx)*(H-T-B);
+ const ticks=[0,.25,.5,.75,1].map(f=>mx*f), compact=v=>SYM[pc]+new Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:1}).format(v);
+ let ax='';for(let a=Math.ceil(pts[0].age/10)*10;a<=pts[pts.length-1].age;a+=10)ax+=`<text x="${x(a)}" y="${H-8}" text-anchor="middle" font-size="10" fill="var(--muted)">${a}</text>`;
+ $('chart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Portfolio path">${ticks.map(t=>`<line x1="${L}" x2="${W-Rr}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/><text x="${L-8}" y="${y(t)+3}" text-anchor="end" font-size="10" fill="var(--muted)">${compact(t)}</text>`).join('')}${ax}<line x1="${x(p.retAge)}" x2="${x(p.retAge)}" y1="${T}" y2="${H-B}" stroke="var(--grey)" stroke-dasharray="4 4"/><polyline fill="none" stroke="var(--accent)" stroke-width="2.5" points="${pts.map(d=>`${x(d.age)},${y(d.bal)}`).join(' ')}"/></svg>`;
+ // sensitivity around the entered yield
+ let h='<tr><th class="l">10-yr yield</th><th>Blended return</th><th>Nest egg needed</th><th>Projected at ret.</th><th>Extra / yr</th></tr>';
+ for(const d of [-2,-1,0,1,2]){const yy=num('y')+d; if(yy<0)continue; const q=params({y:yy/100}),s=run(q); h+=`<tr class="${d===0?'cur':''}"><td class="l">${yy.toFixed(1)}%${d===0?' (yours)':''}</td><td>${(q.r*100).toFixed(2)}%</td><td>${fmt(s.needed)}</td><td>${fmt(s.balRet)}</td><td>${fmt(s.extra)}</td></tr>`}
+ $('sens').innerHTML=h }
+document.querySelectorAll('.page input:not([data-k]),.page select').forEach(el=>el.addEventListener('input',()=>{ if(el.id==='pccy'){ } render()}));
+drawAccts();drawSrcs();render();
+</script></body></html>
