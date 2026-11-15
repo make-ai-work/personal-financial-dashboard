@@ -1,17 +1,33 @@
-# personal-dashboard
+# Personal Financial Dashboard
 
 A personal dashboard built step by step with React + Vite. Each section is a top-level tab
 (add new ones in the `TABS` list in `src/App.jsx`).
 
-## Run
+## Run it on your own computer
+
+You need [Node.js](https://nodejs.org) 18 or newer (free). Nothing else is installed and nothing is sent to a server.
 
 ```bash
-npm install
-npm run dev          # http://localhost:5173
-npm test             # unit tests (encryption + data model)
+git clone https://github.com/saurskr/personal-financial-dashboard   # or download the ZIP from GitHub and unzip it
+cd personal-financial-dashboard
+npm install        # once
+npm start          # builds the app and serves it; then open http://localhost:4173 in your browser
+```
+
+Stop it with `Ctrl+C`. Run `npm start` again whenever you want to use it. If port 4173 is busy, pick another with
+`npm start -- --port 5000` (the address matters if you later set up Google Drive, because Google remembers it).
+
+- **Your data** is one encrypted file (`*.wvault`) that you create on the first screen. In Chrome and Edge the app saves straight
+  back to it; in other browsers it asks you to download the file after changes. Keep the passphrase safe: there is no recovery.
+- **Google Drive** is optional and not switched on yet; the first screen lets you skip it.
+- **Hosting it elsewhere:** `npm run build` writes a static site to `dist/`. Upload that folder to any static host over HTTPS.
+- **For development:** `npm run dev` (live reload), `npm test` (unit tests), and the end-to-end tests below.
+
+```bash
+npm test             # unit tests (encryption, data model, retirement engine, demo data, ...)
 npm run build && npm run test:e2e && npm run test:e2e:countries && npm run test:e2e:property && npm run test:e2e:portfolio && npm run test:e2e:retirement && npm run test:e2e:auth
 npm run build:demo && npm run test:e2e:demo      # the demo build
-                     # end-to-end browser tests (need Playwright + Chromium)
+                     # end-to-end browser tests need Playwright + Chromium
 ```
 
 ## Demo site (GitHub Pages)
@@ -126,5 +142,6 @@ Retirement shows the key results and two charts with the detailed assumptions fo
 - [x] Step 4: Portfolio tab (holdings, allocation, rebalancing), linked to Finance accounts
 - [x] Step 5: Retirement tab (Plan + Monte Carlo with 3 saved versions), placeholder Google sign-in, phone layout
 - [x] Step 6: demo mode (sample data, sign-in page with Demo Mode) published from the `demo` branch
-- [ ] Next: local-run polish (`npm start`), Android app (Capacitor)
+- [x] Step 7: run on your own computer with `npm start`
+- [ ] Next: Android app (Capacitor)
 - [ ] Then: real Google sign-in, two-step verification, Google Drive storage (web and Android)
