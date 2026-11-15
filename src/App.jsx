@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { VaultProvider, useVault } from './finance/VaultContext.jsx'
 import Finance from './finance/Finance.jsx'
 import Property from './property/Property.jsx'
@@ -10,7 +10,8 @@ import { AuthProvider, useAuth } from './auth/AuthContext.jsx'
 import { MfaStep, SignIn } from './auth/SignIn.jsx'
 import { ClientIdForm, Setup } from './auth/Setup.jsx'
 import { shortId } from './lib/google.js'
-import { Modal } from './finance/ui.jsx'
+import { Modal, closeTopModal, hasOpenModal } from './finance/ui.jsx'
+import { backAction, exitApp, onAppActive, onBackButton, shouldLockOnResume } from './lib/nativeapp.js'
 import { PHASE } from './lib/auth.js'
 import { APP_URL } from './lib/demo.js'
 
@@ -67,6 +68,33 @@ function Account() {
   )
 }
 
+// Android app only: the Back button and locking after time away. Renders nothing.
+function NativeBridge({ tab, setTab }) {
+  const vault = useVault()
+  const ref = useRef({ tab, vault })
+  ref.current = { tab, vault }
+  useEffect(() => {
+    let offBack = () => {}
+    let offState = () => {}
+    let left = 0
+    let dead = false
+    onBackButton(() => {
+      const action = backAction({ modalOpen: hasOpenModal(), tab: ref.current.tab })
+      if (action === 'closeModal') closeTopModal()
+      else if (action === 'home') setTab('home')
+      else exitApp()
+    }).then((off) => { if (dead) off?.(); else offBack = off || offBack })
+    onAppActive((active) => {
+      const v = ref.current.vault
+      if (!active) { left = Date.now(); return }
+      if (left && v.phase === 'unlocked' && shouldLockOnResume({ awayMs: Date.now() - left, autoLockMin: v.data?.settings?.autoLockMin })) v.lock()
+      left = 0
+    }).then((off) => { if (dead) off?.(); else offState = off || offState })
+    return () => { dead = true; offBack(); offState() }
+  }, [setTab])
+  return null
+}
+
 // Shown on every screen of the demo site.
 function DemoBar() {
   const vault = useVault()
@@ -121,7 +149,8 @@ function Shell() {
     <VaultProvider>
       <NavContext.Provider value={nav}>
         {auth.demo && <DemoBar />}
-        {header(<Account />)}
+        {auth.native && <NativeBridge tab={tab} setTab={setTab} />}
+        {header(auth.native ? null : <Account />)}
         <nav className="tabs" role="tablist">
           {TABS.map((t) => (
             <button key={t.id} role="tab" aria-selected={t.id === current.id} className={t.id === current.id ? 'on' : ''} onClick={() => setTab(t.id)}>{t.label}</button>

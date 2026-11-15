@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useVault } from './VaultContext.jsx'
 import CountriesPicker from './CountriesPicker.jsx'
 import { PassphraseForm } from './ui.jsx'
+import { ConfirmDelete, ConfirmRestore } from './AppDialogs.jsx'
+import { backupAgeDays, backupStale, lastBackup, markBackup } from '../lib/nativeapp.js'
 import { download, isAbort, pickExcel } from '../lib/fileio.js'
 
 export default function Settings() {
@@ -10,6 +12,8 @@ export default function Settings() {
   const [changing, setChanging] = useState(false)
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
+  const [dlg, setDlg] = useState('') // app only: 'restore' | 'delete'
+  const [backedUp, setBackedUp] = useState(lastBackup())
   const setSettings = (patch) => update((d) => ({ ...d, settings: { ...d.settings, ...patch } }))
 
   const exportExcel = async () => {
@@ -57,9 +61,25 @@ export default function Settings() {
       </div>
 
       <div className="panel">
-        <div className="p-head"><div className="title">{v.demo ? "Data" : "🔒 Security"}</div></div>
+        <div className="p-head"><div className="title">{v.demo ? "Data" : v.isApp ? "🔒 Your data" : "🔒 Security"}</div></div>
         <div className="col">
           {!v.demo && (
+            <>
+          {v.isApp ? (
+            <>
+              <div className="row"><span>Stored in<small>Private to this app</small></span><b>This app</b></div>
+              <div className="row">
+                <span>Back up<small>Opens the share sheet: Files, Drive, email…</small></span>
+                <button className="btn" onClick={async () => { try { await v.exportBackup(); markBackup(); setBackedUp(lastBackup()) } catch (e) { setMsg(e.message) } }}>Export backup…</button>
+              </div>
+              <div className="row">
+                <span>Last backup<small>A reminder to back up now and then</small></span>
+                {(() => { const d = backupAgeDays(backedUp); return <span className={backupStale(d) ? 'warn-text' : ''} data-testid="last-backup">{d === null ? 'never' : d === 0 ? 'today' : `${d} day${d === 1 ? '' : 's'} ago`}</span> })()}
+              </div>
+              <div className="row"><span>Restore<small>Replaces the vault in this app</small></span><button className="btn" onClick={() => setDlg('restore')}>Restore…</button></div>
+              <div className="row"><span>Lock<small>Asks for the passphrase again</small></span><button className="btn" onClick={v.lock}>Lock now</button></div>
+            </>
+          ) : (
             <>
           <div className="row">
             <span>Data file<small>{v.fileName} · AES-256-GCM, key derived from your passphrase</small></span>
@@ -73,6 +93,8 @@ export default function Settings() {
               <span>Save a copy<small>This browser cannot save in place. Download after changes.</small></span>
               <button className="btn primary" onClick={v.downloadNow}>Download encrypted file</button>
             </div>
+          )}
+            </>
           )}
           <div className="row">
             <span>Passphrase<small>Re-encrypts the whole file</small></span>
@@ -95,8 +117,14 @@ export default function Settings() {
             <span>Import from Excel<small>Replaces all current data with a workbook exported from this app.</small></span>
             <button className="btn" onClick={importExcel}>Import…</button>
           </div>
+          {v.isApp && !v.demo && (
+            <div className="row"><span>Delete the vault<small>Cannot be undone</small></span><button className="btn danger-btn" onClick={() => setDlg('delete')}>Delete…</button></div>
+          )}
           {msg && <div className="note">{msg}</div>}
-          {!v.demo && <div className="warn">Also recommended: keep the file on an encrypted disk (BitLocker / FileVault) and keep a second backup copy somewhere private. Data files are excluded from this Git repository.</div>}
+          {v.isApp && <div className="warn"><b>Uninstalling the app, or clearing its data, deletes your vault.</b> Export a backup now and then. The backup is encrypted, so it is safe to keep in Drive.</div>}
+          {dlg === 'restore' && <ConfirmRestore onClose={() => setDlg('')} onConfirm={async () => { setDlg(''); await v.openFile() }} />}
+          {dlg === 'delete' && <ConfirmDelete onClose={() => setDlg('')} onConfirm={async () => { await v.deleteAppVault(); setDlg('') }} />}
+          {!v.demo && !v.isApp && <div className="warn">Also recommended: keep the file on an encrypted disk (BitLocker / FileVault) and keep a second backup copy somewhere private. Data files are excluded from this Git repository.</div>}
         </div>
       </div>
     </>

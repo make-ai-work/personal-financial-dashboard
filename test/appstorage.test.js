@@ -105,3 +105,13 @@ test('a backup goes to the share sheet with its name and the exact bytes', async
   await shareBackup(v, 'WealthTracker.wvault')
   assert.equal(shared.length, 1); assert.equal(shared[0].name, 'WealthTracker.wvault'); assert.deepEqual(shared[0].bytes, v)
 })
+
+test('in the app the desktop file pickers are never used, even if the browser offers them', async () => {
+  const { hasFS } = await import('../src/lib/fileio.js')
+  globalThis.window = { showSaveFilePicker() {}, showOpenFilePicker() {} }
+  try {
+    assert.equal(hasFS(), true, 'a normal browser with the pickers')
+    install()
+    assert.equal(hasFS(), false, 'the app')
+  } finally { delete globalThis.window }
+})

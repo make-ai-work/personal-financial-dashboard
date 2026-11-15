@@ -6,8 +6,9 @@ import { APP_FILE, appVault, isNativeApp } from './appstorage.js'
 export const APP_HANDLE = { kind: 'app', name: APP_FILE }
 export const isAppHandle = (h) => h?.kind === 'app'
 
+// The app never uses the desktop file pickers: its vault is in the app's folder, and restores use the plain file chooser.
 export const hasFS = () =>
-  typeof window !== 'undefined' && 'showSaveFilePicker' in window && 'showOpenFilePicker' in window
+  !isNativeApp() && typeof window !== 'undefined' && 'showSaveFilePicker' in window && 'showOpenFilePicker' in window
 
 export const isAbort = (e) => e?.name === 'AbortError'
 

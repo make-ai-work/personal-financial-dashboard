@@ -132,6 +132,11 @@ export function VaultProvider({ children }) {
       parseVault(f.bytes)
       let h = f.handle
       if (isNativeApp()) { await appVault.write(f.bytes); h = APP_HANDLE } // restoring a backup: the app keeps its own copy
+      // whatever was open is gone: a pending autosave must never overwrite the file that was just opened
+      clearTimeout(timer.current)
+      dataRef.current = null
+      session.current = null
+      setData(null)
       handle.current = h
       bytes.current = f.bytes
       needsDownload.current = false
