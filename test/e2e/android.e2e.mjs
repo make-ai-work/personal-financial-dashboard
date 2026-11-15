@@ -47,6 +47,9 @@ const disk = () => page.evaluate(() => JSON.parse(localStorage.getItem('fakeDisk
 const unlock = async (pass) => { await page.getByPlaceholder('Passphrase').fill(pass); await page.getByRole('button', { name: 'Unlock' }).click() }
 const back = () => page.evaluate(() => window.__back())
 
+// on a phone the Assets section starts folded (the choice is remembered once made)
+const showAssets = async () => { const t = page.locator('.ctoggle', { hasText: 'Assets' }); if ((await t.getAttribute('aria-expanded')) === 'false') await t.click() }
+
 try {
   await page.goto('http://localhost:4184/')
   step('the app opens straight to Home: no Google setup, no sign-in, no Account button')
@@ -69,7 +72,7 @@ try {
   await page.getByLabel('Confirm passphrase').fill(PASS)
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create vault' }).click()
-  await page.getByText('Summary ·').waitFor()
+  await page.getByText('Update date', { exact: true }).waitFor()
   assert.ok('WealthTracker.wvault' in (await disk()))
   await page.getByText(/saved$/).first().waitFor()
 
@@ -82,7 +85,7 @@ try {
   await dialog().locator('.radios label', { hasText: /^Mine/ }).click()
   await dialog().getByRole('button', { name: 'Save' }).click()
   await dialog().waitFor({ state: 'detached' })
-  await page.getByText('Brokerage').first().waitFor()
+  await showAssets(); await page.getByText('Brokerage').first().waitFor()
   await page.waitForTimeout(900)
   const file1 = (await disk())['WealthTracker.wvault']
   assert.ok(file1 && !Buffer.from(file1, 'base64').toString('latin1').includes('Brokerage'), 'the saved file holds no plaintext')
@@ -96,8 +99,8 @@ try {
   await unlock('not the passphrase')
   await page.getByText(/wrong passphrase|could not|incorrect|failed/i).first().waitFor()
   await unlock(PASS)
-  await page.getByText('Summary ·').waitFor()
-  await subtab(/USA/).click(); await page.getByText('Brokerage').first().waitFor()
+  await page.getByText('Update date', { exact: true }).waitFor()
+  await subtab(/USA/).click(); await showAssets(); await page.getByText('Brokerage').first().waitFor()
 
   step('Settings › Your data: stored in this app, backup reminder, export through the share sheet')
   await subtab('Settings').click()
@@ -130,8 +133,8 @@ try {
   await good.setFiles(`${OUT}/backup.wvault`)
   await page.getByRole('heading', { name: 'Your vault' }).waitFor()
   await unlock(PASS)
-  await page.getByText('Summary ·').waitFor()
-  await subtab(/USA/).click(); await page.getByText('Brokerage').first().waitFor()
+  await page.getByText('Update date', { exact: true }).waitFor()
+  await subtab(/USA/).click(); await showAssets(); await page.getByText('Brokerage').first().waitFor()
 
   step('Back button: closes a dialog first, then goes to Home, then leaves the app from Home')
   await topTab(/Property/).click()
@@ -151,7 +154,7 @@ try {
 
   step('coming back after a long time away locks the vault; a short break does not')
   await topTab('Finance Dashboard').click()
-  await page.getByText('Summary ·').waitFor()
+  await page.getByText('Update date', { exact: true }).waitFor()
   await page.evaluate(() => { window.__realNow = Date.now; window.__state(false); Date.now = () => window.__realNow() + 60_000; window.__state(true) }) // away 1 minute
   await page.waitForTimeout(300)
   assert.equal(await page.getByRole('heading', { name: 'Your vault' }).count(), 0, 'one minute away: still unlocked')
@@ -159,7 +162,7 @@ try {
   await page.getByRole('heading', { name: 'Your vault' }).waitFor()
   await page.evaluate(() => { Date.now = window.__realNow })
   await unlock(PASS)
-  await page.getByText('Summary ·').waitFor()
+  await page.getByText('Update date', { exact: true }).waitFor()
 
   step('Delete: the button stays off until DELETE is typed exactly; then the vault is erased and first launch returns')
   await subtab('Settings').click()

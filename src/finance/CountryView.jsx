@@ -6,7 +6,9 @@ import {
 } from '../lib/model.js'
 import { COUNTRIES, fmtDate, maskNumber, maturesSoon, money, ownerLabel, MIX, todayISO } from '../lib/format.js'
 import { AccountModal, PolicyModal } from './Forms.jsx'
-import { MixBar, OwnerChip } from './ui.jsx'
+import { Collapsible, MixBar, OwnerChip } from './ui.jsx'
+import { usePhone } from '../lib/usePhone.js'
+import { performance, sinceMonth } from '../lib/performance.js'
 import Chart from './Chart.jsx'
 import { portfolioFor } from '../lib/portfolio.js'
 import { useNav } from '../nav.jsx'
@@ -19,6 +21,8 @@ export default function CountryView({ code, owner, reveal, fx }) {
   const [modal, setModal] = useState(null) // { kind: 'account'|'policy', type?, item? }
   const [date, setDate] = useState(todayISO())
   const [mode, setMode] = useState('net')
+  const [range, setRange] = useState(null) // a Performance period (months) that trims the chart, or null for all
+  const phone = usePhone()
 
   const accounts = byOwner(inCountry(data.accounts, code), owner)
   const assets = accounts.filter((a) => a.type === 'asset')
@@ -27,6 +31,8 @@ export default function CountryView({ code, owner, reveal, fx }) {
   const t = totals(accounts)
   const dirty = hasUnsavedBalances(data, code)
   const series = monthSeries(data, code, owner)
+  const perf = performance(series)
+  const chartPoints = range ? sinceMonth(series, range) : series
   const fmt = (n) => money(code, n)
   const compact = (n) => new Intl.NumberFormat(c.locale, { notation: 'compact', maximumFractionDigits: 2 }).format(n)
   const num = (n) => (reveal ? n : maskNumber(n))
@@ -58,7 +64,8 @@ export default function CountryView({ code, owner, reveal, fx }) {
   )
 
   return (
-    <>
+    <div className="fin-grid">
+      <div className="fin-left">
       <div className="panel">
         <div className="p-head">
           <div className="title">{c.flag} {c.name} <span className="cur">{c.currency}</span></div>
@@ -75,11 +82,7 @@ export default function CountryView({ code, owner, reveal, fx }) {
         </div>
       </div>
 
-      <div className="panel">
-        <div className="p-head">
-          <div className="title">Assets <span className="sub">{fmt(t.assets)}</span></div>
-          <button className="btn" onClick={() => setModal({ kind: 'account', type: 'asset' })}>+ Add asset</button>
-        </div>
+      <Collapsible id="assets" title="Assets" sub={fmt(t.assets)} phone={phone} phoneFolded action={<button className="btn" onClick={() => setModal({ kind: 'account', type: 'asset' })}>+ Add asset</button>}>
         <div className="tblw">
           <table className="t-a">
             <thead><tr><th>Account name</th><th>Account number</th><th>Bank / holding co.</th><th>Owner</th><th>Current balance</th><th>Asset mix</th><th>Maturity date</th><th>Value at maturity</th><th /></tr></thead>
@@ -102,13 +105,9 @@ export default function CountryView({ code, owner, reveal, fx }) {
           </table>
         </div>
         <div className="mixleg">{MIX.map((m) => <span key={m.key}><i className={`m-${m.key}`} />{m.label}</span>)}</div>
-      </div>
+      </Collapsible>
 
-      <div className="panel">
-        <div className="p-head">
-          <div className="title">Liabilities <span className="sub">{fmt(t.liabilities)}</span></div>
-          <button className="btn" onClick={() => setModal({ kind: 'account', type: 'liability' })}>+ Add liability</button>
-        </div>
+      <Collapsible id="liabilities" title="Liabilities" sub={fmt(t.liabilities)} phone={phone} phoneFolded action={<button className="btn" onClick={() => setModal({ kind: 'account', type: 'liability' })}>+ Add liability</button>}>
         <div className="tblw">
           <table className="t-l">
             <thead><tr><th>Account name</th><th>Account number</th><th>Lender</th><th>Owner</th><th>Current balance</th><th /></tr></thead>
@@ -127,13 +126,9 @@ export default function CountryView({ code, owner, reveal, fx }) {
             </tbody>
           </table>
         </div>
-      </div>
+      </Collapsible>
 
-      <div className="panel">
-        <div className="p-head">
-          <div className="title">Insurance <span className="sub">not counted in net worth</span></div>
-          <button className="btn" onClick={() => setModal({ kind: 'policy' })}>+ Add policy</button>
-        </div>
+      <Collapsible id="insurance" title="Insurance" sub={'not counted in net worth'} phone={phone} phoneFolded action={<button className="btn" onClick={() => setModal({ kind: 'policy' })}>+ Add policy</button>}>
         <div className="tblw">
           <table className="t-p">
             <thead><tr><th>Policy</th><th>Policy number</th><th>Policy company</th><th>Owner</th><th>Death benefit</th><th>Maturity date</th><th>Value on maturity</th><th /></tr></thead>
@@ -154,18 +149,20 @@ export default function CountryView({ code, owner, reveal, fx }) {
             </tbody>
           </table>
         </div>
-      </div>
+      </Collapsible>
 
+      </div>
+      <aside className="fin-right">
       <div className="panel">
         <div className="p-head">
-          <div className="title">Month by month · {c.name} · {ownerName}</div>
+          <div className="title">Net worth by month <span className="cur">{c.currency}</span></div>
           <div className="seg">
             <button className={mode === 'net' ? 'on' : ''} onClick={() => setMode('net')}>Net worth</button>
             <button className={mode === 'split' ? 'on' : ''} onClick={() => setMode('split')}>Assets &amp; liabilities</button>
           </div>
         </div>
         <Chart
-          points={series}
+          points={chartPoints}
           format={fmt}
           compact={compact}
           label={`${c.name} month by month`}
@@ -174,13 +171,34 @@ export default function CountryView({ code, owner, reveal, fx }) {
             : [{ key: 'assets', label: 'Assets', color: 'var(--green)' }, { key: 'liabilities', label: 'Liabilities', color: 'var(--red)' }]}
         />
       </div>
-
+        <div className="panel">
+          <div className="p-head"><div className="title">Performance <span className="sub">{ownerName}</span></div>{range && <button className="link" onClick={() => setRange(null)}>Show all</button>}</div>
+          <table className="perf">
+            <thead><tr><th>Period</th><th>Change</th><th>%</th><th>Net worth then</th></tr></thead>
+            <tbody>
+              {perf.map((p) => (
+                <tr key={p.key} className={`${range === p.months ? 'sel' : ''}${p.available ? ' pick' : ''}`} onClick={() => p.available && setRange(range === p.months ? null : p.months)} aria-selected={range === p.months}>
+                  <td>{p.label}</td>
+                  {p.available ? (
+                    <>
+                      <td className={p.change >= 0 ? 'pos' : 'neg'}>{p.change >= 0 ? '+ ' : '− '}{fmt(Math.abs(p.change))}</td>
+                      <td className={p.change >= 0 ? 'pos' : 'neg'}>{p.pct == null ? '—' : `${p.pct >= 0 ? '+' : '−'}${Math.abs(p.pct).toFixed(1)}%`}</td>
+                      <td>{fmt(p.from.net)}</td>
+                    </>
+                  ) : <><td className="none">—</td><td className="none">—</td><td className="none">not enough history</td></>}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="fine pnote">Change in net worth between the month that long ago and now, for the owner you are viewing. Click a period to show just that range on the chart.</div>
+        </div>
+      </aside>
       {modal?.kind === 'account' && (
         <AccountModal type={modal.type} country={code} initial={modal.item} locked={!!(modal.item && portfolioFor(data, modal.item.id))} parentLabel={parentLabel} onSave={onSave} onClose={() => setModal(null)} />
       )}
       {modal?.kind === 'policy' && (
         <PolicyModal country={code} initial={modal.item} parentLabel={parentLabel} onSave={onSave} onClose={() => setModal(null)} />
       )}
-    </>
+    </div>
   )
 }

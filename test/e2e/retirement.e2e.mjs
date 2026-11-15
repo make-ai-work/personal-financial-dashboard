@@ -57,7 +57,7 @@ try {
   await page.getByLabel('Confirm passphrase').fill(PASS)
   await page.getByRole('checkbox').check()
   await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Create encrypted file' }).click()])
-  await page.getByText('Summary ·').waitFor()
+  await page.getByText('Update date', { exact: true }).waitFor()
   await subtab(/USA/).click()
   await addFinanceAsset('Brokerage', 'Schwab', '96000', 'Joint')
   await addFinanceAsset('401(k)', 'Fidelity', '184000', 'Mine')

@@ -233,7 +233,7 @@ try {
   await page.getByLabel('Confirm passphrase').fill(PASS)
   await page.getByRole('checkbox').check()
   await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Create encrypted file' }).click()])
-  await page.getByText('Summary ·').waitFor()
+  await page.getByText('Update date', { exact: true }).waitFor()
   await subtab('Settings').click()
   await page.getByLabel('Show United Kingdom').check().catch(async () => page.getByLabel('Show UK').check())
   await page.getByLabel('Show Australia').check()
