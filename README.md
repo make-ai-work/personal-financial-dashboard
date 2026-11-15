@@ -25,10 +25,27 @@ Stop it with `Ctrl+C`. Run `npm start` again whenever you want to use it. If por
 
 ```bash
 npm test             # unit tests (encryption, data model, retirement engine, demo data, ...)
-npm run build && npm run test:e2e && npm run test:e2e:countries && npm run test:e2e:property && npm run test:e2e:portfolio && npm run test:e2e:retirement && npm run test:e2e:auth
+npm run build && npm run test:e2e && npm run test:e2e:countries && npm run test:e2e:property && npm run test:e2e:portfolio && npm run test:e2e:retirement && npm run test:e2e:auth && npm run test:e2e:home
 npm run build:demo && npm run test:e2e:demo      # the demo build
                      # end-to-end browser tests need Playwright + Chromium
 ```
+
+## Home settings: weather and the market ticker
+
+Open **⚙ Home settings** on the Home page. Everything there is kept in this browser (not in the encrypted file), so Home works before
+you unlock your data. It persists between visits on this device but is **not encrypted**.
+
+- **Weather** uses [Open-Meteo](https://open-meteo.com) (free, no key). Type a city, optionally with a region ("Austin, Texas"); only that
+  name is sent. Your location is never read automatically.
+- **Market ticker** uses [FCS API](https://fcsapi.com). Paste your key and press **Test**. It shows S&P 500, Nasdaq, Sensex and Nifty 50,
+  one main index for each other country in Finance → Settings (FTSE 100, ASX 200, SMI), gold (XAU/USD) and Bitcoin (BTC/USD).
+  - **Plans:** FCS's free plan (500 calls a month) covers **gold and Bitcoin only**. **Index prices need an FCS stock plan** (from about
+    $25 a month). With a free key the ticker still shows gold and Bitcoin and says why the indices are missing.
+  - **Calls:** a refresh makes at most 3 calls (indices, gold, Bitcoin). Prices are cached and refreshed every 30 minutes by default
+    (15/30/60 in settings), only while the page is visible, and indices only while one of their markets is open.
+- **Market open/closed** is calculated from each exchange's regular hours and time zone. **Public holidays are not included**, so a
+  holiday can show as open.
+- The FCS symbols are in one file, `src/lib/ticker.js`.
 
 ## Demo site (GitHub Pages)
 
@@ -41,6 +58,10 @@ sign-in switched off and a **Demo Mode (skip sign in)** button; the app is fully
   `main` never publishes. To refresh the showcase: merge `main` into `demo` (one way only).
 - To change the sample data, edit `demo/build-demo-data.mjs` and run `node demo/build-demo-data.mjs` (it uses the app's own
   functions, so the file always matches the data model). Dates are moved forward each time the demo opens so it never looks stale.
+- **Demo ticker prices** come from a snapshot written at build time, so your FCS key never reaches the page. Add your key as a repository
+  secret named `FCS_API_KEY` (**Settings → Secrets and variables → Actions → New repository secret**; never commit it or paste it into a
+  chat). The workflow also runs every 6 hours to refresh the snapshot. Without the secret the demo says "Prices unavailable". The
+  snapshot needs an FCS stock plan for index prices; on a free key only gold and Bitcoin appear.
 - One-time setup: repository **Settings → Pages → Build and deployment → Source: GitHub Actions**. The site is then at
   `https://<user>.github.io/<repo>/`. Assets use relative paths (`base: './'`), so any build works at a sub-path or any static host.
 - `.github/workflows/ci.yml` runs the tests and both builds on every pull request and push to `main`.
@@ -76,7 +97,9 @@ A picture version of this, which also ships with the site, is in
 
 ## Tabs
 
-- **Home** – clock and greeting.
+- **Home** – the landing page. A rolling **market ticker**, a **clock for each country** you selected in Finance → Settings (each in
+  its capital's time zone; a country with several zones uses its capital's), the **weather** for a city you choose, and whether each
+  country's main **stock market is open or closed**. See "Home settings" below.
 - **Retirement** – *Plan*: your situation, savings picked from Finance asset accounts (converted to the plan
   currency, equity share taken from the Portfolio mix), income sources with start and end ages, market conditions with a
   staleness warning, nest-egg needed, shortfall and extra saving, and a yield sensitivity table. *Monte Carlo*: 1,000 to 10,000
@@ -143,5 +166,6 @@ Retirement shows the key results and two charts with the detailed assumptions fo
 - [x] Step 5: Retirement tab (Plan + Monte Carlo with 3 saved versions), placeholder Google sign-in, phone layout
 - [x] Step 6: demo mode (sample data, sign-in page with Demo Mode) published from the `demo` branch
 - [x] Step 7: run on your own computer with `npm start`
+- [x] Step 8: Home rebuild: clocks for each country, weather, markets open/closed, FCS market ticker
 - [ ] Next: Android app (Capacitor)
 - [ ] Then: real Google sign-in, two-step verification, Google Drive storage (web and Android)
