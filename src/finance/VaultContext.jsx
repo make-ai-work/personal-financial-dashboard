@@ -3,9 +3,10 @@ import { decryptVault, encryptVault, newSession, parseVault } from '../lib/vault
 import { emptyData, normalizeData } from '../lib/model.js'
 import { IS_DEMO, loadDemoData } from '../lib/demo.js'
 import {
-  download, ensurePermission, forgetHandle, hasFS, isAbort, pickNewVaultHandle, pickVault,
+  APP_HANDLE, download, ensurePermission, forgetHandle, hasFS, isAbort, pickNewVaultHandle, pickVault,
   readHandle, recallHandle, rememberHandle, writeHandle,
 } from '../lib/fileio.js'
+import { appVault, isNativeApp, shareBackup } from '../lib/appstorage.js'
 
 const Ctx = createContext(null)
 export const useVault = () => useContext(Ctx)
@@ -43,7 +44,7 @@ export function VaultProvider({ children }) {
       return () => { live = false }
     }
     ;(async () => {
-      const h = hasFS() ? await recallHandle() : null
+      const h = hasFS() || isNativeApp() ? await recallHandle() : null
       if (!live) return
       if (h) {
         handle.current = h
@@ -101,10 +102,10 @@ export function VaultProvider({ children }) {
   }, [persist])
 
   // Create a new encrypted file (optionally pre-filled from an Excel import).
-  const create = useCallback(async (passphrase, initial = emptyData()) => {
+  const create = useCallback(async (passphrase, initial = emptyData(), { replace = false } = {}) => {
     let h = null
     try {
-      h = await pickNewVaultHandle(DEFAULT_NAME)
+      h = await pickNewVaultHandle(DEFAULT_NAME, { replace })
     } catch (e) {
       if (isAbort(e)) return false
       throw e
@@ -129,12 +130,19 @@ export function VaultProvider({ children }) {
     try {
       const f = await pickVault()
       parseVault(f.bytes)
-      handle.current = f.handle
+      let h = f.handle
+      if (isNativeApp()) { await appVault.write(f.bytes); h = APP_HANDLE } // restoring a backup: the app keeps its own copy
+      // whatever was open is gone: a pending autosave must never overwrite the file that was just opened
+      clearTimeout(timer.current)
+      dataRef.current = null
+      session.current = null
+      setData(null)
+      handle.current = h
       bytes.current = f.bytes
       needsDownload.current = false
       setFileName(f.name)
-      setCanWrite(!!f.handle)
-      if (f.handle) rememberHandle(f.handle)
+      setCanWrite(!!h)
+      if (h) rememberHandle(h)
       setPhase('locked')
     } catch (e) {
       if (!isAbort(e)) setError(e.message)
@@ -156,6 +164,28 @@ export function VaultProvider({ children }) {
     setSaveState(!handle.current && needsDownload.current ? 'unsaved' : 'saved')
     setError('')
     setPhase('unlocked')
+  }, [])
+
+  // Encrypted copy for safekeeping: the phone's share sheet in the app, a download in the browser.
+  const exportBackup = useCallback(async () => {
+    await persist()
+    if (!bytes.current) return
+    if (isNativeApp()) await shareBackup(bytes.current, handle.current?.name || DEFAULT_NAME)
+    else download(fileName || DEFAULT_NAME, bytes.current)
+  }, [persist, fileName])
+
+  // App only: remove the vault stored in this app (irreversible), then start over.
+  const deleteAppVault = useCallback(async () => {
+    clearTimeout(timer.current)
+    await appVault.remove()
+    dataRef.current = null
+    session.current = null
+    handle.current = null
+    bytes.current = null
+    setData(null)
+    setFileName('')
+    setCanWrite(false)
+    setPhase('start')
   }, [])
 
   const lock = useCallback(async () => {
@@ -222,7 +252,8 @@ export function VaultProvider({ children }) {
   const value = {
     demo: IS_DEMO, resetDemo,
     phase, data, fileName, saveState, canWrite, error, setError,
-    update, create, openFile, unlock, lock, switchFile, changePassphrase, downloadNow,
+    update, create, openFile, unlock, lock, switchFile, changePassphrase, downloadNow, exportBackup, deleteAppVault,
+    isApp: isNativeApp(),
   }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

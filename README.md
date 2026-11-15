@@ -25,7 +25,7 @@ Stop it with `Ctrl+C`. Run `npm start` again whenever you want to use it. If por
 
 ```bash
 npm test             # unit tests (encryption, data model, retirement engine, demo data, ...)
-npm run build && npm run test:e2e && npm run test:e2e:countries && npm run test:e2e:property && npm run test:e2e:portfolio && npm run test:e2e:retirement && npm run test:e2e:auth && npm run test:e2e:home
+npm run build && npm run test:e2e && npm run test:e2e:countries && npm run test:e2e:property && npm run test:e2e:portfolio && npm run test:e2e:retirement && npm run test:e2e:auth && npm run test:e2e:home && npm run test:e2e:android
 npm run build:demo && npm run test:e2e:demo      # the demo build
                      # end-to-end browser tests need Playwright + Chromium
 ```
@@ -46,6 +46,43 @@ you unlock your data. It persists between visits on this device but is **not enc
 - **Market open/closed** is calculated from each exchange's regular hours and time zone. **Public holidays are not included**, so a
   holiday can show as open.
 - The FCS symbols are in one file, `src/lib/ticker.js`.
+
+## Android app
+
+The Android app is this same web app packaged with [Capacitor](https://capacitorjs.com) (one codebase). **First version: your data is
+kept in the app's own private storage**; Google Drive comes later. The project is in `android/`.
+
+**What you need:** [Android Studio](https://developer.android.com/studio) (it brings its own JDK and the Android SDK) and Node.js
+**22 or newer** (Capacitor 8's tooling; the web app itself only needs 18).
+
+```bash
+npm install
+npm run android:sync     # builds the web app and copies it into android/
+npm run android:open     # opens the project in Android Studio; press Run to start it on an emulator or a plugged-in phone
+```
+
+After changing the web app, run `npm run android:sync` again before Run.
+
+- **What is different in the app:** it opens straight to the app (no Google setup or sign-in, since nothing leaves the phone), the first
+  screen is "Create your vault", and Finance → Settings → *Your data* has **Export backup…** (the phone's share sheet),
+  *Last backup* (a reminder), **Restore…** (asks first, and only a valid backup ever replaces the vault) and **Delete…** (you must
+  type DELETE). The Back button closes a dialog, then goes to Home, then leaves the app. The app locks itself when you come back after
+  longer than your auto-lock time. Home's weather and prices need internet.
+- **Where the data is:** one encrypted vault file in the app's private folder (not visible to other apps or the file manager), saved safely
+  (a complete temporary copy is written first, so a crash mid-save cannot lose it). **Uninstalling the app or clearing its data deletes
+  it**, so use *Export backup* now and then; backups are encrypted. Android's automatic cloud backup is switched off for the app.
+- **App id:** `io.github.saurskr.dashboard` (in `capacitor.config.json` and `android/app/build.gradle`). Change both before publishing if
+  you want a different one: Google Play never lets it change after release.
+- **Icon and splash screen:** a simple placeholder drawn in the app's colours. Replace `assets/icon-only.png`, `icon-foreground.png` and
+  `icon-background.png` (1024×1024) and run `npm run android:assets`.
+- **Release to Google Play:** in Android Studio, *Build → Generate Signed App Bundle*. Create a signing key once and **keep it safe and
+  out of git**; losing it means you cannot update the app.
+- **Tests:** the app behaviour (first launch, create, relaunch and unlock, backup, restore, delete, Back button, lock after time away) is
+  covered by `npm run test:e2e:android`, which runs the real screens against an in-memory stand-in for the phone's folder, share sheet and
+  Back button, and by unit tests for the storage.
+- **Status:** the project and the web side are tested, but the app has **not yet been compiled or run on a device or emulator** by this
+  repository's authors, so expect a first round of fixes when you press Run. Things only a real phone can show: the edge-to-edge layout
+  around the notch and gesture bar, the share sheet, and the file chooser for restoring.
 
 ## Demo site (GitHub Pages)
 
@@ -167,5 +204,6 @@ Retirement shows the key results and two charts with the detailed assumptions fo
 - [x] Step 6: demo mode (sample data, sign-in page with Demo Mode) published from the `demo` branch
 - [x] Step 7: run on your own computer with `npm start`
 - [x] Step 8: Home rebuild: clocks for each country, weather, markets open/closed, FCS market ticker
-- [ ] Next: Android app (Capacitor)
+- [x] Step 9: Android app, first version (Capacitor; data in the app's private storage; backup/restore; Back button): tested here, **needs a first run on a device**
+- [ ] Next: run it in Android Studio and fix what a device shows; then Google Drive storage
 - [ ] Then: real Google sign-in, two-step verification, Google Drive storage (web and Android)

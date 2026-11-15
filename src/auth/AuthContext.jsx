@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useState } from 'react'
 import { DEMO_USER, PHASE, nextPhase } from '../lib/auth.js'
 import { isClientId, needsSetup } from '../lib/google.js'
 import { IS_DEMO } from '../lib/demo.js'
+import { isNativeApp } from '../lib/appstorage.js'
 
 const Ctx = createContext(null)
 export const useAuth = () => useContext(Ctx)
@@ -16,7 +17,7 @@ export function AuthProvider({ children }) {
   const [skipped, setSkipped] = useState(() => read('google.setupSkipped') === '1')
   const clientId = savedId
   const [reviewing, setReviewing] = useState(false) // keeps the "Google is set up" card up until Continue
-  const [phase, setPhase] = useState(() => (!IS_DEMO && read('auth.demo') === '1' ? PHASE.ready : PHASE.signedOut)) // the demo always starts at the sign-in page
+  const [phase, setPhase] = useState(() => (isNativeApp() || (!IS_DEMO && read('auth.demo') === '1') ? PHASE.ready : PHASE.signedOut)) // the app has nothing to sign in to // the demo always starts at the sign-in page
   const go = useCallback((event, opts) => {
     setPhase((p) => {
       const n = nextPhase(p, event, opts)
@@ -25,11 +26,11 @@ export function AuthProvider({ children }) {
     })
   }, [])
   const value = {
-    clientId, setup: !IS_DEMO && needsSetup({ clientId, skipped }),
+    clientId, setup: !IS_DEMO && !isNativeApp() && needsSetup({ clientId, skipped }),
     saveClientId: (v) => { const id = String(v).trim(); if (!isClientId(id)) return false; setSavedId(id); write('google.clientId', id); setSkipped(false); write('google.setupSkipped', ''); setReviewing(true); return true },
     reviewing, endReview: () => setReviewing(false),
     skipSetup: () => { setSkipped(true); write('google.setupSkipped', '1') },
-    demo: IS_DEMO,
+    demo: IS_DEMO, native: isNativeApp(),
     phase, user: phase === PHASE.ready ? DEMO_USER : null, mfaRequired,
     signIn: () => go('signIn', { mfaRequired }),
     mfaPassed: () => go('mfaPassed'),

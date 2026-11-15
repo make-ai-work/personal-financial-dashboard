@@ -332,3 +332,14 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 @media (max-width: 800px) { .grid3 { grid-template-columns: 1fr; } .card { padding: 16px; } .tm b { font-size: 1.35rem; } .home-page { padding: 12px 12px 0; } .tstate, .tmsg { padding-left: 12px; padding-right: 12px; } }
 
 .diag { display: block; margin-top: 4px; font-size: .7rem; color: var(--muted); }
+
+.warn-text { color: var(--amber); font-weight: 600; }
+
+/* Phone notch and gesture bar (the Android app draws edge to edge). Unknown variables fall back to 0 in a normal browser. */
+.topbar { padding-top: calc(10px + max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px))); }
+.wide-page, .page { padding-bottom: calc(60px + max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px))); }
+@media (min-width: 641px) { .tabs, .topbar { padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); } }
+@media (max-width: 640px) {
+  .topbar { padding-top: calc(8px + max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px))); padding-left: max(14px, env(safe-area-inset-left, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px)); }
+  .tabs { padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)); }
+}
