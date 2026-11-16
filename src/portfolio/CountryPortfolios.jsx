@@ -21,7 +21,8 @@ export default function CountryPortfolios({ code, onAddPortfolio, onAddHolding, 
   const stale = staleHoldings(data, pfs, today, staleDays)
 
   return (
-    <>
+    <div className="split7030">
+      <div className="sp-l">
       <div className="panel">
         <div className="p-head">
           <div className="title">{c.flag} {c.name} <span className="cur">{c.currency}</span></div>
@@ -40,7 +41,8 @@ export default function CountryPortfolios({ code, onAddPortfolio, onAddHolding, 
         <PortfolioPanel key={p.id} portfolio={p} country={code} account={data.accounts.find((a) => a.id === p.accountId)} staleDays={staleDays}
           onAddHolding={onAddHolding} onEditHolding={onEditHolding} onTargets={onTargets} />
       ))}
-
+      </div>
+      <aside className="sp-r">
       {holdings.length > 0 && (
         <Allocation holdings={holdings} names={names} format={fmt} views={VIEWS} title="Allocation" sub={`all ${c.name} portfolios`}>
           {conc.length > 0
@@ -50,6 +52,7 @@ export default function CountryPortfolios({ code, onAddPortfolio, onAddHolding, 
         </Allocation>
       )}
       {pfs.length > 0 && <Rebalance data={data} portfolios={pfs} tolerance={tol} format={fmt} onEditTargets={onTargets} />}
-    </>
+      </aside>
+    </div>
   )
 }

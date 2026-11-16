@@ -205,7 +205,7 @@ tr.cur td { background: var(--surface-2); font-weight: 600; }
 .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
 .legend.pad0 { padding: 2px 18px 12px; }
 .legend i.sw { height: 10px; width: 10px; border-radius: 2px; }
-.top { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
+.top { display: grid; grid-template-columns: minmax(0, 70fr) minmax(0, 30fr); gap: 16px; align-items: start; }
 .mainc { min-width: 0; } .side { position: sticky; top: 12px; }
 .sect { font-size: 1.05rem; margin: 8px 2px 12px; }
 .assume { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; align-items: start; margin-bottom: 16px; }
@@ -369,8 +369,8 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 .radios label b { display: block; } .radios label small { display: block; color: var(--muted); font-size: .72rem; margin-top: 2px; }
 
 /* Finance Dashboard: whole screen, accounts on the left, chart and Performance on the right */
-.fin-page { padding: 0 24px; }
-.fin-page .btn { color: var(--text); border-color: var(--line); background: var(--surface); } .fin-page .btn.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.fin-page, .wide-pad { padding: 0 24px; }
+.fin-page .btn, .wide-pad .btn { color: var(--text); border-color: var(--line); background: var(--surface); } .fin-page .btn.primary, .wide-pad .btn.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
 .fin-fx { margin-bottom: 12px; }
 .fin-grid { display: grid; grid-template-columns: minmax(0, 70fr) minmax(0, 30fr); gap: 16px; align-items: start; } /* 70 : 30 */
 .fin-right { position: sticky; top: 8px; }
@@ -381,7 +381,7 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 .pnote { padding: 8px 16px 14px; }
 .fin-left, .fin-right { min-width: 0; }
 @media (max-width: 1000px) { .fin-grid { grid-template-columns: minmax(0, 1fr); } .fin-right { position: static; } }
-@media (max-width: 640px) { .fin-page { padding: 0 10px; } }
+@media (max-width: 640px) { .fin-page, .wide-pad { padding: 0 10px; } }
 
 /* Quick check before sign-in */
 .hcheck { text-align: left; margin: 16px 0 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface-2); }
@@ -401,3 +401,8 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 .h-right .nwbig { font-size: 2.1rem; }
 @media (max-width: 1000px) { .home70 { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 700px) { .h-top { grid-template-columns: minmax(0, 1fr); } }
+
+/* The same 70 : 30 split on Property, Portfolio and Retirement */
+.split7030 { display: grid; grid-template-columns: minmax(0, 70fr) minmax(0, 30fr); gap: 16px; align-items: start; }
+.sp-l, .sp-r { min-width: 0; } .sp-r .panel:last-child, .sp-l .panel:last-child { margin-bottom: 16px; }
+@media (max-width: 1000px) { .split7030 { grid-template-columns: minmax(0, 1fr); } }

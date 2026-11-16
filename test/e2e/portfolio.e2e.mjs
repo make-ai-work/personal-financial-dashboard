@@ -31,6 +31,11 @@ const errors = []
 page.on('pageerror', (e) => errors.push(e.message))
 page.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
 const step = (s) => console.log('•', s)
+const split = async (page, l, r) => { // the two columns are 70 : 30 of the width they share
+  const a = await page.locator(l).first().boundingBox(), b = await page.locator(r).first().boundingBox()
+  assert.ok(Math.abs(a.width / (a.width + b.width + 16) - 0.7) < 0.02 && b.x > a.x + a.width - 2, `70 : 30, got ${JSON.stringify([a.width, b.width])}`)
+}
+
 const dialog = () => page.getByRole('dialog')
 const subtab = (name) => page.locator('.subtabs').getByRole('button', { name })
 const topTab = (name) => page.getByRole('tab', { name })
@@ -198,6 +203,7 @@ try {
 
   step('overview: totals, attention list')
   await topTab(/Portfolio/).click(); await subtab('Overview').click()
+  await split(page, '.sp-l', '.sp-r')
   const ov = await page.locator('.subpage').innerText()
   assert.match(ov, /USA[\s\S]*2\s+\d+\s+\$ 290,248/)
   assert.match(ov, /Brokerage · Schwab is off target/)

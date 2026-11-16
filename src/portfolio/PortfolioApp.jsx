@@ -32,7 +32,7 @@ export default function PortfolioApp() {
   const done = () => setModal(null)
 
   return (
-    <>
+    <div className="wide-pad">
       <StatusBar />
       <nav className="subtabs">
         <button className={active === 'overview' ? 'on' : ''} onClick={() => setTab('overview')}>Overview</button>
@@ -84,6 +84,6 @@ export default function PortfolioApp() {
       {modal?.kind === 'targets' && (
         <TargetsModal portfolio={modal.portfolio} onClose={done} onSave={(targets) => { update((d) => updatePortfolio(d, modal.portfolio.id, { targets })); done() }} />
       )}
-    </>
+    </div>
   )
 }

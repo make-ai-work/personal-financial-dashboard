@@ -22,14 +22,15 @@ export default function Overview({ owner, fx, onOpen }) {
   const due = dueItems(data, today, data.settings.dueSoonDays, visible).filter((i) => i.days <= WINDOW_DAYS)
 
   return (
-    <>
+    <div className="split7030">
+      <div className="sp-l">
       <div className="panel">
         <div className="p-head"><div className="title">Property summary</div></div>
         <div className="tblw"><table><thead><tr><th>Country</th><th>Properties</th><th>Value</th><th>Mortgage balance</th><th>Equity</th></tr></thead><tbody>
           {per.map(({ c, t }) => (
             <tr key={c}><td>{COUNTRIES[c].flag} {COUNTRIES[c].name} <span className="cur">{cur(c)}</span></td><td>{t.count}</td><td>{money(c, t.value)}</td><td className="neg">{money(c, t.balance)}</td><td className={t.equity >= 0 ? 'pos' : 'neg'}>{money(c, t.equity)}</td></tr>
           ))}
-          {multi && codes.map((c) => (
+          {multi && codes.slice(0, 1).map((c) => (
             <tr key={`tot-${c}`} className="total">
               <td>Total in {cur(c)}</td><td>{per.reduce((s, p) => s + p.t.count, 0)}</td>
               <td>{fmtc(cur(c), sumIn(cur(c), 'value'))}</td><td>{fmtc(cur(c), sumIn(cur(c), 'balance'))}</td><td>{fmtc(cur(c), sumIn(cur(c), 'equity'))}</td>
@@ -44,6 +45,8 @@ export default function Overview({ owner, fx, onOpen }) {
         <PropertyList items={rows} parentLabel={data.settings.parentLabel} onOpen={onOpen} showCountry />
       </div>
 
+      </div>
+      <aside className="sp-r">
       {due.length > 0 && (
         <div className="panel">
           <div className="p-head"><div className="title">Coming up <span className="sub">next {WINDOW_DAYS} days</span></div></div>
@@ -52,6 +55,8 @@ export default function Overview({ owner, fx, onOpen }) {
           ))}
         </div>
       )}
-    </>
+      {due.length === 0 && <div className="panel"><div className="p-head"><div className="title">Coming up <span className="sub">next {WINDOW_DAYS} days</span></div></div><div className="okrow">Nothing is due.</div></div>}
+      </aside>
+    </div>
   )
 }

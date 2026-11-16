@@ -31,6 +31,11 @@ const errors = []
 page.on('pageerror', (e) => errors.push(e.message))
 page.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
 const step = (s) => console.log('•', s)
+const split = async (page, l, r) => { // the two columns are 70 : 30 of the width they share
+  const a = await page.locator(l).first().boundingBox(), b = await page.locator(r).first().boundingBox()
+  assert.ok(Math.abs(a.width / (a.width + b.width + 16) - 0.7) < 0.02 && b.x > a.x + a.width - 2, `70 : 30, got ${JSON.stringify([a.width, b.width])}`)
+}
+
 const dialog = () => page.getByRole('dialog')
 const subtab = (name) => page.locator('.subtabs').getByRole('button', { name })
 const fill = async (f) => { for (const [l, v] of Object.entries(f)) await dialog().getByLabel(l).first().fill(v) }
@@ -123,7 +128,8 @@ try {
   await subtab('Overview').click()
   const sum = await page.locator('.tblw').first().innerText()
   assert.match(sum, /Total in USD[\s\S]*\$ 481,429[\s\S]*\$ 241,257[\s\S]*\$ 240,171/) // 410000 + 6000000/84 ...
-  assert.match(sum, /Total in INR[\s\S]*₹ 4,04,40,000[\s\S]*₹ 2,02,65,600[\s\S]*₹ 2,01,74,400/)
+  assert.ok(!/Total in INR/.test(sum), 'totals are in the first currency only')
+  await split(page, '.sp-l', '.sp-r')
   assert.match(await page.locator('.fx').innerText(), /1 USD = ₹ 84/)
   const coming = await page.locator('.panel', { hasText: 'Coming up' }).innerText()
   assert.match(coming, /Maple Street home · Mortgage payment[\s\S]*due in 5 days/)
