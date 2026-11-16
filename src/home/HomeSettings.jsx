@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { Modal } from '../finance/ui.jsx'
 import { homePrefs } from '../lib/homeprefs.js'
 import { IS_DEMO } from '../lib/demo.js'
 import { fetchQuotes, fmtPrice, tickerItems } from '../lib/ticker.js'
 import { AV_PROXIES, fetchAvQuotes } from '../lib/alphavantage.js'
 import { COUNTRIES } from '../lib/format.js'
 
-export default function HomeSettings({ countries, onClose, onSaved }) {
+export default function HomeSettings({ countries }) {
+  const [saved, setSaved] = useState(false)
   const [unit, setUnit] = useState(homePrefs.unit(''))
   const [provider, setProvider] = useState(homePrefs.provider())
   const [key, setKey] = useState(homePrefs.fcsKey())
@@ -39,11 +39,12 @@ export default function HomeSettings({ countries, onClose, onSaved }) {
     homePrefs.setUnit(unit)
     homePrefs.setRefreshMin(every)
     if (!IS_DEMO) { homePrefs.setProvider(provider); homePrefs.setFcsKey(key); homePrefs.setAvKey(avKey) }
-    onSaved()
-    onClose()
+    setSaved(true)
   }
   return (
-    <Modal title="Home settings" onClose={onClose} footer={<><button className="btn" onClick={onClose}>Cancel</button><button className="btn primary" onClick={save}>Save</button></>}>
+    <div className="panel" id="set-home">
+      <div className="p-head"><div className="title">Home</div></div>
+      <div className="pad hset" onChange={() => setSaved(false)}>
       <div className="rowf"><span>Temperature unit<small>Weather and air quality come from Open-Meteo (free, no key) for the city of each country’s main stock exchange. Only the city’s coordinates are sent.</small></span>
         <select value={unit} onChange={(e) => setUnit(e.target.value)} aria-label="Temperature unit"><option value="">Automatic (°F in the US, °C elsewhere)</option><option value="F">°F (Fahrenheit)</option><option value="C">°C (Celsius)</option></select></div>
       <hr className="sep" />
@@ -75,6 +76,8 @@ export default function HomeSettings({ countries, onClose, onSaved }) {
       {!IS_DEMO && (av
         ? <div className="warn"><b>Alpha Vantage.</b> The free plan has no real index levels, so each index is shown through an ETF that tracks it (S&amp;P 500 as SPY, Nasdaq as QQQ, Nifty 50 as Nifty BeES, FTSE 100 as ISF, SMI as EWL), labelled on the ticker.</div>
         : <div className="warn"><b>FCS plans.</b> The free FCS plan covers gold and Bitcoin. Index prices (S&amp;P 500, Sensex, …) need an FCS stock plan, from about $25 a month.</div>)}
-    </Modal>
+      </div>
+      <div className="p-head foot"><span>{saved && <span className="okmsg" role="status">Saved.</span>}</span><button className="btn primary" onClick={save}>Save Home settings</button></div>
+    </div>
   )
 }

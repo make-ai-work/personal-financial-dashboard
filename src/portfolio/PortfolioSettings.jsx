@@ -13,7 +13,7 @@ export default function PortfolioSettings() {
       </select></div>
   )
   return (
-    <div className="panel mw">
+    <div className="panel" id="set-portfolio">
       <div className="p-head"><div className="title">Portfolio · Countries shown</div></div>
       <CountriesPicker
         value={s.portfolioCountries}

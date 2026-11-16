@@ -44,6 +44,8 @@ const addAsset = async (name, balance) => {
   await dialog().waitFor({ state: 'detached' })
 }
 // The combined total now lives on Home (the Finance Summary tab is gone): read the net worth card, then come back to Finance.
+const gear = () => page.getByRole('tab', { name: 'Settings' }).click() // the one Settings tab (gear icon, far right)
+const fin = () => page.getByRole('tab', { name: 'Finance Dashboard' }).click()
 const summaryText = async () => {
   await page.getByRole('tab', { name: 'Home' }).click()
   await page.getByTestId('networth').waitFor()
@@ -64,14 +66,14 @@ try {
   await page.getByText('Update date', { exact: true }).waitFor()
 
   step('default is two countries (USA, India), as before')
-  assert.equal(await page.locator('.subtabs button').count(), 3) // USA, India, Settings
+  assert.equal(await page.locator('.subtabs button').count(), 2) // USA, India (settings live in the gear tab)
 
   step('seed one account per country, then add a third country (UK)')
   await subtab(/USA/).click(); await addAsset('Checking', '1000')
   await subtab(/India/).click(); await addAsset('Savings', '84000')
-  await subtab('Settings').click()
-  await page.getByRole('checkbox', { name: 'Show UK' }).check()
-  await subtab(/UK/).click(); await addAsset('Cash ISA', '400')
+  await gear()
+  await page.locator('#set-countries').getByRole('checkbox', { name: 'Show UK' }).check()
+  await fin(); await subtab(/UK/).click(); await addAsset('Cash ISA', '400')
 
   step('summary: one total row per currency, converted through the reporting currency')
   let t = await summaryText()
@@ -83,36 +85,37 @@ try {
   assert.ok(await page.locator('.chart circle').count() > 0 || true)
 
   step('hiding a country that has data warns, hides, never deletes')
-  await subtab('Settings').click()
-  await page.getByRole('checkbox', { name: 'Show India' }).click()
-  assert.match(await page.locator('.warn').first().innerText(), /will hide 1 item\. Nothing is deleted/)
+  await gear()
+  await page.locator('#set-countries').getByRole('checkbox', { name: 'Show India' }).click()
+  assert.match(await page.locator('#set-countries .warn').first().innerText(), /will hide 1 item\. Nothing is deleted/)
   await page.getByRole('button', { name: 'Hide India' }).click()
+  await fin()
   assert.equal(await page.locator('.subtabs button', { hasText: 'India' }).count(), 0)
   t = await summaryText()
   assert.ok(!t.includes('India'))
   assert.match(t, /\$\s?1,500/) // 1000 + 400/0.8
-  await subtab('Settings').click()
-  await page.getByRole('checkbox', { name: 'Show India' }).check()
-  await subtab(/India/).click()
+  await gear()
+  await page.locator('#set-countries').getByRole('checkbox', { name: 'Show India' }).check()
+  await fin(); await subtab(/India/).click()
   assert.ok(await page.getByText('Savings').isVisible()) // data came back
 
   step('reorder: UK first makes GBP the reporting currency and re-fetches rates from it')
-  await subtab('Settings').click()
+  await gear()
   await page.getByRole('button', { name: 'Move UK up' }).click() // list is USA, UK, India (India re-ticked last)
   assert.ok(await page.getByRole('button', { name: 'Move UK up' }).isDisabled()) // now first
-  await subtab(/UK/).click()
+  await fin(); await subtab(/UK/).click()
   await page.getByText(/1 GBP = /).waitFor()
   assert.ok(fetched.includes('GBP->USD,INR'), `rates re-fetched from GBP, got ${fetched}`)
   assert.match(await page.locator('.fx').innerText(), /1 GBP = \$ 1\.25 · ₹ 105/)
   assert.match(await summaryText(), /£\s?2,000/) // same wealth, same answer, now in GBP
 
   step('a single country hides combined totals and the exchange-rate bar')
-  await subtab('Settings').click()
+  await gear()
   for (const name of ['India', 'USA']) {
-    await page.getByRole('checkbox', { name: `Show ${name}` }).click()
+    await page.locator('#set-countries').getByRole('checkbox', { name: `Show ${name}` }).click()
     if (await page.getByRole('button', { name: `Hide ${name}` }).count()) await page.getByRole('button', { name: `Hide ${name}` }).click()
   }
-  assert.ok(await page.getByRole('checkbox', { name: 'Show UK' }).isDisabled()) // cannot untick the last one
+  assert.ok(await page.locator('#set-countries').getByRole('checkbox', { name: 'Show UK' }).isDisabled()) // cannot untick the last one
   t = await summaryText()
   assert.equal(await page.locator('.fx').count(), 0)
   await page.screenshot({ path: `${OUT}/single.png`, fullPage: true })

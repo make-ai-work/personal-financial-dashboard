@@ -4,7 +4,6 @@ import StatusBar from '../finance/StatusBar.jsx'
 import { useFx } from '../finance/useFx.js'
 import Overview from './Overview.jsx'
 import CountryPortfolios from './CountryPortfolios.jsx'
-import PortfolioSettings from './PortfolioSettings.jsx'
 import { HoldingModal, PortfolioModal, PricesModal, TargetsModal } from './PortfolioForms.jsx'
 import { COUNTRIES } from '../lib/format.js'
 import { addHolding, addPortfolio, countryOf, holdingsOf, updateHolding, updatePortfolio, updatePrices } from '../lib/portfolio.js'
@@ -18,7 +17,7 @@ export default function PortfolioApp() {
   const fx = useFx(codes, data.rates)
   const [tab, setTab] = useState('overview')
   const [modal, setModal] = useState(null)
-  const active = [...codes, 'overview', 'settings'].includes(tab) ? tab : 'overview'
+  const active = [...codes, 'overview'].includes(tab) ? tab : 'overview'
 
   useEffect(() => {
     if (focus?.portfolioId) {
@@ -38,11 +37,9 @@ export default function PortfolioApp() {
         <button className={active === 'overview' ? 'on' : ''} onClick={() => setTab('overview')}>Overview</button>
         {codes.map((c) => <button key={c} className={active === c ? 'on' : ''} onClick={() => setTab(c)}>{COUNTRIES[c].flag} {COUNTRIES[c].name}</button>)}
         <button onClick={() => setModal({ kind: 'portfolio', country: codes.includes(active) ? active : codes[0] })}>+ Add portfolio</button>
-        <button className={active === 'settings' ? 'on' : ''} onClick={() => setTab('settings')}>Settings</button>
       </nav>
       <div className="subpage">
         {active === 'overview' && <Overview fx={fx} onOpenCountry={setTab} />}
-        {active === 'settings' && <PortfolioSettings />}
         {codes.includes(active) && (
           <CountryPortfolios code={active}
             onAddPortfolio={(country) => setModal({ kind: 'portfolio', country })}

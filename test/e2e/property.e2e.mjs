@@ -66,7 +66,7 @@ try {
   await page.getByRole('checkbox').check()
   await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Create encrypted file' }).click()])
   await page.getByText('Property summary').waitFor()
-  assert.equal(await page.locator('.subtabs button').count(), 5) // Overview, USA, India, + Add property, Settings
+  assert.equal(await page.locator('.subtabs button').count(), 4) // Overview, USA, India, + Add property
 
   step('add a US property (validation first), then its valuations')
   await page.getByRole('button', { name: '+ Add property' }).click()
@@ -169,20 +169,19 @@ try {
   await page.getByRole('button', { name: 'Cancel' }).click()
 
   step('property countries are independent of Finance, and hiding never deletes')
-  await subtab('Settings').click()
-  await page.getByRole('checkbox', { name: 'Show India' }).click()
-  assert.match(await page.locator('.warn').first().innerText(), /will hide 1 property\. Nothing is deleted/)
-  await page.getByRole('button', { name: 'Hide India' }).click()
-  assert.equal(await page.locator('.subtabs button', { hasText: 'India' }).count(), 0)
-  await page.getByRole('checkbox', { name: 'Show Australia' }).check()
-  await page.getByRole('tab', { name: 'Finance Dashboard' }).click()
-  await page.getByRole('button', { name: 'Settings' }).click()
-  assert.ok(await page.getByRole('checkbox', { name: 'Show India' }).isChecked()) // Finance list untouched
-  assert.ok(!(await page.getByRole('checkbox', { name: 'Show Australia' }).isChecked()))
+  await page.getByRole('tab', { name: 'Settings' }).click()
+  const pset = page.locator('#set-property'), fset = page.locator('#set-countries')
+  await pset.getByRole('checkbox', { name: 'Show India' }).click()
+  assert.match(await pset.locator('.warn').first().innerText(), /will hide 1 property\. Nothing is deleted/)
+  await pset.getByRole('button', { name: 'Hide India' }).click()
+  await pset.getByRole('checkbox', { name: 'Show Australia' }).check()
+  assert.ok(await fset.getByRole('checkbox', { name: 'Show India' }).isChecked()) // the Finance list is untouched
+  assert.ok(!(await fset.getByRole('checkbox', { name: 'Show Australia' }).isChecked()))
   await page.getByRole('tab', { name: /Property/ }).click()
-  await subtab('Settings').click()
-  await page.getByRole('checkbox', { name: 'Show India' }).click() // ticking again brings it back
-  await subtab(/India/).click()
+  assert.equal(await page.locator('.subtabs button', { hasText: 'India' }).count(), 0)
+  await page.getByRole('tab', { name: 'Settings' }).click()
+  await pset.getByRole('checkbox', { name: 'Show India' }).click() // ticking again brings it back
+  await page.getByRole('tab', { name: /Property/ }).click(); await subtab(/India/).click()
   assert.ok(await page.getByText('Pune apartment').first().isVisible())
 
   step('lock / unlock keeps everything, and Excel export includes property data')
@@ -194,8 +193,7 @@ try {
   await page.getByRole('button', { name: 'Unlock' }).click()
   await subtab(/USA/).click()
   assert.ok(await page.getByText('Maple Street home').first().isVisible())
-  await page.getByRole('tab', { name: 'Finance Dashboard' }).click()
-  await page.getByRole('button', { name: 'Settings' }).click()
+  await page.getByRole('tab', { name: 'Settings' }).click()
   page.once('dialog', (d) => d.accept())
   const [xl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Export…' }).click()])
   await xl.saveAs(`${OUT}/export.xlsx`)

@@ -62,7 +62,7 @@ export function CountryRow({ code, now, version }) {
   const d = w.data
   const info = d && describe(d.code)
   return (
-    <div className="crow" data-testid={`row-${code}`}>
+    <div className="hcrow" data-testid={`row-${code}`}>
       <div className="l1">
         <div className="cty"><span className="fl">{COUNTRIES[code].flag}</span><b>{ck.city}</b><small>{EXCHANGES[code].name}</small></div>
         <div className="tme"><b>{ck.time}</b><span className="dn-ico" role="img" aria-label={ck.isDay ? 'Daytime' : 'Night'}>{ck.isDay ? '☀️' : '🌙'}</span><small>{ck.day}</small></div>

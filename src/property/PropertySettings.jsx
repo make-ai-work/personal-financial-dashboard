@@ -4,7 +4,7 @@ import CountriesPicker from '../finance/CountriesPicker.jsx'
 export default function PropertySettings() {
   const { data, update } = useVault()
   return (
-    <div className="panel mw">
+    <div className="panel" id="set-property">
       <div className="p-head"><div className="title">Property · Countries shown</div></div>
       <CountriesPicker
         value={data.settings.propertyCountries}

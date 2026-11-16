@@ -40,7 +40,7 @@ export default function Settings() {
 
   return (
     <>
-      <div className="panel">
+      <div className="panel" id="set-countries">
         <div className="p-head"><div className="title">Finance · Countries shown</div></div>
         <CountriesPicker
           value={data.settings.countries}
@@ -60,7 +60,7 @@ export default function Settings() {
         </div>
       </div>
 
-      <div className="panel">
+      <div className="panel" id="set-data">
         <div className="p-head"><div className="title">{v.demo ? "Data" : v.isApp ? "🔒 Your data" : "🔒 Security"}</div></div>
         <div className="col">
           {!v.demo && (
