@@ -10,6 +10,9 @@ await new Promise((r) => setTimeout(r, 2500))
 const browser = await chromium.launch()
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } })
 await ctx.addInitScript(() => { delete window.showSaveFilePicker; delete window.showOpenFilePicker })
+// Google is stubbed: a fake sign-in script (window.__gsiMode = 'ok' | 'closed') and the userinfo answer
+await ctx.route(/accounts\.google\.com\/gsi\/client/, (r) => r.fulfill({ contentType: 'text/javascript', body: `window.__gsiMode='ok';window.__gsiCalls=0;window.google={accounts:{oauth2:{initTokenClient:function(c){return{requestAccessToken:function(o){window.__gsiCalls++;window.__gsiArgs={client:c.client_id,scope:c.scope,prompt:o&&o.prompt};if(window.__gsiMode==='closed')c.error_callback({type:'popup_closed'});else setTimeout(function(){c.callback({access_token:'T'})},50)}}},revoke:function(t,cb){window.__revoked=t;cb&&cb()}}}}` }))
+await ctx.route(/googleapis\.com\/oauth2\/v3\/userinfo/, (r) => r.fulfill({ json: { sub: '1001', email: 'sam@example.com', name: 'Sam Example', email_verified: true } }))
 const page = await ctx.newPage()
 const errors = []
 page.on('pageerror', (e) => errors.push(e.message))
@@ -32,7 +35,7 @@ try {
   const ID = '123456789012-abcdefghij1234.apps.googleusercontent.com'
   await box.fill(ID); await page.getByText('Looks right.').waitFor(); await save.click()
   await page.getByRole('heading', { name: 'Google is set up' }).waitFor()
-  await page.getByText(ID).waitFor(); await page.getByText(/sign-in on hold/).waitFor()
+  await page.getByText(ID).waitFor(); await page.getByText(/ready to sign in/).waitFor()
   await page.reload()
   await wantSignIn() // remembered across reloads, no setup again
   step('first visit, skipping setup goes to the demo sign-in and is remembered')
@@ -71,6 +74,16 @@ try {
   await page.getByLabel(/Preview the two-step verification/).check()
   await page.getByRole('button', { name: 'Sign out' }).click()
   await wantSignIn()
+  await page.getByText(/Only your name and email are read/).waitFor() // a client ID is saved: the real sign-in
+  step('real Google sign-in: closing the window is explained; nothing opens the app')
+  await page.getByRole('button', { name: /Sign in with Google/ }).click() // loads the (fake) Google script first
+  await page.getByRole('heading', { name: 'Two-step verification' }).waitFor()
+  await page.getByRole('button', { name: 'Cancel' }).click(); await wantSignIn()
+  await page.evaluate(() => { window.__gsiMode = 'closed' })
+  await page.getByRole('button', { name: /Sign in with Google/ }).click()
+  await page.getByRole('alert').getByText(/window was closed before it finished/).waitFor()
+  assert.equal(await page.getByRole('tab').count(), 0)
+  await page.evaluate(() => { window.__gsiMode = 'ok' })
   await page.getByRole('button', { name: /Sign in with Google/ }).click()
   await page.getByRole('heading', { name: 'Two-step verification' }).waitFor()
   assert.equal(await page.getByRole('tab').count(), 0, 'app stays closed until the step is passed')
@@ -81,8 +94,15 @@ try {
   await page.getByRole('button', { name: 'Verify' }).click()
   await page.getByRole('tab', { name: 'Home' }).waitFor()
 
-  step('cancel from the code screen goes back to sign-in; turning the preview off skips the step')
+  step('the Account dialog shows the real Google identity; only identity was asked for and nothing is kept')
   await page.getByRole('button', { name: 'Account' }).click()
+  await page.getByText(/Sam Example/).first().waitFor(); await page.getByText(/sam@example\.com/).waitFor(); await page.getByText('Signed in with your Google account.').waitFor()
+  const g = await page.evaluate(() => ({ args: window.__gsiArgs, revoked: window.__revoked, stored: localStorage.getItem('auth.user'), keys: Object.keys(localStorage) }))
+  assert.deepEqual([g.args.client, g.args.scope, g.args.prompt], [ID, 'openid email profile', 'select_account'])
+  assert.equal(g.revoked, 'T', 'the access pass is revoked straight away')
+  assert.deepEqual(Object.keys(JSON.parse(g.stored)).sort(), ['email', 'id', 'name', 'picture', 'verified'])
+  assert.ok(!JSON.stringify(g).includes('access_token'))
+  step('cancel from the code screen goes back to sign-in; turning the preview off skips the step')
   await page.getByRole('button', { name: 'Sign out' }).click()
   await page.getByRole('button', { name: /Sign in with Google/ }).click()
   await page.getByRole('button', { name: 'Cancel' }).click()

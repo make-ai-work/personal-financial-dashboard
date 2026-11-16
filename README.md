@@ -168,19 +168,24 @@ A picture version of this, which also ships with the site, is in
   Australia or Switzerland; choose one to five, and Finance and Property each keep their own list), with a summary page, owner filter (Mine / Joint / Parent) and a
   month-by-month chart per country.
 
-## Sign-in (placeholder)
+## Sign-in with Google
 
-The app opens on a **Sign in with Google** screen. The button is a dummy: it is not connected to Google, signs you in as a demo
-user and sends nothing anywhere. A two-step (MFA) screen is built into the flow (`src/lib/auth.js`, `src/auth/`) but not
-enforced: turn on the preview from the Account dialog to see it; any 6-digit code passes. Real Google sign-in, real
-verification and storing the data file in Google Drive are the next steps. Until then the encrypted file and its passphrase
-are unchanged.
+The app opens on a **Sign in with Google** screen. Once you have saved your own Google client ID (next section) the button is **real**:
+it opens Google's sign-in window (Google Identity Services, `src/lib/googleauth.js`) and asks only for your **name and email** (scopes
+`openid email profile`), to show who is signed in. No token is kept (the access pass is revoked straight away), and your identity
+(name, email, picture link) is remembered in this browser until you sign out. Your data file keeps its own passphrase; Google
+sign-in does not unlock it. Without a client ID (skipped setup) the button is the old placeholder and signs you in as a demo user.
+Google's own two-step verification applies to your Google account; the app's **two-step screen** (`src/auth/`) is still only a
+preview that accepts any 6-digit code. Storing the data file in Google Drive is a later step. The demo site and the Android app
+have no Google sign-in.
 
 ## Google setup (first run)
 
 Everyone uses their **own** Google client ID, so the first screen asks for it (with a 6-step guide, the address to authorise,
-and a refusal to accept a client *secret*, which the app never needs). It is saved in the browser only, can be changed from
-the Account dialog, and can be skipped to use the demo sign-in. Real sign-in with it is still on hold.
+and a refusal to accept a client *secret*, which the app never needs). It is saved in the browser only and can be changed from
+the Account dialog. The address shown on that screen must be listed under **Authorized JavaScript origins** in Google Cloud, or Google
+refuses with an "authorised list" message. The sign-in has not been tried against a live Google account in development (it is
+tested with a stand-in for Google), so report anything odd.
 
 ## Phone
 
@@ -214,4 +219,5 @@ Retirement shows the key results and two charts with the detailed assumptions fo
 - [x] Step 8: Home rebuild: clocks for each country, weather, markets open/closed, FCS market ticker
 - [x] Step 9: Android app, first version (Capacitor; data in the app's private storage; backup/restore; Back button): tested here, **needs a first run on a device**
 - [ ] Next: run it in Android Studio and fix what a device shows; then Google Drive storage
-- [ ] Then: real Google sign-in, two-step verification, Google Drive storage (web and Android)
+- [x] Real Google sign-in (name and email only) on the web version
+- [ ] Then: two-step verification, Google Drive storage (web and Android)
