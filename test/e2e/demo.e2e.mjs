@@ -75,6 +75,7 @@ try {
   await google.click({ force: true, timeout: 1000 }).catch(() => {})
   assert.equal(await page.getByRole('tab').count(), 0, 'clicking the disabled button does nothing')
 
+  assert.equal(await page.getByTestId('check-question').count(), 0, 'the demo has no quick check')
   step('Demo Mode opens the app with sample data, the DEMO banner and no file, lock or passphrase controls')
   await enter()
   await page.getByText('Sample data.', { exact: false }).first().waitFor()

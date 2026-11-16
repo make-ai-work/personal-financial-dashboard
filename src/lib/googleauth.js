@@ -37,20 +37,25 @@ export function parseUserInfo(j) {
 }
 
 // Open the Google popup, then read who signed in. gsi / fetchImpl are injectable for tests.
-export async function signInWithGoogle(clientId, { gsi, fetchImpl = fetch, desktop } = {}) {
+// `silent: true` is the quiet attempt made when the app opens: Google signs you in only if you are already signed in to Google and
+// approved this app before (prompt 'none'); otherwise it fails quietly and the normal button is shown. It never works in the Windows
+// app (that signs in through your browser). Nothing is stored either way.
+export async function signInWithGoogle(clientId, { gsi, fetchImpl = fetch, desktop, silent = false, timeoutMs = 8000 } = {}) {
   // The Windows app signs in through the user's browser (Google refuses sign-in inside an app's own window).
   const dd = desktop === undefined ? (typeof window !== 'undefined' ? window.desktopApp : null) : desktop
   const useDesktop = !gsi && !!dd?.googleToken
+  if (silent && useDesktop) throw new Error('Silent sign-in is not available here.')
   const google = useDesktop ? null : (gsi || (await loadGsi()))
-  const token = useDesktop ? await dd.googleToken(clientId).catch((e) => { throw new Error(String(e?.message || e).replace(/^Error invoking remote method '[^']+': (Error: )?/, '')) }) : await new Promise((resolve, reject) => {
+  const withTimeout = (p) => (silent ? Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('Google did not answer.')), timeoutMs))]) : p)
+  const token = useDesktop ? await dd.googleToken(clientId).catch((e) => { throw new Error(String(e?.message || e).replace(/^Error invoking remote method '[^']+': (Error: )?/, '')) }) : await withTimeout(new Promise((resolve, reject) => {
     const client = google.accounts.oauth2.initTokenClient({
       client_id: clientId,
       scope: SCOPES,
       callback: (resp) => (resp?.error ? reject(new Error(explainGoogleError(resp.error, resp.error_description))) : resolve(resp.access_token)),
       error_callback: (err) => reject(new Error(explainGoogleError(err?.type, err?.message))),
     })
-    client.requestAccessToken({ prompt: 'select_account' })
-  })
+    client.requestAccessToken({ prompt: silent ? 'none' : 'select_account' })
+  }))
   let json
   try {
     const res = await fetchImpl(USERINFO_URL, { headers: { Authorization: `Bearer ${token}` } })
@@ -60,8 +65,7 @@ export async function signInWithGoogle(clientId, { gsi, fetchImpl = fetch, deskt
   const user = parseUserInfo(json)
   if (!user) throw new Error('Google did not return a name and email. Try again.')
   if (!user.verified) throw new Error('That Google account’s email address is not verified.')
-  // identity only: the pass is not needed any more
-  if (useDesktop) fetchImpl(`https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(token)}`, { method: 'POST' }).catch(() => {})
-  else try { google.accounts.oauth2.revoke?.(token, () => {}) } catch { /* ignore */ }
+  // Nothing is stored and the pass expires by itself within the hour. It is deliberately NOT revoked: revoking also removes Google's
+  // saved approval for this app, which would make the quiet sign-in at the next visit impossible.
   return user
 }
