@@ -41,6 +41,8 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'   # the web builds do not need the Windows app's Electron binary
       - run: npm test           # unit tests must pass before anything is published
       - name: Index snapshot for the demo ticker (Alpha Vantage)
         run: node scripts/fetch-av-snapshot.mjs
