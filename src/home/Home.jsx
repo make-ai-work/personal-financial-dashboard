@@ -3,7 +3,7 @@ import { useVault } from '../finance/VaultContext.jsx'
 import { useFx } from '../finance/useFx.js'
 import { homePrefs } from '../lib/homeprefs.js'
 import { CountriesCard, NetWorthCard, useNow } from './Cards.jsx'
-import { CombinedChartPanel, OwnershipPanel, SummaryPanel } from './HomeSummary.jsx'
+import { CombinedChartPanel, OwnershipPanel, RatesCard, SummaryPanel } from './HomeSummary.jsx'
 import Ticker from './Ticker.jsx'
 import { useNav } from '../nav.jsx'
 
@@ -45,6 +45,7 @@ export default function Home() {
           </div>
           <div className="h-right">
             <NetWorthCard data={data} owner={owner} onOwner={pickOwner} fx={fx} parentLabel={parentLabel} />
+            {data && countries.length > 1 && <RatesCard fx={fx} />}
             <CountriesCard countries={countries} now={now} version={version} onSettings={openSettings} />
           </div>
         </div>
