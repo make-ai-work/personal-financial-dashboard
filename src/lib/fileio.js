@@ -8,7 +8,14 @@ export const isAppHandle = (h) => h?.kind === 'app'
 
 // The app never uses the desktop file pickers: its vault is in the app's folder, and restores use the plain file chooser.
 export const hasFS = () =>
-  !isNativeApp() && typeof window !== 'undefined' && 'showSaveFilePicker' in window && 'showOpenFilePicker' in window
+  isDesktop() || (!isNativeApp() && typeof window !== 'undefined' && 'showSaveFilePicker' in window && 'showOpenFilePicker' in window)
+
+// The Windows (Electron) app: files go through native dialogs and a small, checked bridge (electron/preload.cjs).
+const dk = () => (typeof window !== 'undefined' ? window.desktopApp : null)
+export const isDesktop = () => !!dk()?.isDesktop
+export const isDesktopHandle = (h) => h?.kind === 'desktop'
+const desktopHandle = (r) => ({ kind: 'desktop', path: r.path, name: r.name })
+const abort = () => new DOMException('Cancelled', 'AbortError')
 
 export const isAbort = (e) => e?.name === 'AbortError'
 
@@ -26,6 +33,11 @@ function pickViaInput(accept) {
 }
 
 export async function pickVault() {
+  if (isDesktop()) {
+    const r = await dk().openVault()
+    if (!r) throw abort()
+    return { handle: desktopHandle(r), name: r.name, bytes: new Uint8Array(r.bytes) }
+  }
   if (hasFS()) {
     const [handle] = await window.showOpenFilePicker({ types: VAULT_TYPES })
     const file = await handle.getFile()
@@ -47,25 +59,32 @@ export async function pickNewVaultHandle(suggestedName, { replace = false } = {}
     if (!replace && (await appVault.exists())) throw new Error('A vault is already stored in this app. Open it, or delete it first.')
     return APP_HANDLE
   }
+  if (isDesktop()) {
+    const r = await dk().saveVaultAs(suggestedName)
+    if (!r) throw abort()
+    return desktopHandle(r)
+  }
   if (!hasFS()) return null
   return window.showSaveFilePicker({ suggestedName, types: VAULT_TYPES })
 }
 
 export async function readHandle(handle) {
   if (isAppHandle(handle)) return appVault.read()
+  if (isDesktopHandle(handle)) return new Uint8Array(await dk().readVault(handle.path))
   const file = await handle.getFile()
   return new Uint8Array(await file.arrayBuffer())
 }
 
 export async function writeHandle(handle, bytes) {
   if (isAppHandle(handle)) return appVault.write(bytes)
+  if (isDesktopHandle(handle)) return dk().writeVault(handle.path, bytes)
   const w = await handle.createWritable()
   await w.write(bytes)
   await w.close()
 }
 
 export async function ensurePermission(handle, mode = 'readwrite') {
-  if (isAppHandle(handle)) return true
+  if (isAppHandle(handle) || isDesktopHandle(handle)) return true
   const opts = { mode }
   if ((await handle.queryPermission(opts)) === 'granted') return true
   return (await handle.requestPermission(opts)) === 'granted'
@@ -101,6 +120,6 @@ async function idbRun(mode, fn) {
   })
 }
 // The app's vault needs no remembering: it is found in the app's folder.
-export const rememberHandle = (h) => (isAppHandle(h) ? undefined : idbRun('readwrite', (s) => s.put(h, 'vault')).catch(() => {}))
-export const recallHandle = async () => (isNativeApp() ? ((await appVault.exists()) ? APP_HANDLE : null) : idbRun('readonly', (s) => s.get('vault')).catch(() => null))
-export const forgetHandle = () => (isNativeApp() ? undefined : idbRun('readwrite', (s) => s.delete('vault')).catch(() => {}))
+export const rememberHandle = (h) => (isAppHandle(h) ? undefined : isDesktopHandle(h) ? dk().rememberVault(h.path).catch(() => {}) : idbRun('readwrite', (s) => s.put(h, 'vault')).catch(() => {}))
+export const recallHandle = async () => (isDesktop() ? dk().lastVault().then((r) => (r ? desktopHandle(r) : null)).catch(() => null) : isNativeApp() ? ((await appVault.exists()) ? APP_HANDLE : null) : idbRun('readonly', (s) => s.get('vault')).catch(() => null))
+export const forgetHandle = () => (isDesktop() ? dk().forgetVault().catch(() => {}) : isNativeApp() ? undefined : idbRun('readwrite', (s) => s.delete('vault')).catch(() => {}))

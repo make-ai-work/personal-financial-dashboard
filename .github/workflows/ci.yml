@@ -19,6 +19,8 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'   # the web builds do not need the Windows app's Electron binary
       - run: npm test
       - run: npm run build
       - run: npm run build:demo

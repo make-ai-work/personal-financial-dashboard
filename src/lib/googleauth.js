@@ -37,9 +37,12 @@ export function parseUserInfo(j) {
 }
 
 // Open the Google popup, then read who signed in. gsi / fetchImpl are injectable for tests.
-export async function signInWithGoogle(clientId, { gsi, fetchImpl = fetch } = {}) {
-  const google = gsi || (await loadGsi())
-  const token = await new Promise((resolve, reject) => {
+export async function signInWithGoogle(clientId, { gsi, fetchImpl = fetch, desktop } = {}) {
+  // The Windows app signs in through the user's browser (Google refuses sign-in inside an app's own window).
+  const dd = desktop === undefined ? (typeof window !== 'undefined' ? window.desktopApp : null) : desktop
+  const useDesktop = !gsi && !!dd?.googleToken
+  const google = useDesktop ? null : (gsi || (await loadGsi()))
+  const token = useDesktop ? await dd.googleToken(clientId).catch((e) => { throw new Error(String(e?.message || e).replace(/^Error invoking remote method '[^']+': (Error: )?/, '')) }) : await new Promise((resolve, reject) => {
     const client = google.accounts.oauth2.initTokenClient({
       client_id: clientId,
       scope: SCOPES,
@@ -57,6 +60,8 @@ export async function signInWithGoogle(clientId, { gsi, fetchImpl = fetch } = {}
   const user = parseUserInfo(json)
   if (!user) throw new Error('Google did not return a name and email. Try again.')
   if (!user.verified) throw new Error('That Google account’s email address is not verified.')
-  try { google.accounts.oauth2.revoke?.(token, () => {}) } catch { /* the pass is not needed any more */ } // identity only: nothing is kept
+  // identity only: the pass is not needed any more
+  if (useDesktop) fetchImpl(`https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(token)}`, { method: 'POST' }).catch(() => {})
+  else try { google.accounts.oauth2.revoke?.(token, () => {}) } catch { /* ignore */ }
   return user
 }
