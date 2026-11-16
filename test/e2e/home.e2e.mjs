@@ -97,8 +97,8 @@ try {
 
   step('weather: no city to set; each row shows its own exchange city, in °F for the US and °C elsewhere, with AQI when there is data')
   await ny.getByText('68°F').waitFor(); await mum.getByText('20°C').waitFor()
-  assert.match(await ny.innerText(), /Partly cloudy[\s\S]*High 74°[\s\S]*Low 55°[\s\S]*Wind 8 mph[\s\S]*Humidity 52%[\s\S]*AQI 38 · Good/)
-  assert.match(await mum.innerText(), /High 23°[\s\S]*Low 13°[\s\S]*Wind 8 km\/h[\s\S]*AQI 142 · Unhealthy for some/)
+  assert.match(await ny.innerText(), /Partly cloudy[\s\S]*H\/L 74\/55°[\s\S]*Wind 8 mph[\s\S]*Hum 52%[\s\S]*AQI 38 · Good/)
+  assert.match(await mum.innerText(), /H\/L 23\/13°[\s\S]*Wind 8 km\/h[\s\S]*AQI 142 · Unhealthy for some/)
   assert.equal(meteo.geocodeCalls, 0, 'no city lookup'); assert.equal(meteo.calls, 2); assert.equal(meteo.airCalls, 2)
 
   step('no key: the ticker strip is still there with names and dashes, and says prices are off; nothing was requested from FCS')
@@ -248,6 +248,12 @@ try {
   await syd.getByText(/°C/).waitFor(); assert.ok(!/AQI/.test(await syd.innerText()), 'Sydney has no AQI data')
   await page.getByText('FTSE 100').first().waitFor() // a new country's index is fetched at once
   assert.ok((await ticker().innerText()).includes('9,310.40'))
+
+  step('exchange rates have their own box in the right column, above markets, time and weather')
+  const order = await page.locator('.h-right > .card').evaluateAll((els) => els.map((e) => e.getAttribute('aria-label')))
+  assert.deepEqual(order, ['Total net worth', 'Exchange rates', 'Markets, time and weather'])
+  await page.getByLabel('Exchange rates').getByText(/1 USD = /).waitFor()
+  assert.equal(await page.getByLabel('Summary', { exact: true }).locator('.fx').count(), 0, 'no longer inside the Summary box')
 
   step('net worth card: owner choices include Spouse, an empty file shows zero, the choice is remembered')
   const nw = page.getByLabel('Total net worth')
