@@ -3,6 +3,7 @@ import { createRequire } from 'node:module'
 import { spawn } from 'node:child_process'
 import { mkdirSync } from 'node:fs'
 import assert from 'node:assert/strict'
+import { autoSignIn } from './signin.mjs'
 
 const require = createRequire(import.meta.url) // playwright is provided globally (NODE_PATH), not a project dependency
 const { chromium } = require('playwright')
@@ -15,7 +16,7 @@ await new Promise((r) => setTimeout(r, 2500))
 const browser = await chromium.launch()
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true })
 await ctx.route(/open-meteo\.com/, (r) => r.fulfill({ json: { current: { temperature_2m: 20, relative_humidity_2m: 50, weather_code: 1, wind_speed_10m: 5, us_aqi: 40 }, daily: { time: ['2026-11-16', '2026-11-17'], weather_code: [1, 1], temperature_2m_max: [22, 22], temperature_2m_min: [12, 12] } } })) // Home's weather: not under test here
-await ctx.addInitScript(() => { delete window.showSaveFilePicker; delete window.showOpenFilePicker; localStorage.setItem('auth.demo', '1') }) // start signed in
+await ctx.addInitScript(() => { delete window.showSaveFilePicker; delete window.showOpenFilePicker; localStorage.setItem('google.setupSkipped', '1') }) // start signed in
 // Deterministic rates per USD: INR 84, GBP 0.8, AUD 1.5, CHF 0.9 (cross rates derived from the requested base)
 const PER_USD = { USD: 1, INR: 84, GBP: 0.8, AUD: 1.5, CHF: 0.9 }
 const fetched = []
@@ -27,6 +28,7 @@ await ctx.route('**/api.frankfurter.dev/**', (r) => {
   r.fulfill({ json: { base, date: '2026-10-27', rates: Object.fromEntries(symbols.map((s) => [s, PER_USD[s] / PER_USD[base]])) } })
 })
 const page = await ctx.newPage()
+autoSignIn(page)
 await page.clock.setFixedTime(new Date('2026-10-27T12:00:00'))
 const errors = []
 page.on('pageerror', (e) => errors.push(e.message))

@@ -78,7 +78,8 @@ try {
   await page.route(/frankfurter/, (r) => r.fulfill({ json: { base: 'USD', date: '2026-11-14', rates: { INR: 84 } } }))
   await page.route(/open-meteo/, (r) => r.fulfill({ json: { current: { temperature_2m: 20, relative_humidity_2m: 50, weather_code: 1, wind_speed_10m: 5, us_aqi: 40 }, daily: { time: ['2026-11-16', '2026-11-17'], weather_code: [1, 1], temperature_2m_max: [22, 22], temperature_2m_min: [12, 12] } } }))
   await page.waitForLoadState('domcontentloaded')
-  await page.getByRole('tab', { name: 'Home' }).waitFor() // still signed in
+  await page.getByRole('button', { name: /Sign in with Google/ }).click() // nothing about the user is stored: sign in again
+  await page.getByRole('tab', { name: 'Home' }).waitFor()
   await page.getByRole('tab', { name: 'Finance Dashboard' }).click()
   await page.getByText('WealthTracker.wvault').first().waitFor()
   await page.getByPlaceholder('Passphrase').fill('wrong passphrase here'); await page.getByRole('button', { name: 'Unlock' }).click()

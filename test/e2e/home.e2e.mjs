@@ -4,6 +4,7 @@ import { createRequire } from 'node:module'
 import { spawn } from 'node:child_process'
 import { mkdirSync } from 'node:fs'
 import assert from 'node:assert/strict'
+import { autoSignIn } from './signin.mjs'
 
 const require = createRequire(import.meta.url)
 const { chromium } = require('playwright')
@@ -15,7 +16,7 @@ const server = spawn('npx', ['vite', 'preview', '--port', '4183', '--strictPort'
 await new Promise((r) => setTimeout(r, 2500))
 const browser = await chromium.launch()
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, timezoneId: 'America/Chicago', acceptDownloads: true })
-await ctx.addInitScript(() => { Object.defineProperty(document, 'visibilityState', { get: () => window.__hidden ? 'hidden' : 'visible', configurable: true }); delete window.showSaveFilePicker; delete window.showOpenFilePicker; if (!sessionStorage.getItem('seeded')) { localStorage.setItem('auth.demo', '1'); sessionStorage.setItem('seeded', '1') } })
+await ctx.addInitScript(() => { Object.defineProperty(document, 'visibilityState', { get: () => window.__hidden ? 'hidden' : 'visible', configurable: true }); delete window.showSaveFilePicker; delete window.showOpenFilePicker; localStorage.setItem('google.setupSkipped', '1') })
 
 // ---- stubs ----
 const PER_USD = { USD: 1, INR: 84, GBP: 0.8, AUD: 1.5, CHF: 0.9 }
@@ -68,6 +69,7 @@ await ctx.route(/\/\/api\.open-meteo\.com/, (r) => { // note: must not also matc
 })
 
 const page = await ctx.newPage()
+autoSignIn(page)
 await page.clock.setFixedTime(new Date('2026-11-16T15:42:00Z')) // 9:42 AM in Chicago
 const errors = []
 page.on('pageerror', (e) => errors.push(e.message))
