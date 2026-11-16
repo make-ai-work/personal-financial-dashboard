@@ -194,8 +194,8 @@ the file for next time (you only type the passphrase). Everything is in `electro
 
 The app opens on a **Sign in with Google** screen. Once you have saved your own Google client ID (next section) the button is **real**:
 it opens Google's sign-in window (Google Identity Services, `src/lib/googleauth.js`) and asks only for your **name and email** (scopes
-`openid email profile`), to show who is signed in. No token is kept (the access pass is revoked straight away). Your data file keeps its own passphrase; Google
-sign-in does not unlock it. **Nothing about who you are is stored**: your name and email stay in memory for the session only, so closing or reloading the page signs you out (earlier versions' stored copies are erased). Without a client ID (skipped setup) the button is the old placeholder and signs you in as a demo user.
+`openid email profile`), to show who is signed in. No token is kept: the one-hour access pass is held in memory only and is not revoked (revoking would also remove Google's saved approval). Your data file keeps its own passphrase; Google
+sign-in does not unlock it. **Nothing about who you are is stored**: your name and email stay in memory for the session only, so closing the page ends your session. When the app opens it makes one **quiet attempt** to sign you in (prompt `none`): if Google already has you signed in and you approved this app before, you are in without clicking; otherwise you see the normal button. Browsers may block that quiet attempt, and the Windows app, which signs in through your browser, never makes it. (Earlier versions' stored copies are erased.) Without a client ID (skipped setup) the button is the old placeholder and signs you in as a demo user.
 Google's own two-step verification applies to your Google account; the app's **two-step screen** (`src/auth/`) is still only a
 preview that accepts any 6-digit code. Storing the data file in Google Drive is a later step. The demo site and the Android app
 have no Google sign-in.

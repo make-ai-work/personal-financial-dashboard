@@ -12,7 +12,7 @@ const GoogleMark = () => (
 )
 
 export function SignIn() {
-  const { signIn, demo, googleReady, busy, error } = useAuth()
+  const { signIn, demo, googleReady, busy, checking, error } = useAuth()
   if (demo) {
     return (
       <div className="panel center narrow">
@@ -30,7 +30,7 @@ export function SignIn() {
     <div className="panel center narrow">
       <h2>Welcome</h2>
       <p className="note">Sign in to open your dashboard. There is no password to remember.</p>
-      <button className="gbtn" onClick={signIn} disabled={busy}><GoogleMark /> {busy ? 'Opening Google…' : 'Sign in with Google'}</button>
+      <button className="gbtn" onClick={signIn} disabled={busy}><GoogleMark /> {checking ? 'Checking your Google session…' : busy ? 'Opening Google…' : 'Sign in with Google'}</button>
       {error && <p className="err" role="alert">{error}</p>}
       {googleReady ? (
         <div className="warn">

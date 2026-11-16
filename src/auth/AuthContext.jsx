@@ -24,7 +24,19 @@ export function AuthProvider({ children }) {
   const clientId = savedId
   const [realUser, setRealUser] = useState(null) // memory only
   useEffect(forgetOldIdentity, [])
+  // Quiet sign-in when the app opens: works only if Google already has you signed in and you approved this app before. Nothing is
+  // stored by the app; a failure just shows the normal sign-in page.
+  useEffect(() => {
+    if (!checking) return undefined
+    let live = true
+    signInWithGoogle(read('google.clientId') || '', { silent: true })
+      .then((u) => { if (live) { setRealUser(u); go('signIn', { mfaRequired }) } })
+      .catch(() => {})
+      .finally(() => live && setChecking(false))
+    return () => { live = false }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const [busy, setBusy] = useState(false)
+  const [checking, setChecking] = useState(() => !IS_DEMO && !isNativeApp() && validId(read('google.clientId') || '') && !window.desktopApp) // the quiet attempt at start
   const [error, setError] = useState('')
   const [reviewing, setReviewing] = useState(false) // keeps the "Google is set up" card up until Continue
   const [phase, setPhase] = useState(() => (isNativeApp() ? PHASE.ready : PHASE.signedOut)) // the phone app has nothing to sign in to; everything else starts at the sign-in page
@@ -37,7 +49,7 @@ export function AuthProvider({ children }) {
     reviewing, endReview: () => setReviewing(false),
     skipSetup: () => { setSkipped(true); write('google.setupSkipped', '1') },
     demo: IS_DEMO, native: isNativeApp(),
-    phase, user: phase === PHASE.ready ? (realUser || DEMO_USER) : null, mfaRequired, real: !!realUser, busy, error,
+    phase, user: phase === PHASE.ready ? (realUser || DEMO_USER) : null, mfaRequired, real: !!realUser, busy: busy || checking, checking, error,
     googleReady: !IS_DEMO && !isNativeApp() && validId(clientId),
     signIn: async () => {
       setError('')
