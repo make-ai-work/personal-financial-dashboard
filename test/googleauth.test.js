@@ -13,14 +13,14 @@ const info = (j, ok = true) => async (url, opt) => ({ ok, json: async () => j, u
 
 test('only identity is requested: openid, email, profile', () => { assert.equal(SCOPES, 'openid email profile') })
 
-test('sign-in returns name and email, asks with the client ID, and revokes the pass at once', async () => {
+test('sign-in returns name and email and asks with the client ID; the pass is not revoked (that would also remove Google’s saved approval)', async () => {
   const gsi = fakeGsi()
   let asked
   const user = await signInWithGoogle('ID.apps.googleusercontent.com', { gsi, fetchImpl: async (url, opt) => { asked = { url, opt }; return { ok: true, json: async () => ({ sub: '42', email: 'sam@example.com', name: 'Sam', picture: 'http://p', email_verified: true }) } } })
   assert.deepEqual(user, { id: '42', email: 'sam@example.com', name: 'Sam', picture: 'http://p', verified: true })
   assert.deepEqual([gsi.seen.init.client_id, gsi.seen.init.scope, gsi.seen.req.prompt], ['ID.apps.googleusercontent.com', SCOPES, 'select_account'])
   assert.equal(asked.url, USERINFO_URL); assert.equal(asked.opt.headers.Authorization, 'Bearer TKN')
-  assert.equal(gsi.seen.revoked, 'TKN')
+  assert.equal(gsi.seen.revoked, null)
 })
 
 test('a closed window, a blocked popup, a wrong origin and a refused user all give plain messages', async () => {
@@ -49,4 +49,14 @@ test('loading the script: already there, loads once, and fails in words when blo
   const unusable = mk((s) => s.onload())
   await assert.rejects(loadGsi({ ...unusable }), /not usable here/)
   await assert.rejects(loadGsi({ doc: null, win: {} }), /needs a browser/)
+})
+
+test('quiet sign-in asks Google with prompt none, gives up quietly on any error or silence, and is never used in the Windows app', async () => {
+  const gsi = fakeGsi()
+  const user = await signInWithGoogle('x', { gsi, silent: true, fetchImpl: info({ sub: '1', email: 'a@b.c', name: 'A', email_verified: true }) })
+  assert.equal(user.email, 'a@b.c'); assert.equal(gsi.seen.req.prompt, 'none')
+  await assert.rejects(signInWithGoogle('x', { gsi: fakeGsi({ error: 'interaction_required' }), silent: true }), /Google said|did not finish/)
+  const silentGoogle = { accounts: { oauth2: { initTokenClient: () => ({ requestAccessToken: () => {} }) } } } // never answers
+  await assert.rejects(signInWithGoogle('x', { gsi: silentGoogle, silent: true, timeoutMs: 30 }), /did not answer/)
+  await assert.rejects(signInWithGoogle('x', { desktop: { googleToken: async () => 'T' }, silent: true }), /not available here/)
 })

@@ -48,7 +48,7 @@ function Account() {
       </span>
       {open && (
         <Modal title="Account" onClose={() => setOpen(false)} footer={<><button className="btn" onClick={() => setOpen(false)}>Close</button><button className="btn primary" onClick={signOut}>Sign out</button></>}>
-          <p className="note">Signed in as <b>{auth.user.name}</b> ({auth.user.email}). {auth.real ? 'Signed in with your Google account.' : 'This is a demo sign-in, not a real Google account.'}</p>
+          <p className="note">Signed in as <b>{auth.user.name}</b> ({auth.user.email}). {auth.real ? 'Signed in with your Google account. Your name and email are not stored: closing or reloading this page signs you out.' : 'This is a demo sign-in, not a real Google account.'}</p>
           <div className="acctrow">
             <div><b>Google connection</b><div className="hint">{auth.demo ? 'Not available in the demo' : auth.clientId ? <>Client ID <code>{shortId(auth.clientId)}</code></> : 'Not set up (demo sign-in)'}</div></div>
             <button className="btn sm" disabled={auth.demo} title={auth.demo ? 'Not available in the demo' : undefined} onClick={() => setEditId(true)}>{auth.clientId ? 'Change' : 'Set up'}</button>

@@ -2,6 +2,7 @@
 import { createRequire } from 'node:module'
 import { spawn } from 'node:child_process'
 import assert from 'node:assert/strict'
+import { answerFor, signInClick, solveCheck } from './signin.mjs'
 
 const require = createRequire(import.meta.url)
 const { chromium } = require('playwright')
@@ -11,7 +12,7 @@ const browser = await chromium.launch()
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } })
 await ctx.addInitScript(() => { delete window.showSaveFilePicker; delete window.showOpenFilePicker })
 // Google is stubbed: a fake sign-in script (window.__gsiMode = 'ok' | 'closed') and the userinfo answer
-await ctx.route(/accounts\.google\.com\/gsi\/client/, (r) => r.fulfill({ contentType: 'text/javascript', body: `window.__gsiMode='ok';window.__gsiCalls=0;window.google={accounts:{oauth2:{initTokenClient:function(c){return{requestAccessToken:function(o){window.__gsiCalls++;window.__gsiArgs={client:c.client_id,scope:c.scope,prompt:o&&o.prompt};if(window.__gsiMode==='closed')c.error_callback({type:'popup_closed'});else setTimeout(function(){c.callback({access_token:'T'})},50)}}},revoke:function(t,cb){window.__revoked=t;cb&&cb()}}}}` }))
+await ctx.route(/accounts\.google\.com\/gsi\/client/, (r) => r.fulfill({ contentType: 'text/javascript', body: `window.__gsiMode='ok';window.__gsiCalls=0;window.__gsiSession=localStorage.getItem('test.gsi')==='on';window.google={accounts:{oauth2:{initTokenClient:function(c){return{requestAccessToken:function(o){window.__gsiCalls++;window.__gsiArgs={client:c.client_id,scope:c.scope,prompt:o&&o.prompt};if(o&&o.prompt==='none'){if(window.__gsiSession)setTimeout(function(){c.callback({access_token:'T'})},30);else c.callback({error:'interaction_required'});return}if(window.__gsiMode==='closed')c.error_callback({type:'popup_closed'});else setTimeout(function(){c.callback({access_token:'T'})},50)}}},revoke:function(t,cb){window.__revoked=t;cb&&cb()}}}}` }))
 await ctx.route(/googleapis\.com\/oauth2\/v3\/userinfo/, (r) => r.fulfill({ json: { sub: '1001', email: 'sam@example.com', name: 'Sam Example', email_verified: true } }))
 const page = await ctx.newPage()
 const errors = []
@@ -48,10 +49,29 @@ try {
   assert.equal(await page.getByRole('tab').count(), 0, 'no tabs before signing in')
   await page.getByText(/Demo sign-in/).waitFor()
 
-  step('the Google button signs in and the app opens; it survives a reload')
-  await page.getByRole('button', { name: /Sign in with Google/ }).click()
+  step('quick check: the Google button stays off until it is answered; wrong answers are refused and three in a row lock it for a while')
+  const gbtn = page.getByRole('button', { name: /Sign in with Google/ })
+  assert.ok(await gbtn.isDisabled())
+  const ans = page.getByLabel('Your answer'), chk = page.getByRole('button', { name: 'Check', exact: true })
+  const q1 = await page.getByTestId('check-question').innerText()
+  await ans.fill('9999'); await chk.click(); await page.getByText('Not quite. Try this one.').waitFor(); assert.ok(await gbtn.isDisabled())
+  await ans.fill('9999'); await chk.click(); await ans.fill('9999'); await chk.click()
+  await page.getByText(/Wait \d+ seconds, then try again/).waitFor(); assert.ok(await ans.isDisabled()); assert.ok(await gbtn.isDisabled())
+  await page.reload(); await wantSignIn() // nothing is remembered: a fresh check
+  assert.ok(await gbtn.isDisabled()); assert.ok(await ans.isEnabled())
+  assert.ok(await page.getByTestId('check-question').innerText().then(Boolean))
+  void q1
+
+  step('the Google button signs in and the app opens; nothing about the user is stored, so a reload signs out')
+  await page.evaluate(() => { localStorage.setItem('auth.user', JSON.stringify({ email: 'old@example.com' })); localStorage.setItem('auth.demo', '1') }) // left by an earlier version
+  await page.reload(); await wantSignIn()
+  assert.equal(await page.evaluate(() => [localStorage.getItem('auth.user'), localStorage.getItem('auth.demo')].join('|')), '|', 'old stored identity is erased and does not sign anyone in')
+  await signInClick(page)
   await page.getByRole('tab', { name: 'Home' }).waitFor()
   await page.reload()
+  await wantSignIn()
+  assert.equal(await page.getByRole('tab').count(), 0, 'signed out after a reload')
+  await signInClick(page)
   await page.getByRole('tab', { name: 'Home' }).waitFor()
 
   step('account dialog shows the demo user and says the two-step check is on hold')
@@ -76,15 +96,15 @@ try {
   await wantSignIn()
   await page.getByText(/Only your name and email are read/).waitFor() // a client ID is saved: the real sign-in
   step('real Google sign-in: closing the window is explained; nothing opens the app')
-  await page.getByRole('button', { name: /Sign in with Google/ }).click() // loads the (fake) Google script first
+  await signInClick(page) // loads the (fake) Google script first
   await page.getByRole('heading', { name: 'Two-step verification' }).waitFor()
   await page.getByRole('button', { name: 'Cancel' }).click(); await wantSignIn()
   await page.evaluate(() => { window.__gsiMode = 'closed' })
-  await page.getByRole('button', { name: /Sign in with Google/ }).click()
+  await signInClick(page)
   await page.getByRole('alert').getByText(/window was closed before it finished/).waitFor()
   assert.equal(await page.getByRole('tab').count(), 0)
   await page.evaluate(() => { window.__gsiMode = 'ok' })
-  await page.getByRole('button', { name: /Sign in with Google/ }).click()
+  await signInClick(page)
   await page.getByRole('heading', { name: 'Two-step verification' }).waitFor()
   assert.equal(await page.getByRole('tab').count(), 0, 'app stays closed until the step is passed')
   assert.ok(await page.getByRole('button', { name: 'Verify' }).isDisabled())
@@ -94,25 +114,46 @@ try {
   await page.getByRole('button', { name: 'Verify' }).click()
   await page.getByRole('tab', { name: 'Home' }).waitFor()
 
-  step('the Account dialog shows the real Google identity; only identity was asked for and nothing is kept')
+  step('the Account dialog shows the real Google identity (from memory); nothing about it is stored anywhere in the browser')
   await page.getByRole('button', { name: 'Account' }).click()
   await page.getByText(/Sam Example/).first().waitFor(); await page.getByText(/sam@example\.com/).waitFor(); await page.getByText('Signed in with your Google account.').waitFor()
-  const g = await page.evaluate(() => ({ args: window.__gsiArgs, revoked: window.__revoked, stored: localStorage.getItem('auth.user'), keys: Object.keys(localStorage) }))
+  const g = await page.evaluate(() => ({ args: window.__gsiArgs, revoked: window.__revoked, dump: JSON.stringify([Object.entries(localStorage), Object.entries(sessionStorage)]) }))
   assert.deepEqual([g.args.client, g.args.scope, g.args.prompt], [ID, 'openid email profile', 'select_account'])
-  assert.equal(g.revoked, 'T', 'the access pass is revoked straight away')
-  assert.deepEqual(Object.keys(JSON.parse(g.stored)).sort(), ['email', 'id', 'name', 'picture', 'verified'])
-  assert.ok(!JSON.stringify(g).includes('access_token'))
+  assert.ok(!g.revoked, 'the pass is not revoked (that would remove Google’s saved approval and break the quiet sign-in)')
+  for (const secret of ['sam@example.com', 'Sam Example', 'access_token', '1001']) assert.ok(!g.dump.includes(secret), `nothing about the user is stored in the browser: found ${secret}`)
+  assert.ok(!g.dump.includes('auth.user') && !g.dump.includes('auth.demo'))
+  assert.ok(!(await page.evaluate(async () => (await indexedDB.databases?.().catch(() => []))?.some((d) => /auth|user|google/i.test(d.name || '')))), 'no database for it either')
+  step('quiet sign-in: with a Google session and an earlier approval the app opens by itself after a reload; otherwise the button is shown; nothing is stored')
+  await page.keyboard.press('Escape')
+  await page.evaluate(() => localStorage.setItem('test.gsi', 'on'))
+  await page.reload()
+  await page.getByRole('heading', { name: 'Two-step verification' }).or(page.getByRole('tab', { name: 'Home' })).first().waitFor() // the quiet attempt succeeded
+  if (await page.getByRole('heading', { name: 'Two-step verification' }).count()) { await page.getByLabel('Verification code').fill('000000'); await page.getByRole('button', { name: 'Verify' }).click() }
+  await page.getByRole('tab', { name: 'Home' }).waitFor()
+  assert.equal(await page.evaluate(() => window.__gsiArgs.prompt), 'none')
+  await page.getByRole('button', { name: 'Account' }).click(); await page.getByText(/sam@example\.com/).waitFor()
+  const dump2 = await page.evaluate(() => JSON.stringify([Object.entries(localStorage), Object.entries(sessionStorage)]))
+  assert.ok(!dump2.includes('sam@example.com') && !dump2.includes('Sam Example'), 'still nothing stored')
+  await page.evaluate(() => localStorage.setItem('test.gsi', 'off'))
+  await page.getByRole('button', { name: 'Sign out' }).click(); await wantSignIn()
+  await page.reload(); await wantSignIn() // no Google session: the normal button
+  assert.equal(await page.getByRole('tab').count(), 0)
+  await signInClick(page)
+  await page.getByRole('heading', { name: 'Two-step verification' }).or(page.getByRole('tab', { name: 'Home' })).first().waitFor()
+  if (await page.getByRole('heading', { name: 'Two-step verification' }).count()) { await page.getByLabel('Verification code').fill('000000'); await page.getByRole('button', { name: 'Verify' }).click() }
+  await page.getByRole('tab', { name: 'Home' }).waitFor()
+  await page.getByRole('button', { name: 'Account' }).click()
   step('cancel from the code screen goes back to sign-in; turning the preview off skips the step')
   await page.getByRole('button', { name: 'Sign out' }).click()
-  await page.getByRole('button', { name: /Sign in with Google/ }).click()
+  await signInClick(page)
   await page.getByRole('button', { name: 'Cancel' }).click()
   await wantSignIn()
-  await page.getByRole('button', { name: /Sign in with Google/ }).click()
+  await signInClick(page)
   await page.getByLabel('Verification code').fill('000000'); await page.getByRole('button', { name: 'Verify' }).click()
   await page.getByRole('button', { name: 'Account' }).click()
   await page.getByLabel(/Preview the two-step verification/).uncheck()
   await page.getByRole('button', { name: 'Sign out' }).click()
-  await page.getByRole('button', { name: /Sign in with Google/ }).click()
+  await signInClick(page)
   await page.getByRole('tab', { name: 'Home' }).waitFor()
 
   step('phone: setup, sign-in and account are usable without scrolling sideways; help starts folded')
@@ -124,7 +165,7 @@ try {
   assert.equal(await page.locator('details.howto').evaluate((d) => d.open), false)
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), 0)
   await page.getByRole('button', { name: /Skip for now/ }).click()
-  await page.getByRole('button', { name: /Sign in with Google/ }).click()
+  await signInClick(page)
   await page.setViewportSize({ width: 390, height: 844 })
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), 0)
   await page.getByRole('button', { name: 'Account' }).click()

@@ -35,8 +35,8 @@ test('desktop: read, write, permission, remember, recall and forget go through t
 })
 
 test('desktop: Google sign-in uses the browser bridge, not the in-page popup, and tidies its error message', async () => {
-  let asked, revoked
-  const user = await signInWithGoogle('ID', { fetchImpl: async (url, opt) => { if (String(url).includes('revoke')) { revoked = String(url); return { ok: true } } asked = opt.headers.Authorization; return { ok: true, json: async () => ({ sub: '1', email: 'a@b.c', name: 'A', email_verified: true }) } } })
-  assert.equal(user.email, 'a@b.c'); assert.equal(asked, 'Bearer TKN'); assert.ok(revoked.includes('oauth2.googleapis.com/revoke?token=TKN'))
+  let asked
+  const user = await signInWithGoogle('ID', { fetchImpl: async (url, opt) => { asked = opt.headers.Authorization; return { ok: true, json: async () => ({ sub: '1', email: 'a@b.c', name: 'A', email_verified: true }) } } })
+  assert.equal(user.email, 'a@b.c'); assert.equal(asked, 'Bearer TKN')
   await assert.rejects(signInWithGoogle('bad'), (e) => e.message === 'The Google sign-in was cancelled.')
 })
