@@ -168,6 +168,28 @@ A picture version of this, which also ships with the site, is in
   Australia or Switzerland; choose one to five, and Finance and Property each keep their own list), with a summary page, owner filter (Mine / Joint / Parent) and a
   month-by-month chart per country.
 
+## Windows app (Electron)
+
+The same app as a Windows program: a **portable `.exe`** (nothing to install) and an **installer**. It is the normal web app in its own
+window, plus a small file bridge, so it saves straight into your encrypted data file with ordinary Open / Save dialogs and remembers
+the file for next time (you only type the passphrase). Everything is in `electron/`.
+
+- **Get the .exe:** on GitHub go to **Actions → Build Windows app → Run workflow**, then download `windows-app` from the finished run.
+  Pushing a tag such as `v0.1.0` also attaches the files to a release. Or build it yourself: `npm install`, then `npm run win:build`;
+  the files appear in `release/` (`FinanceDashboard-<version>-portable.exe` and the installer).
+- **Try it without packaging:** `npm run win:dev` builds the web app and opens it in Electron.
+- **Windows warning:** the files are not code-signed, so SmartScreen says "Windows protected your PC" the first time: **More info →
+  Run anyway**. Signing needs a paid certificate.
+- **Data:** only in the file you choose (the app never uploads it). The last file's path is remembered in the app's own settings folder.
+  The page can only read or write files you picked in a dialog.
+- **Google sign-in in this app** opens your normal browser (Google does not allow sign-in inside an app's own window). The app runs on
+  the fixed address `http://localhost:53682`. In Google Cloud, on your **Web application** client, add
+  `http://localhost:53682/oauth-callback` under **Authorized redirect URIs** (the setup screen shows it and has a Copy button).
+  If another program already uses port 53682 the app says so and does not start.
+- **Tests:** `npm test` (server, sign-in return, file allow-list) and, on Linux with a virtual screen,
+  `npm run build && xvfb-run -a npm run test:e2e:windows` runs the real Electron app. The packaged `.exe` has not been run on a real
+  Windows machine in development, so tell me about anything odd.
+
 ## Sign-in with Google
 
 The app opens on a **Sign in with Google** screen. Once you have saved your own Google client ID (next section) the button is **real**:
