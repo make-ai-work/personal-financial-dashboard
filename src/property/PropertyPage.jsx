@@ -38,6 +38,8 @@ export default function PropertyPage({ property, reveal, onDeleted }) {
 
   return (
     <>
+      <div className="split7030">
+      <div className="sp-l">
       <div className="panel">
         <div className="p-head">
           <div className="title">{typeIcon(property.type)} {property.name} <span className="cur">{typeLabel(property.type)}</span> <OwnerChip owner={property.owner} parentLabel={parentLabel} /></div>
@@ -142,6 +144,8 @@ export default function PropertyPage({ property, reveal, onDeleted }) {
       <div className="panel"><div className="pad"><button className="btn" onClick={() => setModal({ kind: 'loan' })}>+ Add mortgage</button>
         {loans.length === 0 && <span className="sub"> No mortgage on this property. Add one to track balance, payments and equity.</span>}</div></div>
 
+      </div>
+      <aside className="sp-r">
       <div className="panel">
         <div className="p-head"><div className="title">Value, mortgage and equity</div></div>
         <Chart
@@ -152,6 +156,8 @@ export default function PropertyPage({ property, reveal, onDeleted }) {
           label={`${property.name} value, mortgage and equity`}
           note={`Monthly. Filled dot = a valuation or loan record that month; hollow = carried forward.${hasEstimate ? ' Months before your first recorded mortgage update use the loan schedule.' : ''}`}
         />
+      </div>
+      </aside>
       </div>
 
       {modal?.kind === 'property' && (

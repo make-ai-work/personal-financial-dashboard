@@ -103,9 +103,9 @@ export default function PlanPage({ plan, fx }) {
   )
 
   return (
-    <div className="cols2">
-      {phone && <div>{results}</div>}
-      <div>
+    <div className="split7030">
+      <div className="sp-l">{results}</div>
+      <aside className="sp-r">
         <Section title="Your situation" simple={false}>
           <NumRow label="Current age" value={r.age} onChange={(v) => set({ age: v })} width={90} />
           <NumRow label="Retirement age" value={r.retAge} onChange={(v) => set({ retAge: v })} width={90} />
@@ -179,8 +179,7 @@ export default function PlanPage({ plan, fx }) {
           {days !== null && days > 30 && <div className="warnrow" style={{ margin: '6px 0' }}>Market figures are {days} days old. Update them before relying on the result.</div>}
           <div className="sub">Bond return is assumed equal to the yield; equity return is inflation plus the premium. Starting values are placeholders, not live data.</div>
         </Section>
-      </div>
-      {!phone && <div>{results}</div>}
+      </aside>
     </div>
   )
 }

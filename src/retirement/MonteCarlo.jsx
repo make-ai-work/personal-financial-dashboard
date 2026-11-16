@@ -272,10 +272,9 @@ export default function MonteCarlo({ plan }) {
       {planStrip}
       <div className="top">
         <div className="mainc">{results}{fan}{surv}{hist}</div>
-        <aside className="side">{versionsPanel}</aside>
+        <aside className="side">{versionsPanel}{compare}</aside>
       </div>
       {phone ? <details className="panel fold"><summary>Advanced: assumptions</summary><div className="pad">{assumptions}</div></details> : assumptions}
-      {compare}
       {how}
     </div>
   )

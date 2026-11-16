@@ -31,6 +31,11 @@ const errors = []
 page.on('pageerror', (e) => errors.push(e.message))
 page.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
 const step = (s) => console.log('•', s)
+const split = async (page, l, r) => { // the two columns are 70 : 30 of the width they share
+  const a = await page.locator(l).first().boundingBox(), b = await page.locator(r).first().boundingBox()
+  assert.ok(Math.abs(a.width / (a.width + b.width + 16) - 0.7) < 0.02 && b.x > a.x + a.width - 2, `70 : 30, got ${JSON.stringify([a.width, b.width])}`)
+}
+
 const dialog = () => page.getByRole('dialog')
 const subtab = (name) => page.locator('.subtabs').getByRole('button', { name })
 const topTab = (name) => page.getByRole('tab', { name })
@@ -82,6 +87,7 @@ try {
 
   step('Plan page: results appear, the yield sensitivity table is there, and a bad age is reported')
   await page.getByText('Nest egg needed at retirement').waitFor()
+  await split(page, '.sp-l', '.sp-r') // results left, the inputs right
   assert.equal(await page.locator('table tbody tr').count(), 5)
   await page.getByLabel('Retirement age').fill('30')
   await page.getByText('Retirement age cannot be before your current age.').waitFor()
@@ -104,6 +110,7 @@ try {
 
   step('Monte Carlo: results, the three charts, and exact repeatability for the same seed')
   await subtab('Monte Carlo').click()
+  await split(page, '.mainc', '.side') // results left, saved versions and the comparison right
   await page.getByLabel('Equities weight').fill('70'); await page.getByLabel('Bonds weight').fill('25'); await page.getByLabel('Cash equivalents weight').fill('5'); await page.getByLabel('Precious metals weight').fill('0')
   const p1 = await chance()
   assert.ok(p1 > 5 && p1 < 100, `chance ${p1}`)

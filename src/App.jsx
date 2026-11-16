@@ -19,9 +19,9 @@ import { APP_URL } from './lib/demo.js'
 const TABS = [
   { id: 'home', label: 'Home', wide: true, render: () => <Home /> },
   { id: 'finance', label: 'Finance Dashboard', wide: true, render: () => <Finance /> },
-  { id: 'property', label: '🏠 Property', render: () => <Property /> },
-  { id: 'portfolio', label: '📈 Portfolio', render: () => <Portfolio /> },
-  { id: 'retirement', label: '🏖️ Retirement', render: () => <Retirement /> },
+  { id: 'property', wide: true, label: '🏠 Property', render: () => <Property /> },
+  { id: 'portfolio', wide: true, label: '📈 Portfolio', render: () => <Portfolio /> },
+  { id: 'retirement', wide: true, label: '🏖️ Retirement', render: () => <Retirement /> },
 ]
 
 const read = (k, fallback) => {

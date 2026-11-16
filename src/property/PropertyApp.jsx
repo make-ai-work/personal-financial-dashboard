@@ -25,7 +25,7 @@ export default function PropertyApp() {
   const goto = (t) => { setTab(t); setOpenId(null) }
 
   return (
-    <>
+    <div className="wide-pad">
       <StatusBar />
       <nav className="subtabs">
         <button className={!property && active === 'overview' ? 'on' : ''} onClick={() => goto('overview')}>Overview</button>
@@ -60,6 +60,6 @@ export default function PropertyApp() {
             setOpenId(id)
           }} />
       )}
-    </>
+    </div>
   )
 }

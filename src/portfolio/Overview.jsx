@@ -37,20 +37,22 @@ export default function Overview({ fx, onOpenCountry }) {
   for (const x of staleHoldings(data, shown, today, staleDays)) attention.push({ k: `s-${x.holding.id}`, c: countryOf(data, shown.find((p) => p.id === x.holding.portfolioId)), text: <>The price of <b>{x.holding.name}</b> is {x.age} days old.</> })
 
   return (
-    <>
+    <div className="split7030">
+      <div className="sp-l">
       <div className="panel">
         <div className="p-head"><div className="title">Portfolio summary</div></div>
         <div className="tblw"><table><thead><tr><th>Country</th><th>Portfolios</th><th>Holdings</th><th>Value</th></tr></thead><tbody>
           {per.map(({ c, t }) => (
             <tr key={c}><td><button className="link" onClick={() => onOpenCountry(c)}>{COUNTRIES[c].flag} {COUNTRIES[c].name}</button> <span className="cur">{cur(c)}</span></td><td>{t.count}</td><td>{t.holdings}</td><td>{money(c, t.value)}</td></tr>
           ))}
-          {multi && codes.map((c) => (
+          {multi && codes.slice(0, 1).map((c) => (
             <tr key={`tot-${c}`} className="total"><td>Total in {cur(c)}</td><td>{per.reduce((s, p) => s + p.t.count, 0)}</td><td>{per.reduce((s, p) => s + p.t.holdings, 0)}</td><td>{fmtc(cur(c), sumIn(cur(c)))}</td></tr>
           ))}
         </tbody></table></div>
         {multi ? <FxBar fx={fx} note="These totals are already inside your Finance totals, through the linked accounts." /> : <div className="fx"><span>These totals are already inside your Finance totals, through the linked accounts.</span></div>}
       </div>
-
+      </div>
+      <aside className="sp-r">
       {converted.length > 0 && (
         <Allocation holdings={converted} names={{}} format={(n) => moneyCurrency(cur(base), n)} views={multi ? VIEWS : VIEWS.slice(0, 2)}
           title="Combined allocation" sub={multi ? `all countries, in ${cur(base)} at today's rate` : ''} />
@@ -64,6 +66,7 @@ export default function Overview({ fx, onOpenCountry }) {
           <div className="warnrow" key={a.k}>{COUNTRIES[a.c]?.flag} {a.text} <button className="link" onClick={() => onOpenCountry(a.c)}>Open</button></div>
         ))}
       </div>
-    </>
+      </aside>
+    </div>
   )
 }

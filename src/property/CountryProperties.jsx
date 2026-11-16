@@ -17,7 +17,8 @@ export default function CountryProperties({ code, owner, onOpen, onAdd }) {
   const ownerName = owner === 'all' ? 'All' : ownerLabel(owner, data.settings.parentLabel)
 
   return (
-    <>
+    <div className="split7030">
+      <div className="sp-l">
       <div className="panel">
         <div className="p-head"><div className="title">{c.flag} {c.name} <span className="cur">{c.currency}</span> <span className="sub">{ownerName}</span></div><button className="btn primary" onClick={() => onAdd(code)}>+ Add property</button></div>
         <div className="kpis four">
@@ -28,12 +29,15 @@ export default function CountryProperties({ code, owner, onOpen, onAdd }) {
         </div>
         <PropertyList items={rows} parentLabel={data.settings.parentLabel} onOpen={onOpen} />
       </div>
+      </div>
+      <aside className="sp-r">
       <div className="panel">
         <div className="p-head"><div className="title">Equity by month <span className="sub">value − mortgage balance</span></div></div>
         <Chart points={points} lines={[{ key: 'equity', label: 'Equity', color: 'var(--accent)' }]} format={fmt}
           compact={(n) => new Intl.NumberFormat(c.locale, { notation: 'compact', maximumFractionDigits: 2 }).format(n)}
           label={`${c.name} equity by month`} note="Monthly. Filled dot = a valuation or loan record that month; hollow = carried forward." />
       </div>
-    </>
+      </aside>
+    </div>
   )
 }
