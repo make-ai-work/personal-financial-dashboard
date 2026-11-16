@@ -12,7 +12,7 @@ export default function RetirementApp() {
   const fx = useFx(data.settings.countries, data.rates)
   const plan = resolvePlan(data, fx)
   return (
-    <>
+    <div className="wide-pad">
       <StatusBar />
       <nav className="subtabs">
         <button className={tab === 'plan' ? 'on' : ''} onClick={() => setTab('plan')}>Plan</button>
@@ -22,6 +22,6 @@ export default function RetirementApp() {
         {fx.loading && <div className="banner" style={{ marginBottom: 12 }}>Fetching exchange rates…</div>}
         {tab === 'plan' ? <PlanPage plan={plan} fx={fx} /> : <MonteCarlo plan={plan} />}
       </div>
-    </>
+    </div>
   )
 }

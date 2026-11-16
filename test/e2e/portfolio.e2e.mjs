@@ -31,6 +31,11 @@ const errors = []
 page.on('pageerror', (e) => errors.push(e.message))
 page.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
 const step = (s) => console.log('•', s)
+const split = async (page, l, r) => { // the two columns are 70 : 30 of the width they share
+  const a = await page.locator(l).first().boundingBox(), b = await page.locator(r).first().boundingBox()
+  assert.ok(Math.abs(a.width / (a.width + b.width + 16) - 0.7) < 0.02 && b.x > a.x + a.width - 2, `70 : 30, got ${JSON.stringify([a.width, b.width])}`)
+}
+
 const dialog = () => page.getByRole('dialog')
 const subtab = (name) => page.locator('.subtabs').getByRole('button', { name })
 const topTab = (name) => page.getByRole('tab', { name })
@@ -102,7 +107,7 @@ try {
   assert.match(bt, /Finance account says\s+\$ 96,000/)
   assert.match(bt, /\$ 5,000 unexplained/)
   assert.ok(await banner.getByRole('radio', { name: /Add the difference as an unallocated holding/ }).isChecked(), 'unallocated must be the default')
-  await subtab('Settings').click(); await subtab(/USA/).click()
+  await subtab(/USA/).click()
   await banner.getByRole('button', { name: 'Finish linking' }).click()
   await banner.waitFor({ state: 'detached' })
   const pfText = await panelOf(P).innerText()
@@ -148,9 +153,9 @@ try {
   leg = await page.locator('.leg').first().innerText()
   assert.match(leg, /401\(k\) · Fidelity\s+66\.9%/); assert.match(leg, /Brokerage · Schwab\s+33\.1%/)
   assert.match(await page.locator('.okrow').first().innerText(), /No single stock is above your 10% limit/)
-  await subtab('Settings').click()
+  await page.getByRole('tab', { name: 'Settings' }).click()
   await page.getByLabel('Single-stock limit').selectOption('7')
-  await subtab(/USA/).click()
+  await page.getByRole('tab', { name: /Portfolio/ }).click(); await subtab(/USA/).click()
   const conc = await page.locator('.warnrow').first().innerText()
   assert.match(conc, /Apple is 9\.4% of Brokerage · Schwab/); assert.match(conc, /Microsoft is 7\.3%/)
 
@@ -198,6 +203,7 @@ try {
 
   step('overview: totals, attention list')
   await topTab(/Portfolio/).click(); await subtab('Overview').click()
+  await split(page, '.sp-l', '.sp-r')
   const ov = await page.locator('.subpage').innerText()
   assert.match(ov, /USA[\s\S]*2\s+\d+\s+\$ 290,248/)
   assert.match(ov, /Brokerage · Schwab is off target/)
@@ -224,7 +230,7 @@ try {
   assert.match(await page.locator('.panel').filter({ hasText: 'Targets are percentages of' }).innerText(), /70%/)
 
   step('Excel export includes portfolios and holdings')
-  await topTab('Finance Dashboard').click(); await subtab('Settings').click()
+  await page.getByRole('tab', { name: 'Settings' }).click()
   accept()
   const [xl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Export…' }).click()])
   await xl.saveAs(`${OUT}/export.xlsx`)

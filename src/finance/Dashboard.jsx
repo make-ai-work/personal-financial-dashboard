@@ -4,7 +4,6 @@ import { useVault } from './VaultContext.jsx'
 import { COUNTRIES, OWNERS, ownerLabel } from '../lib/format.js'
 import { useFx } from './useFx.js'
 import CountryView from './CountryView.jsx'
-import Settings from './Settings.jsx'
 import StatusBar from './StatusBar.jsx'
 import FxBar from './FxBar.jsx'
 
@@ -24,7 +23,7 @@ export default function Dashboard() {
     }
   }, [focus]) // eslint-disable-line react-hooks/exhaustive-deps
   const parentLabel = data.settings.parentLabel
-  const active = [...codes, 'settings'].includes(tab) ? tab : codes[0]
+  const active = codes.includes(tab) ? tab : codes[0]
 
   return (
     <div className="fin-page">
@@ -33,9 +32,8 @@ export default function Dashboard() {
         {codes.map((c) => (
           <button key={c} className={active === c ? 'on' : ''} onClick={() => setTab(c)}>{COUNTRIES[c].flag} {COUNTRIES[c].name}</button>
         ))}
-        <button className={active === 'settings' ? 'on' : ''} onClick={() => setTab('settings')}>Settings</button>
       </nav>
-      {active !== 'settings' && (
+      {(
         <div className="filterbar">
           Show:
           <span className="seg" role="group" aria-label="Owner filter">
@@ -46,8 +44,7 @@ export default function Dashboard() {
           <button className="btn sm" onClick={() => setReveal(!reveal)}>{reveal ? 'Hide account numbers' : 'Show account numbers'}</button>
         </div>
       )}
-      {active === 'settings' && <Settings />}
-      {codes.length > 1 && active !== 'settings' && <div className="fin-fx"><FxBar fx={fx} /></div>}
+      {codes.length > 1 && <div className="fin-fx"><FxBar fx={fx} /></div>}
       {codes.includes(active) && <CountryView key={active} code={active} owner={owner} reveal={reveal} fx={fx} />}
     </div>
   )

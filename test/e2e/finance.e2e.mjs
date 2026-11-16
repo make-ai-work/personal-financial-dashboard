@@ -107,6 +107,7 @@ try {
   step('layout: accounts on the left, chart and Performance on the right; no Summary tab; sections fold and the choice is remembered')
   assert.equal(await page.locator('.subtabs button', { hasText: 'Summary' }).count(), 0)
   const lbox = await page.locator('.fin-left').boundingBox(), rbox = await page.locator('.fin-right').boundingBox()
+  assert.ok(Math.abs(lbox.width / (lbox.width + rbox.width + 16) - 0.7) < 0.02, `70 : 30: ${JSON.stringify([lbox.width, rbox.width])}`)
   assert.ok(rbox.x > lbox.x + lbox.width - 2 && lbox.x < 40, `two columns across the whole screen: ${JSON.stringify([lbox, rbox])}`)
   await page.getByRole('heading', { name: 'Performance' }).or(page.getByText('Performance').first()).waitFor()
   const assets = page.locator('.ctoggle', { hasText: 'Assets' })
@@ -154,7 +155,7 @@ await page.getByRole('button', { name: /USA/ }).first().click()
 assert.ok(await page.getByText('Brokerage').isVisible())
 
 step('excel export is a readable flat workbook; import restores it')
-await page.getByRole('button', { name: 'Settings' }).click()
+await page.getByRole('tab', { name: 'Settings' }).click()
 page.once('dialog', (d) => d.accept())
 const [xl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Export…' }).click()])
 await xl.saveAs(`${OUT}/export.xlsx`)
@@ -166,6 +167,7 @@ assert.ok(JSON.stringify(wb.getWorksheet('Items').getSheetValues()).includes('00
 await page.screenshot({ path: `${OUT}/settings.png`, fullPage: true })
 
 await page.getByRole('button', { name: 'Change file' }).click()
+await page.getByRole('tab', { name: 'Finance Dashboard' }).click() // the file picker screen lives on the Finance tab
 const [xc] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', { name: /Import from an Excel file/ }).click()])
 await xc.setFiles(`${OUT}/export.xlsx`)
 await page.getByText(/Imported 4 items, 1 policies and 8 balances/).waitFor()

@@ -5,7 +5,6 @@ import { COUNTRIES, OWNERS, moneyCurrency, ownerLabel } from '../lib/format.js'
 import { describe, loadPlaceWeather } from '../lib/weather.js'
 import { netWorth } from '../lib/networth.js'
 import { homePrefs } from '../lib/homeprefs.js'
-import { useFx } from '../finance/useFx.js'
 
 // A Date that refreshes itself (every 15 seconds is plenty for minute-accurate clocks).
 export function useNow(ms = 15_000) {
@@ -63,7 +62,7 @@ export function CountryRow({ code, now, version }) {
   const d = w.data
   const info = d && describe(d.code)
   return (
-    <div className="crow" data-testid={`row-${code}`}>
+    <div className="hcrow" data-testid={`row-${code}`}>
       <div className="l1">
         <div className="cty"><span className="fl">{COUNTRIES[code].flag}</span><b>{ck.city}</b><small>{EXCHANGES[code].name}</small></div>
         <div className="tme"><b>{ck.time}</b><span className="dn-ico" role="img" aria-label={ck.isDay ? 'Daytime' : 'Night'}>{ck.isDay ? '☀️' : '🌙'}</span><small>{ck.day}</small></div>
@@ -97,23 +96,20 @@ export function CountriesCard({ countries, now, version, onSettings }) {
   )
 }
 
-// Total net worth with an owner selector. Needs the unlocked data (the Home page itself works before unlocking).
-export function NetWorthCard({ data, parentLabel }) {
-  const [owner, setOwner] = useState(() => homePrefs.owner())
-  const pick = (o) => { setOwner(o); homePrefs.setOwner(o) }
+// Total net worth with an owner selector (the choice also drives the Summary and chart on the left). Needs the unlocked data.
+export function NetWorthCard({ data, owner, onOwner, fx, parentLabel }) {
   return (
     <div className="card nwc" aria-label="Total net worth">
       <h3 className="ch"><span>Total net worth</span></h3>
       <div className="seg" role="group" aria-label="Whose net worth">
-        {['all', ...OWNERS].map((o) => <button key={o} className={owner === o ? 'on' : ''} onClick={() => pick(o)}>{o === 'all' ? 'All' : ownerLabel(o, parentLabel)}</button>)}
+        {['all', ...OWNERS].map((o) => <button key={o} className={owner === o ? 'on' : ''} onClick={() => onOwner(o)}>{o === 'all' ? 'All' : ownerLabel(o, parentLabel)}</button>)}
       </div>
-      {data ? <NetWorthBody data={data} owner={owner} /> : <p className="c">Unlock your data to see this.</p>}
+      {data ? <NetWorthBody data={data} owner={owner} fx={fx} /> : <p className="c">Unlock your data to see this.</p>}
     </div>
   )
 }
 
-function NetWorthBody({ data, owner }) {
-  const fx = useFx(data.settings.countries, data.rates)
+function NetWorthBody({ data, owner, fx }) {
   const nw = netWorth(data, owner, fx)
   const cur = nw.base
   const show = (n) => (Number.isNaN(n) ? '—' : moneyCurrency(cur, n))

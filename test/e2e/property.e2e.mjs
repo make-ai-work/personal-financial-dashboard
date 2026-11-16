@@ -31,6 +31,11 @@ const errors = []
 page.on('pageerror', (e) => errors.push(e.message))
 page.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
 const step = (s) => console.log('•', s)
+const split = async (page, l, r) => { // the two columns are 70 : 30 of the width they share
+  const a = await page.locator(l).first().boundingBox(), b = await page.locator(r).first().boundingBox()
+  assert.ok(Math.abs(a.width / (a.width + b.width + 16) - 0.7) < 0.02 && b.x > a.x + a.width - 2, `70 : 30, got ${JSON.stringify([a.width, b.width])}`)
+}
+
 const dialog = () => page.getByRole('dialog')
 const subtab = (name) => page.locator('.subtabs').getByRole('button', { name })
 const fill = async (f) => { for (const [l, v] of Object.entries(f)) await dialog().getByLabel(l).first().fill(v) }
@@ -61,7 +66,7 @@ try {
   await page.getByRole('checkbox').check()
   await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Create encrypted file' }).click()])
   await page.getByText('Property summary').waitFor()
-  assert.equal(await page.locator('.subtabs button').count(), 5) // Overview, USA, India, + Add property, Settings
+  assert.equal(await page.locator('.subtabs button').count(), 4) // Overview, USA, India, + Add property
 
   step('add a US property (validation first), then its valuations')
   await page.getByRole('button', { name: '+ Add property' }).click()
@@ -123,7 +128,8 @@ try {
   await subtab('Overview').click()
   const sum = await page.locator('.tblw').first().innerText()
   assert.match(sum, /Total in USD[\s\S]*\$ 481,429[\s\S]*\$ 241,257[\s\S]*\$ 240,171/) // 410000 + 6000000/84 ...
-  assert.match(sum, /Total in INR[\s\S]*₹ 4,04,40,000[\s\S]*₹ 2,02,65,600[\s\S]*₹ 2,01,74,400/)
+  assert.ok(!/Total in INR/.test(sum), 'totals are in the first currency only')
+  await split(page, '.sp-l', '.sp-r')
   assert.match(await page.locator('.fx').innerText(), /1 USD = ₹ 84/)
   const coming = await page.locator('.panel', { hasText: 'Coming up' }).innerText()
   assert.match(coming, /Maple Street home · Mortgage payment[\s\S]*due in 5 days/)
@@ -163,20 +169,19 @@ try {
   await page.getByRole('button', { name: 'Cancel' }).click()
 
   step('property countries are independent of Finance, and hiding never deletes')
-  await subtab('Settings').click()
-  await page.getByRole('checkbox', { name: 'Show India' }).click()
-  assert.match(await page.locator('.warn').first().innerText(), /will hide 1 property\. Nothing is deleted/)
-  await page.getByRole('button', { name: 'Hide India' }).click()
-  assert.equal(await page.locator('.subtabs button', { hasText: 'India' }).count(), 0)
-  await page.getByRole('checkbox', { name: 'Show Australia' }).check()
-  await page.getByRole('tab', { name: 'Finance Dashboard' }).click()
-  await page.getByRole('button', { name: 'Settings' }).click()
-  assert.ok(await page.getByRole('checkbox', { name: 'Show India' }).isChecked()) // Finance list untouched
-  assert.ok(!(await page.getByRole('checkbox', { name: 'Show Australia' }).isChecked()))
+  await page.getByRole('tab', { name: 'Settings' }).click()
+  const pset = page.locator('#set-property'), fset = page.locator('#set-countries')
+  await pset.getByRole('checkbox', { name: 'Show India' }).click()
+  assert.match(await pset.locator('.warn').first().innerText(), /will hide 1 property\. Nothing is deleted/)
+  await pset.getByRole('button', { name: 'Hide India' }).click()
+  await pset.getByRole('checkbox', { name: 'Show Australia' }).check()
+  assert.ok(await fset.getByRole('checkbox', { name: 'Show India' }).isChecked()) // the Finance list is untouched
+  assert.ok(!(await fset.getByRole('checkbox', { name: 'Show Australia' }).isChecked()))
   await page.getByRole('tab', { name: /Property/ }).click()
-  await subtab('Settings').click()
-  await page.getByRole('checkbox', { name: 'Show India' }).click() // ticking again brings it back
-  await subtab(/India/).click()
+  assert.equal(await page.locator('.subtabs button', { hasText: 'India' }).count(), 0)
+  await page.getByRole('tab', { name: 'Settings' }).click()
+  await pset.getByRole('checkbox', { name: 'Show India' }).click() // ticking again brings it back
+  await page.getByRole('tab', { name: /Property/ }).click(); await subtab(/India/).click()
   assert.ok(await page.getByText('Pune apartment').first().isVisible())
 
   step('lock / unlock keeps everything, and Excel export includes property data')
@@ -188,8 +193,7 @@ try {
   await page.getByRole('button', { name: 'Unlock' }).click()
   await subtab(/USA/).click()
   assert.ok(await page.getByText('Maple Street home').first().isVisible())
-  await page.getByRole('tab', { name: 'Finance Dashboard' }).click()
-  await page.getByRole('button', { name: 'Settings' }).click()
+  await page.getByRole('tab', { name: 'Settings' }).click()
   page.once('dialog', (d) => d.accept())
   const [xl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Export…' }).click()])
   await xl.saveAs(`${OUT}/export.xlsx`)
