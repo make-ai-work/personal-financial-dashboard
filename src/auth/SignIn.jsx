@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { checkAnswer, createLimiter, makeChallenge } from '../lib/humancheck.js'
 import { useAuth } from './AuthContext.jsx'
 import { looksLikeCode } from '../lib/auth.js'
 
@@ -11,8 +12,39 @@ const GoogleMark = () => (
   </svg>
 )
 
+// "Quick check" before the real sign-in button (not in the demo). A built-in puzzle: see lib/humancheck.js for what it is and is not.
+function HumanCheck({ onPass }) {
+  const limiter = useRef(createLimiter())
+  const [challenge, setChallenge] = useState(() => makeChallenge())
+  const [value, setValue] = useState('')
+  const [bad, setBad] = useState(false)
+  const [, tick] = useState(0)
+  const [passed, setPassed] = useState(false)
+  useEffect(() => { if (!limiter.current.locked()) return undefined; const id = setInterval(() => { tick((n) => n + 1); if (!limiter.current.locked()) { clearInterval(id); setChallenge(makeChallenge()); setValue('') } }, 500); return () => clearInterval(id) }, [bad])
+  if (passed) return <div className="hcheck ok" role="status">✓ Thanks, you are not a robot.</div>
+  const locked = limiter.current.locked()
+  const submit = (e) => {
+    e.preventDefault()
+    if (locked) return
+    if (checkAnswer(challenge, value)) { setPassed(true); onPass() }
+    else { limiter.current.fail(); setBad(true); setValue(''); if (!limiter.current.locked()) setChallenge(makeChallenge()) }
+  }
+  return (
+    <form className="hcheck" onSubmit={submit} aria-label="Quick check">
+      <div className="hq"><b>Quick check</b> <span data-testid="check-question">{locked ? 'Too many wrong answers.' : challenge.question}</span></div>
+      <div className="hrow">
+        <input aria-label="Your answer" value={value} onChange={(e) => { setValue(e.target.value); setBad(false) }} autoComplete="off" maxLength={8} disabled={locked} />
+        <button className="btn" disabled={locked || !value.trim()}>Check</button>
+      </div>
+      {bad && !locked && <p className="err" role="alert">Not quite. Try this one.</p>}
+      {locked && <p className="err" role="alert">Wait {limiter.current.secondsLeft()} seconds, then try again.</p>}
+    </form>
+  )
+}
+
 export function SignIn() {
   const { signIn, demo, googleReady, busy, checking, error } = useAuth()
+  const [human, setHuman] = useState(false)
   if (demo) {
     return (
       <div className="panel center narrow">
@@ -30,7 +62,8 @@ export function SignIn() {
     <div className="panel center narrow">
       <h2>Welcome</h2>
       <p className="note">Sign in to open your dashboard. There is no password to remember.</p>
-      <button className="gbtn" onClick={signIn} disabled={busy}><GoogleMark /> {checking ? 'Checking your Google session…' : busy ? 'Opening Google…' : 'Sign in with Google'}</button>
+      <HumanCheck onPass={() => setHuman(true)} />
+      <button className="gbtn" onClick={signIn} disabled={busy || !human} title={human ? undefined : 'Answer the quick check first'}><GoogleMark /> {checking ? 'Checking your Google session…' : busy ? 'Opening Google…' : 'Sign in with Google'}</button>
       {error && <p className="err" role="alert">{error}</p>}
       {googleReady ? (
         <div className="warn">
