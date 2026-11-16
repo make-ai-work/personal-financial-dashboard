@@ -107,6 +107,7 @@ try {
   step('layout: accounts on the left, chart and Performance on the right; no Summary tab; sections fold and the choice is remembered')
   assert.equal(await page.locator('.subtabs button', { hasText: 'Summary' }).count(), 0)
   const lbox = await page.locator('.fin-left').boundingBox(), rbox = await page.locator('.fin-right').boundingBox()
+  assert.ok(Math.abs(lbox.width / (lbox.width + rbox.width + 16) - 0.7) < 0.02, `70 : 30: ${JSON.stringify([lbox.width, rbox.width])}`)
   assert.ok(rbox.x > lbox.x + lbox.width - 2 && lbox.x < 40, `two columns across the whole screen: ${JSON.stringify([lbox, rbox])}`)
   await page.getByRole('heading', { name: 'Performance' }).or(page.getByText('Performance').first()).waitFor()
   const assets = page.locator('.ctoggle', { hasText: 'Assets' })
