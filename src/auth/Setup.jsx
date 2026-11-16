@@ -66,9 +66,9 @@ export function SavedCard({ onContinue, onChange }) {
     <div className="panel center">
       <div className="steps">Setup ✓ › <b>Sign in</b> › Open your data</div>
       <h2>Google is set up</h2>
-      <div className="okbox">Client ID saved in this browser. <span className="pill p-wait">sign-in on hold</span></div>
-      <div className="kvs"><span>Client ID</span><code>{auth.clientId}</code><span>This address</span><code>{window.location.origin}</code><span>Drive access</span><div>App files only</div></div>
-      <p className="note" style={{ textAlign: 'left' }}>Real Google sign-in is not switched on yet, so the next screen still uses the demo button. Nothing is sent to Google.</p>
+      <div className="okbox">Client ID saved in this browser. <span className="pill p-ok">ready to sign in</span></div>
+      <div className="kvs"><span>Client ID</span><code>{auth.clientId}</code><span>This address</span><code>{window.location.origin}</code><span>Access asked for</span><div>Your name and email only</div></div>
+      <p className="note" style={{ textAlign: 'left' }}>The next screen opens a Google window to sign in. Only your name and email are read, to show who is signed in. Your data file keeps its own passphrase.</p>
       <div className="rowend"><button className="link" onClick={onChange}>Change client ID</button><button className="btn primary" onClick={onContinue}>Continue to sign in</button></div>
     </div>
   )

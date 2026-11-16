@@ -12,7 +12,7 @@ const GoogleMark = () => (
 )
 
 export function SignIn() {
-  const { signIn, demo } = useAuth()
+  const { signIn, demo, googleReady, busy, error } = useAuth()
   if (demo) {
     return (
       <div className="panel center narrow">
@@ -30,10 +30,17 @@ export function SignIn() {
     <div className="panel center narrow">
       <h2>Welcome</h2>
       <p className="note">Sign in to open your dashboard. There is no password to remember.</p>
-      <button className="gbtn" onClick={signIn}><GoogleMark /> Sign in with Google</button>
-      <div className="warn">
-        <b>Demo sign-in.</b> This button is a placeholder. It is not connected to Google yet, so it signs you in as a demo user and sends nothing anywhere. Your data file is still protected by its own passphrase.
-      </div>
+      <button className="gbtn" onClick={signIn} disabled={busy}><GoogleMark /> {busy ? 'Opening Google…' : 'Sign in with Google'}</button>
+      {error && <p className="err" role="alert">{error}</p>}
+      {googleReady ? (
+        <div className="warn">
+          <b>Only your name and email are read</b>, to show who is signed in. Nothing else is requested and nothing is kept. Your data file is still protected by its own passphrase.
+        </div>
+      ) : (
+        <div className="warn">
+          <b>Demo sign-in.</b> Google is not set up on this device yet (Account → Google connection), so this button signs you in as a demo user and sends nothing anywhere. Your data file is still protected by its own passphrase.
+        </div>
+      )}
     </div>
   )
 }
