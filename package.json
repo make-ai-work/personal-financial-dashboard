@@ -71,12 +71,12 @@
         "portable",
         "nsis"
       ],
-      "icon": "build/icon.png",
-      "artifactName": "FinanceDashboard-${version}-${target}.${ext}"
+      "icon": "build/icon.png"
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "FinanceDashboard-${version}-setup.${ext}"
     },
     "portable": {
       "artifactName": "FinanceDashboard-${version}-portable.${ext}"
