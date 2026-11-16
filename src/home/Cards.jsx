@@ -75,8 +75,8 @@ export function CountryRow({ code, now, version }) {
           <>
             <span className="wt"><span aria-hidden="true">{info.icon}</span> {d.temp}°{d.unit}</span>
             <span>{info.text}</span>
-            <span>High <b>{d.high}°</b></span><span>Low <b>{d.low}°</b></span>
-            <span>Wind <b>{d.wind} {d.windUnit}</b></span><span>Humidity <b>{d.humidity}%</b></span>
+            <span title="High / low today">H/L <b>{d.high}/{d.low}°</b></span>
+            <span>Wind <b>{d.wind} {d.windUnit}</b></span><span title="Humidity">Hum <b>{d.humidity}%</b></span>
             {d.aqi != null && <span className="aqi" title="US air quality index">AQI <b>{d.aqi}</b> · {d.aqiLabel}</span>}
           </>
         )}

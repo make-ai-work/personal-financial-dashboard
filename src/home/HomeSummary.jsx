@@ -6,6 +6,16 @@ import { combinedSeries, netWorth, ownerBreakdown } from '../lib/networth.js'
 
 const fmtc = (cur, n) => (Number.isNaN(n) ? '—' : moneyCurrency(cur, n))
 
+// The exchange rates in their own box (right column, above markets, time and weather).
+export function RatesCard({ fx }) {
+  return (
+    <div className="card" aria-label="Exchange rates">
+      <h3 className="ch"><span>Exchange rates</span></h3>
+      <FxBar fx={fx} />
+    </div>
+  )
+}
+
 // Home, left column: country totals (in the first country's currency only), who owns what, and the combined history.
 export function SummaryPanel({ data, owner, fx, parentLabel }) {
   const nw = netWorth(data, owner, fx)
@@ -32,7 +42,6 @@ export function SummaryPanel({ data, owner, fx, parentLabel }) {
           </tbody>
         </table>
       </div>
-      {multi && <FxBar fx={fx} />}
     </div>
   )
 }
