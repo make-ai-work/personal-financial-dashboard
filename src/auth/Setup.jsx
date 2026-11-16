@@ -11,7 +11,8 @@ export function ClientIdForm({ initial = '', onSave, onSkip, submitLabel = 'Save
   const [value, setValue] = useState(initial)
   const [copied, setCopied] = useState(false)
   const v = validateClientId(value)
-  const origin = window.location.origin
+  const desktop = !!window.desktopApp // the Windows app signs in through your browser and a redirect address
+  const origin = desktop ? `${window.location.origin}/oauth-callback` : window.location.origin
   return (
     <form onSubmit={(e) => { e.preventDefault(); if (v.ok) onSave(value.trim()) }}>
       <label className="field">OAuth client ID
@@ -25,10 +26,10 @@ export function ClientIdForm({ initial = '', onSave, onSkip, submitLabel = 'Save
         <summary>How do I get one? (about 5 minutes)</summary>
         <ol>
           <li>Open <b>Google Cloud Console</b> and create a project (any name).</li>
-          <li><b>APIs &amp; Services › Library:</b> enable the <b>Google Drive API</b>.</li>
+          <li><b>APIs &amp; Services › Library:</b> nothing to enable yet. (The <b>Google Drive API</b> is only needed once Drive storage is added.)</li>
           <li><b>OAuth consent screen:</b> choose <i>External</i>, add yourself as a test user.</li>
           <li><b>Credentials › Create credentials › OAuth client ID</b>, type <b>Web application</b>.</li>
-          <li>Under <b>Authorized JavaScript origins</b> add this address:
+          <li>Under <b>{desktop ? 'Authorized redirect URIs' : 'Authorized JavaScript origins'}</b> add this address:
             <div className="copyrow"><code>{origin}</code><button type="button" className="btn sm" onClick={async () => { setCopied(await copy(origin)); setTimeout(() => setCopied(false), 1200) }}>{copied ? 'Copied' : 'Copy'}</button></div>
           </li>
           <li>Create it, then copy the <b>Client ID</b> (not the secret) into the box above.</li>
@@ -36,7 +37,7 @@ export function ClientIdForm({ initial = '', onSave, onSkip, submitLabel = 'Save
       </details>
 
       <div className="warn"><b>Never paste a client secret here.</b> This app does not need one. Only the client ID goes in the box.</div>
-      <div className="kvs"><span>Permissions it will ask for</span><div>Your name and email (to sign you in), and access only to the files this app creates in your Drive. It cannot see your other files.</div></div>
+      <div className="kvs"><span>Permissions it will ask for</span><div>Your name and email only, to show who is signed in. It cannot see your Drive, mail or anything else.</div></div>
       <div className="rowend">
         {onSkip ? <button type="button" className="link" onClick={onSkip}>Skip for now, use the demo sign-in</button> : <span />}
         <button className="btn primary" disabled={!v.ok}>{submitLabel}</button>
@@ -66,9 +67,9 @@ export function SavedCard({ onContinue, onChange }) {
     <div className="panel center">
       <div className="steps">Setup ✓ › <b>Sign in</b> › Open your data</div>
       <h2>Google is set up</h2>
-      <div className="okbox">Client ID saved in this browser. <span className="pill p-wait">sign-in on hold</span></div>
-      <div className="kvs"><span>Client ID</span><code>{auth.clientId}</code><span>This address</span><code>{window.location.origin}</code><span>Drive access</span><div>App files only</div></div>
-      <p className="note" style={{ textAlign: 'left' }}>Real Google sign-in is not switched on yet, so the next screen still uses the demo button. Nothing is sent to Google.</p>
+      <div className="okbox">Client ID saved in this browser. <span className="pill p-ok">ready to sign in</span></div>
+      <div className="kvs"><span>Client ID</span><code>{auth.clientId}</code><span>This address</span><code>{window.location.origin}</code><span>Access asked for</span><div>Your name and email only</div></div>
+      <p className="note" style={{ textAlign: 'left' }}>The next screen opens a Google window to sign in. Only your name and email are read, to show who is signed in. Your data file keeps its own passphrase.</p>
       <div className="rowend"><button className="link" onClick={onChange}>Change client ID</button><button className="btn primary" onClick={onContinue}>Continue to sign in</button></div>
     </div>
   )

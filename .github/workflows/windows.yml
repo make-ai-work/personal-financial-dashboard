@@ -1,0 +1,37 @@
+# Builds the Windows app (Electron): a portable .exe (no install) and an installer. Run it from the Actions tab
+# ("Run workflow"), or push a tag like v0.1.0 to also attach the files to a GitHub release.
+# The files are not code-signed, so Windows SmartScreen shows a warning the first time ("More info" > "Run anyway").
+name: Build Windows app
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write   # only used to attach files to a release when a tag is pushed
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run win:build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-app
+          path: |
+            release/*.exe
+          if-no-files-found: error
+      - name: Attach to the release (tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" release/*.exe --title "$GITHUB_REF_NAME" --generate-notes
