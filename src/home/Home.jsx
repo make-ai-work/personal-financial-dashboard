@@ -5,7 +5,7 @@ import { homePrefs } from '../lib/homeprefs.js'
 import { CountriesCard, NetWorthCard, useNow } from './Cards.jsx'
 import { CombinedChartPanel, OwnershipPanel, SummaryPanel } from './HomeSummary.jsx'
 import Ticker from './Ticker.jsx'
-import HomeSettings from './HomeSettings.jsx'
+import { useNav } from '../nav.jsx'
 
 // The landing page, 70 : 30. Left (70%): the Summary and who owns what side by side, then the combined history. Right (30%): total
 // net worth and, for each country, its exchange city, time, market status and weather. It works before the data file is unlocked: the
@@ -16,8 +16,9 @@ export default function Home() {
   const fromVault = data?.settings?.countries
   const key = fromVault ? fromVault.join(',') : ''
   const countries = useMemo(() => (fromVault && fromVault.length ? fromVault : homePrefs.countries()), [key]) // eslint-disable-line react-hooks/exhaustive-deps
-  const [open, setOpen] = useState(false)
-  const [version, setVersion] = useState(0)
+  const nav = useNav()
+  const openSettings = () => nav.go('settings', { section: 'home' })
+  const version = 0
   const [owner, setOwner] = useState(() => homePrefs.owner())
   const pickOwner = (o) => { setOwner(o); homePrefs.setOwner(o) }
   const fx = useFx(countries, data?.rates || [])
@@ -28,7 +29,7 @@ export default function Home() {
 
   return (
     <div className="home">
-      <Ticker countries={countries} version={version} onSettings={() => setOpen(true)} />
+      <Ticker countries={countries} version={version} onSettings={openSettings} />
       <div className="home-page">
         <div className="home70">
           <div className="h-left">
@@ -44,11 +45,10 @@ export default function Home() {
           </div>
           <div className="h-right">
             <NetWorthCard data={data} owner={owner} onOwner={pickOwner} fx={fx} parentLabel={parentLabel} />
-            <CountriesCard countries={countries} now={now} version={version} onSettings={() => setOpen(true)} />
+            <CountriesCard countries={countries} now={now} version={version} onSettings={openSettings} />
           </div>
         </div>
       </div>
-      {open && <HomeSettings countries={countries} onClose={() => setOpen(false)} onSaved={() => setVersion((v) => v + 1)} />}
     </div>
   )
 }

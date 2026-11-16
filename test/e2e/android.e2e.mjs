@@ -56,7 +56,7 @@ try {
   await page.getByRole('heading', { name: /^Markets · time · weather/ }).waitFor()
   assert.equal(await page.getByRole('heading', { name: 'Connect your Google account' }).count(), 0)
   assert.equal(await page.getByRole('button', { name: /Sign in with Google/ }).count(), 0)
-  assert.equal(await page.getByRole('button', { name: 'Account' }).count(), 0)
+  assert.equal(await page.getByRole('button', { name: 'Account', exact: true }).count(), 0)
 
   step('first launch: "Create your vault" with restore and Excel import; Google Drive is shown as coming later')
   await topTab('Finance Dashboard').click()
@@ -103,9 +103,9 @@ try {
   await subtab(/USA/).click(); await showAssets(); await page.getByText('Brokerage').first().waitFor()
 
   step('Settings › Your data: stored in this app, backup reminder, export through the share sheet')
-  await subtab('Settings').click()
+  await page.getByRole('tab', { name: 'Settings' }).click()
   await page.getByText('🔒 Your data').waitFor()
-  await page.getByText('Private to this app').waitFor()
+  await page.locator('#set-data').getByText('Private to this app').waitFor()
   assert.equal(await page.getByTestId('last-backup').innerText(), 'never')
   assert.equal(await page.getByText('Change file').count(), 0)
   await page.getByRole('button', { name: 'Export backup…' }).click()
@@ -131,6 +131,7 @@ try {
   await page.getByRole('button', { name: 'Restore…' }).click()
   const [good] = await Promise.all([page.waitForEvent('filechooser'), dialog().getByRole('button', { name: 'Choose a backup file…' }).click()])
   await good.setFiles(`${OUT}/backup.wvault`)
+  await topTab('Finance Dashboard').click() // the unlock screen lives on the Finance tab
   await page.getByRole('heading', { name: 'Your vault' }).waitFor()
   await unlock(PASS)
   await page.getByText('Update date', { exact: true }).waitFor()
@@ -139,11 +140,13 @@ try {
   step('Back button: closes a dialog first, then goes to Home, then leaves the app from Home')
   await topTab(/Property/).click()
   await page.getByRole('tab', { name: /Property/, selected: true }).waitFor()
-  await topTab('Home').click()
-  await page.getByRole('button', { name: '⚙ Home settings' }).click()
+  await topTab('Finance Dashboard').click()
+  await page.getByRole('button', { name: '+ Add asset' }).click()
   await dialog().waitFor()
-  await back()
+  await back() // closes the dialog and nothing else
   await dialog().waitFor({ state: 'detached' })
+  await page.getByRole('tab', { name: 'Finance Dashboard', selected: true }).waitFor()
+  await back() // now Home
   await page.getByRole('tab', { name: 'Home', selected: true }).waitFor()
   await topTab(/Retirement/).click()
   await back()
@@ -165,7 +168,7 @@ try {
   await page.getByText('Update date', { exact: true }).waitFor()
 
   step('Delete: the button stays off until DELETE is typed exactly; then the vault is erased and first launch returns')
-  await subtab('Settings').click()
+  await page.getByRole('tab', { name: 'Settings' }).click()
   await page.getByRole('button', { name: 'Delete…' }).click()
   const del = dialog().getByRole('button', { name: 'Delete', exact: true })
   assert.ok(await del.isDisabled())
@@ -176,6 +179,7 @@ try {
   await page.getByRole('button', { name: 'Delete…' }).click()
   await dialog().getByLabel('Type DELETE to confirm').fill('DELETE')
   await del.click()
+  await topTab('Finance Dashboard').click()
   await page.getByRole('heading', { name: 'Create your vault' }).waitFor()
   assert.equal(Object.keys(await disk()).length, 0, 'nothing is left in the app folder')
 

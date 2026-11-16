@@ -4,13 +4,13 @@ import Finance from './finance/Finance.jsx'
 import Property from './property/Property.jsx'
 import Portfolio from './portfolio/Portfolio.jsx'
 import Retirement from './retirement/Retirement.jsx'
-import { NavContext } from './nav.jsx'
+import { NavContext, useNav } from './nav.jsx'
 import Home from './home/Home.jsx'
 import { AuthProvider, useAuth } from './auth/AuthContext.jsx'
 import { MfaStep, SignIn } from './auth/SignIn.jsx'
-import { ClientIdForm, Setup } from './auth/Setup.jsx'
-import { shortId } from './lib/google.js'
-import { Modal, closeTopModal, hasOpenModal } from './finance/ui.jsx'
+import { Setup } from './auth/Setup.jsx'
+import SettingsPage from './settings/SettingsPage.jsx'
+import { closeTopModal, hasOpenModal } from './finance/ui.jsx'
 import { backAction, exitApp, onAppActive, onBackButton, shouldLockOnResume } from './lib/nativeapp.js'
 import { PHASE } from './lib/auth.js'
 import { APP_URL } from './lib/demo.js'
@@ -22,6 +22,7 @@ const TABS = [
   { id: 'property', wide: true, label: '🏠 Property', render: () => <Property /> },
   { id: 'portfolio', wide: true, label: '📈 Portfolio', render: () => <Portfolio /> },
   { id: 'retirement', wide: true, label: '🏖️ Retirement', render: () => <Retirement /> },
+  { id: 'settings', gear: true, wide: true, label: '⚙', name: 'Settings', render: () => <SettingsPage /> }, // the one place for every setting, far right
 ]
 
 const read = (k, fallback) => {
@@ -31,40 +32,14 @@ const write = (k, v) => {
   try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k) } catch { /* storage unavailable */ }
 }
 
-// Who is signed in, two-step preview switch, and sign-out (which also locks the data file).
+// The signed-in name in the top bar; it opens the Account part of the Settings tab.
 function Account() {
   const auth = useAuth()
-  const vault = useVault()
-  const [open, setOpen] = useState(false)
-  const [editId, setEditId] = useState(false)
-  const signOut = async () => {
-    if (vault.phase === 'unlocked') await vault.lock()
-    auth.signOut()
-  }
+  const nav = useNav()
   return (
-    <>
-      <span className="who">
-        <button className="btn" onClick={() => setOpen(true)} aria-label="Account"><span className="hide-sm">{auth.user.name}</span><span className="show-sm">Account</span></button>
-      </span>
-      {open && (
-        <Modal title="Account" onClose={() => setOpen(false)} footer={<><button className="btn" onClick={() => setOpen(false)}>Close</button><button className="btn primary" onClick={signOut}>Sign out</button></>}>
-          <p className="note">Signed in as <b>{auth.user.name}</b> ({auth.user.email}). {auth.real ? 'Signed in with your Google account. Your name and email are not stored: closing or reloading this page signs you out.' : 'This is a demo sign-in, not a real Google account.'}</p>
-          <div className="acctrow">
-            <div><b>Google connection</b><div className="hint">{auth.demo ? 'Not available in the demo' : auth.clientId ? <>Client ID <code>{shortId(auth.clientId)}</code></> : 'Not set up (demo sign-in)'}</div></div>
-            <button className="btn sm" disabled={auth.demo} title={auth.demo ? 'Not available in the demo' : undefined} onClick={() => setEditId(true)}>{auth.clientId ? 'Change' : 'Set up'}</button>
-          </div>
-          <label className="check">
-            <input type="checkbox" disabled={auth.demo} checked={auth.mfaRequired} onChange={(e) => auth.setMfaRequired(e.target.checked)} /> Preview the two-step verification screen at sign-in
-          </label>
-          <p className="note">Two-step verification is built into the sign-in flow but is on hold: nothing is enforced, and any 6-digit code passes.</p>
-        </Modal>
-      )}
-      {editId && (
-        <Modal title="Google connection" onClose={() => setEditId(false)}>
-          <ClientIdForm initial={auth.clientId} submitLabel="Save" onSave={(id) => { if (auth.saveClientId(id)) { auth.endReview(); setEditId(false) } }} />
-        </Modal>
-      )}
-    </>
+    <span className="who">
+      <button className="btn" onClick={() => nav.go('settings', { section: 'account' })} aria-label="Account"><span className="hide-sm">{auth.user.name}</span><span className="show-sm">Account</span></button>
+    </span>
   )
 }
 
@@ -152,8 +127,12 @@ function Shell() {
         {auth.native && <NativeBridge tab={tab} setTab={setTab} />}
         {header(auth.native ? null : <Account />)}
         <nav className="tabs" role="tablist">
-          {TABS.map((t) => (
+          {TABS.filter((t) => !t.gear).map((t) => (
             <button key={t.id} role="tab" aria-selected={t.id === current.id} className={t.id === current.id ? 'on' : ''} onClick={() => setTab(t.id)}>{t.label}</button>
+          ))}
+          <span className="tabsp" />
+          {TABS.filter((t) => t.gear).map((t) => (
+            <button key={t.id} role="tab" aria-label={t.name} title={t.name} aria-selected={t.id === current.id} className={`gear${t.id === current.id ? ' on' : ''}`} onClick={() => setTab(t.id)}>{t.label}</button>
           ))}
         </nav>
         {current.wide ? <main className="wide-page">{current.render()}</main> : <main className="page">{current.render()}</main>}

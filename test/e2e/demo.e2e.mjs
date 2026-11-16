@@ -101,16 +101,19 @@ try {
   await page.getByTestId('row-us').getByText('55°F').waitFor()
   assert.match(await page.getByTestId('row-us').innerText(), /New York[\s\S]*AQI 61 · Moderate/)
   assert.equal(meteoCalls.length, 0, 'the cities are built in: no city lookup')
-  assert.equal(await page.locator('.crow').count(), 2)
+  assert.equal(await page.locator('.hcrow').count(), 2)
   const nwCard = page.getByLabel('Total net worth')
   await nwCard.getByTestId('networth').getByText(/^\$\s?[\d,]{7,}/).waitFor() // the sample data's combined net worth, in USD
   await nwCard.getByRole('button', { name: 'Spouse' }).click()
   await nwCard.getByTestId('networth').getByText(/^\$\s?41,000$/).waitFor() // the sample "Spouse IRA"
   await nwCard.getByRole('button', { name: 'All' }).click()
-  await page.getByRole('button', { name: '⚙ Home settings' }).click()
-  await dialog().getByText(/short-lived token, so no API key is needed/).waitFor()
-  assert.equal(await dialog().getByLabel('FCS API key').count(), 0, 'no key field in the demo')
-  await dialog().getByLabel('Temperature unit').selectOption('C'); await dialog().getByRole('button', { name: 'Save' }).click()
+  await page.getByRole('button', { name: '⚙ Home settings' }).click() // opens the Home part of the one Settings tab
+  await page.getByText(/short-lived token, so no API key is needed/).waitFor()
+  assert.equal(await page.getByLabel('FCS API key').count(), 0, 'no key field in the demo')
+  await page.getByText('Not available in the demo').first().waitFor() // the Google connection
+  const tabs = await page.getByRole('tab').evaluateAll((els) => els.map((e) => ({ name: e.getAttribute('aria-label') || e.textContent, x: Math.round(e.getBoundingClientRect().x) })))
+  assert.equal(tabs.at(-1).name, 'Settings'); assert.ok(tabs.at(-1).x > tabs.at(-2).x + 300, `the gear is alone at the far right: ${JSON.stringify(tabs)}`)
+  await page.getByLabel('Temperature unit').selectOption('C'); await page.getByRole('button', { name: 'Save Home settings' }).click(); await page.getByText('Saved.').waitFor(); await topTab('Home').click()
   await page.getByTestId('row-us').getByText('55°C').waitFor()
   assert.equal(await page.evaluate(() => localStorage.getItem('home.unit') || localStorage.getItem('home.owner')), null, 'the demo keeps nothing in the browser')
   step('a reload also returns to the sign-in page with fresh data')

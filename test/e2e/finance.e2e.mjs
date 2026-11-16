@@ -155,7 +155,7 @@ await page.getByRole('button', { name: /USA/ }).first().click()
 assert.ok(await page.getByText('Brokerage').isVisible())
 
 step('excel export is a readable flat workbook; import restores it')
-await page.getByRole('button', { name: 'Settings' }).click()
+await page.getByRole('tab', { name: 'Settings' }).click()
 page.once('dialog', (d) => d.accept())
 const [xl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Export…' }).click()])
 await xl.saveAs(`${OUT}/export.xlsx`)
@@ -167,6 +167,7 @@ assert.ok(JSON.stringify(wb.getWorksheet('Items').getSheetValues()).includes('00
 await page.screenshot({ path: `${OUT}/settings.png`, fullPage: true })
 
 await page.getByRole('button', { name: 'Change file' }).click()
+await page.getByRole('tab', { name: 'Finance Dashboard' }).click() // the file picker screen lives on the Finance tab
 const [xc] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', { name: /Import from an Excel file/ }).click()])
 await xc.setFiles(`${OUT}/export.xlsx`)
 await page.getByText(/Imported 4 items, 1 policies and 8 balances/).waitFor()
