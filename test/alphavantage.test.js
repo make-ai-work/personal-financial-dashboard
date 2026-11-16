@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import { existsSync, rmSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { AV_PROXIES, fetchAvQuotes, parseGlobalQuote, quoteUrl } from '../src/lib/alphavantage.js'
 import { tickerItems } from '../src/lib/ticker.js'
 
@@ -39,6 +40,6 @@ test('only items with a stand-in are asked for, labelled as ETFs; a limit stops 
 test('the snapshot script writes nothing and succeeds when there is no key', () => {
   const file = new URL('../public/av-snapshot.json', import.meta.url)
   rmSync(file, { force: true })
-  const r = spawnSync(process.execPath, [new URL('../scripts/fetch-av-snapshot.mjs', import.meta.url).pathname], { env: { ...process.env, ALPHAVANTAGE_API_KEY: '' }, encoding: 'utf8' })
+  const r = spawnSync(process.execPath, [fileURLToPath(new URL('../scripts/fetch-av-snapshot.mjs', import.meta.url))], { env: { ...process.env, ALPHAVANTAGE_API_KEY: '' }, encoding: 'utf8' })
   assert.equal(r.status, 0); assert.match(r.stdout, /ALPHAVANTAGE_API_KEY is not set/); assert.equal(existsSync(file), false)
 })
