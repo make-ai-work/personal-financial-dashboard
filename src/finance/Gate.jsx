@@ -7,6 +7,7 @@ import { ConfirmDelete, ConfirmRestore } from './AppDialogs.jsx'
 export function FirstRun() {
   const v = useVault()
   const [step, setStep] = useState('choose')
+  const [where, setWhere] = useState('device') // 'device' | 'drive': Google Drive is an optional extra choice
   const [initial, setInitial] = useState(null)
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
@@ -30,7 +31,8 @@ export function FirstRun() {
     setBusy(true)
     setErr('')
     try {
-      await v.create(pass, initial || undefined)
+      if (where === 'drive') await v.createInDrive(pass, initial || undefined)
+      else await v.create(pass, initial || undefined)
     } catch (e) {
       setErr(e.message)
     } finally {
@@ -46,8 +48,10 @@ export function FirstRun() {
         {notice && <p className="note">{notice}</p>}
         <p className="note">{v.isApp
           ? 'Your data is encrypted with this passphrase (AES-256) and stored inside this app.'
-          : 'Your data is encrypted with this passphrase (AES-256) before it is saved. After you press Create you will choose where to save the file.'}</p>
-        <PassphraseForm submitLabel={v.isApp ? 'Create vault' : 'Create encrypted file'} onSubmit={create} busy={busy} error={err} />
+          : where === 'drive'
+            ? 'Your data is encrypted with this passphrase (AES-256) on this device. Only the encrypted file is uploaded to your Google Drive; Google may ask you to allow access first.'
+            : 'Your data is encrypted with this passphrase (AES-256) before it is saved. After you press Create you will choose where to save the file.'}</p>
+        <PassphraseForm submitLabel={v.isApp ? 'Create vault' : where === 'drive' ? 'Create in Google Drive' : 'Create encrypted file'} onSubmit={create} busy={busy} error={err} />
         <button className="link" onClick={() => setStep('choose')}>← Back</button>
       </div>
     )
@@ -70,14 +74,23 @@ export function FirstRun() {
       </div>
       ) : (
       <div className="choice">
-        <button className="primary" onClick={() => { setInitial(null); setNotice(''); setStep('pass') }}>
+        <button className="primary" onClick={() => { setInitial(null); setNotice(''); setWhere('device'); setStep('pass') }}>
           Create a new encrypted file<small>Starts empty. You set the passphrase next.</small>
         </button>
         <button onClick={v.openFile}>Open an existing encrypted file<small>A .wvault file you made before.</small></button>
         <button onClick={importExcel}>
           Import from an Excel file<small>For a workbook exported from this app (Items / Insurance / Balances / Rates sheets). The original is left untouched, so delete or secure it yourself afterwards.</small>
         </button>
-        <button disabled>Save to Google Drive<small>Needs the real Google sign-in, which is on hold.</small></button>
+        {v.driveEnabled ? (
+          <>
+            <button onClick={() => { setInitial(null); setNotice(''); setWhere('drive'); setStep('pass') }}>
+              Save to Google Drive <span className="opt">optional</span><small>Creates the encrypted file in your own Drive, so it is on every device you sign in to. Only the encrypted file is uploaded.</small>
+            </button>
+            <button onClick={v.openFromDrive}>Open from Google Drive<small>The encrypted file this app saved to your Drive before.</small></button>
+          </>
+        ) : (
+          <button disabled>Save to Google Drive <span className="opt">optional</span><small>{window.desktopApp ? 'Not in the Windows app yet. Use a file on this computer.' : v.demo ? 'Not available in the demo.' : 'Add your Google client ID first (Settings → Account).'}</small></button>
+        )}
       </div>
       )}
       {(v.error || err) && <div className="err">{v.error || err}</div>}
@@ -108,7 +121,7 @@ export function Unlock() {
     <div className="panel center narrow">
       <div className="lock">🔒</div>
       <h2>{v.isApp ? 'Your vault' : v.fileName || 'Encrypted file'}</h2>
-      <p className="note">Enter your passphrase to unlock.</p>
+      <p className="note">{v.storage === 'drive' ? 'Stored in your Google Drive. ' : ''}Enter your passphrase to unlock.</p>
       <form onSubmit={submit}>
         <input className="pw center-text" type="password" autoFocus autoComplete="current-password" placeholder="Passphrase" value={pass} onChange={(e) => setPass(e.target.value)} />
         {err && <div className="err">{err}</div>}

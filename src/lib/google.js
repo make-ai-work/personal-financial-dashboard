@@ -16,6 +16,19 @@ export function validateClientId(v) {
   return { ok: true, error: '' }
 }
 
+// The app ships with one built-in client ID (set at build time, VITE_GOOGLE_CLIENT_ID in .env), so most people just click "Sign in with
+// Google" and set nothing up. A client ID is public by design, and Google only accepts it from the addresses registered for it, so
+// shipping it is safe. Your own ID (Settings → Account) always wins; "no Google" (skipped) turns the built-in one off on this device.
+const env = (typeof import.meta !== 'undefined' && import.meta.env) || {}
+export const DEFAULT_CLIENT_ID = isClientId(env.VITE_GOOGLE_CLIENT_ID || '') ? String(env.VITE_GOOGLE_CLIENT_ID).trim() : ''
+
+// Which client ID is in use, and whether it is the built-in one. -> { clientId, usingDefault }
+export function resolveClientId({ saved = '', skipped = false, fallback = DEFAULT_CLIENT_ID } = {}) {
+  if (isClientId(saved || '')) return { clientId: String(saved).trim(), usingDefault: false }
+  if (!skipped && isClientId(fallback || '')) return { clientId: String(fallback).trim(), usingDefault: true }
+  return { clientId: '', usingDefault: false }
+}
+
 // Should the setup screen come before sign-in? Not once a valid ID is saved, or when it was skipped.
 export const needsSetup = ({ clientId, skipped }) => !isClientId(clientId || '') && !skipped
 

@@ -29,7 +29,10 @@
     "win:build": "vite build && electron-builder --win --publish never",
     "app": "node scripts/run-as-app.mjs",
     "shortcut": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/make-shortcut.ps1",
-    "test:e2e:pwa": "node test/e2e/pwa.e2e.mjs"
+    "test:e2e:pwa": "node test/e2e/pwa.e2e.mjs",
+    "test:e2e:drive": "node test/e2e/drive.e2e.mjs",
+    "build:nodefault": "VITE_GOOGLE_CLIENT_ID= vite build --outDir dist-nodefault",
+    "test:e2e:default-client": "node test/e2e/default-client.e2e.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.2",

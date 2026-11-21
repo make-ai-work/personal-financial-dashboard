@@ -422,3 +422,6 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 .cl .row-actions { display: flex; gap: 4px; } .cl .mv { width: 30px; height: 28px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); color: var(--text); cursor: pointer; } .cl .mv:disabled { opacity: .35; cursor: default; } .cl .hid { color: var(--muted); font-size: .8rem; }
 .settings { padding-top: 14px; }
 @media (max-width: 640px) { .settings .rowf { flex-wrap: wrap; } .settings .rowf > span:first-child { flex: 1 1 100%; min-width: 0; } .settings .rowf select, .settings .rowf input, .settings .rowf .inl { max-width: 100%; min-width: 0; } .settings .rowf .inl { display: flex; width: 100%; } .settings .rowf .inl input { flex: 1; } }
+
+.statusbar { flex-wrap: wrap; } .sb-err { flex-basis: 100%; color: var(--red); font-size: .82rem; }
+.choice .opt { font-size: .7rem; font-weight: 600; color: var(--accent); border: 1px solid var(--accent); border-radius: 99px; padding: 0 7px; margin-left: 6px; vertical-align: middle; }

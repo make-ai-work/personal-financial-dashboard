@@ -12,3 +12,4 @@ dist-demo
 # Written by the demo build (scripts/fetch-av-snapshot.mjs); never committed
 public/av-snapshot.json
 release
+dist-nodefault

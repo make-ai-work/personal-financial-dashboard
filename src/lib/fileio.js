@@ -2,6 +2,7 @@
 // Other browsers fall back to a file input for opening and a download for saving.
 // In the Android app the vault lives in the app's private folder (see appstorage.js); it is represented by APP_HANDLE.
 import { APP_FILE, appVault, isNativeApp } from './appstorage.js'
+import * as drive from './drive.js'
 
 export const APP_HANDLE = { kind: 'app', name: APP_FILE }
 export const isAppHandle = (h) => h?.kind === 'app'
@@ -16,6 +17,13 @@ export const isDesktop = () => !!dk()?.isDesktop
 export const isDesktopHandle = (h) => h?.kind === 'desktop'
 const desktopHandle = (r) => ({ kind: 'desktop', path: r.path, name: r.name })
 const abort = () => new DOMException('Cancelled', 'AbortError')
+
+// Google Drive (optional, web version): the handle holds the file's id and the version this copy last saw (to detect another device saving).
+export const isDriveHandle = (h) => h?.kind === 'drive'
+export const driveHandle = (f) => ({ kind: 'drive', id: f.id, name: f.name || drive.DRIVE_FILE, version: f.modifiedTime || '' })
+const DRIVE_KEY = 'vault.drive' // only the file's id and name (not secrets), so the next visit finds it
+const driveStored = () => { try { const j = JSON.parse(localStorage.getItem(DRIVE_KEY)); return j && j.id ? j : null } catch { return null } }
+export const driveRemembered = () => !!driveStored() && drive.driveClientReady()
 
 export const isAbort = (e) => e?.name === 'AbortError'
 
@@ -70,6 +78,7 @@ export async function pickNewVaultHandle(suggestedName, { replace = false } = {}
 
 export async function readHandle(handle) {
   if (isAppHandle(handle)) return appVault.read()
+  if (isDriveHandle(handle)) { const r = await drive.readVault(handle.id); handle.version = r.modifiedTime; return r.bytes }
   if (isDesktopHandle(handle)) return new Uint8Array(await dk().readVault(handle.path))
   const file = await handle.getFile()
   return new Uint8Array(await file.arrayBuffer())
@@ -77,6 +86,7 @@ export async function readHandle(handle) {
 
 export async function writeHandle(handle, bytes) {
   if (isAppHandle(handle)) return appVault.write(bytes)
+  if (isDriveHandle(handle)) { const r = await drive.writeVault(handle.id, bytes, { known: handle.version || undefined }); handle.version = r.modifiedTime; return }
   if (isDesktopHandle(handle)) return dk().writeVault(handle.path, bytes)
   const w = await handle.createWritable()
   await w.write(bytes)
@@ -84,6 +94,7 @@ export async function writeHandle(handle, bytes) {
 }
 
 export async function ensurePermission(handle, mode = 'readwrite') {
+  if (isDriveHandle(handle)) return drive.connectDrive() // may show Google's window: called from the Unlock click
   if (isAppHandle(handle) || isDesktopHandle(handle)) return true
   const opts = { mode }
   if ((await handle.queryPermission(opts)) === 'granted') return true
@@ -120,6 +131,24 @@ async function idbRun(mode, fn) {
   })
 }
 // The app's vault needs no remembering: it is found in the app's folder.
-export const rememberHandle = (h) => (isAppHandle(h) ? undefined : isDesktopHandle(h) ? dk().rememberVault(h.path).catch(() => {}) : idbRun('readwrite', (s) => s.put(h, 'vault')).catch(() => {}))
-export const recallHandle = async () => (isDesktop() ? dk().lastVault().then((r) => (r ? desktopHandle(r) : null)).catch(() => null) : isNativeApp() ? ((await appVault.exists()) ? APP_HANDLE : null) : idbRun('readonly', (s) => s.get('vault')).catch(() => null))
-export const forgetHandle = () => (isDesktop() ? dk().forgetVault().catch(() => {}) : isNativeApp() ? undefined : idbRun('readwrite', (s) => s.delete('vault')).catch(() => {}))
+const setDriveKey = (v) => { try { v ? localStorage.setItem(DRIVE_KEY, JSON.stringify(v)) : localStorage.removeItem(DRIVE_KEY) } catch { /* storage unavailable */ } }
+export function rememberHandle(h) {
+  if (isDriveHandle(h)) { setDriveKey({ id: h.id, name: h.name }); return undefined }
+  setDriveKey(null) // moving back to a file on this computer forgets the Drive choice
+  if (isAppHandle(h)) return undefined
+  if (isDesktopHandle(h)) return dk().rememberVault(h.path).catch(() => {})
+  return idbRun('readwrite', (st) => st.put(h, 'vault')).catch(() => {})
+}
+export async function recallHandle() {
+  const d = driveStored()
+  if (d && drive.driveClientReady()) return driveHandle({ id: d.id, name: d.name })
+  if (isDesktop()) return dk().lastVault().then((r) => (r ? desktopHandle(r) : null)).catch(() => null)
+  if (isNativeApp()) return (await appVault.exists()) ? APP_HANDLE : null
+  return idbRun('readonly', (st) => st.get('vault')).catch(() => null)
+}
+export function forgetHandle() {
+  setDriveKey(null)
+  if (isDesktop()) return dk().forgetVault().catch(() => {})
+  if (isNativeApp()) return undefined
+  return idbRun('readwrite', (st) => st.delete('vault')).catch(() => {})
+}

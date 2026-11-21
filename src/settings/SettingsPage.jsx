@@ -26,8 +26,12 @@ function AccountSettings() {
       <div className="pad">
         <p className="note">Signed in as <b>{auth.user.name}</b> ({auth.user.email}). {auth.real ? 'Signed in with your Google account. Your name and email are not stored: closing this page ends the session.' : 'This is a demo sign-in, not a real Google account.'}</p>
         <div className="acctrow">
-          <div><b>Google connection</b><div className="hint">{auth.demo ? 'Not available in the demo' : auth.clientId ? <>Client ID <code>{shortId(auth.clientId)}</code></> : 'Not set up (demo sign-in)'}</div></div>
-          <button className="btn sm" disabled={auth.demo} title={auth.demo ? 'Not available in the demo' : undefined} onClick={() => setEditId(!editId)}>{editId ? 'Cancel' : auth.clientId ? 'Change' : 'Set up'}</button>
+          <div><b>Google connection</b><div className="hint">{auth.demo ? 'Not available in the demo' : auth.usingDefault ? <>Built-in Google client <code>{shortId(auth.clientId)}</code></> : auth.clientId ? <>Your own client ID <code>{shortId(auth.clientId)}</code></> : 'Not set up (demo sign-in)'}</div></div>
+          <span className="row-actions">
+            <button className="btn sm" disabled={auth.demo} title={auth.demo ? 'Not available in the demo' : undefined} onClick={() => setEditId(!editId)}>{editId ? 'Cancel' : auth.usingDefault ? 'Use my own…' : auth.clientId ? 'Change' : 'Set up'}</button>
+            {auth.hasBuiltIn && !auth.usingDefault && <button className="btn sm" onClick={auth.useBuiltIn}>Use the built-in one</button>}
+            {auth.clientId && <button className="btn sm" onClick={auth.turnOffGoogle} title="Sign in as a demo user and keep no Google connection on this device">Turn off Google</button>}
+          </span>
         </div>
         {editId && <ClientIdForm initial={auth.clientId} submitLabel="Save" onSave={(id) => { if (auth.saveClientId(id)) { auth.endReview(); setEditId(false) } }} />}
         <label className="check">
