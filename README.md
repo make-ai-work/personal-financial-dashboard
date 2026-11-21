@@ -168,6 +168,23 @@ A picture version of this, which also ships with the site, is in
   Australia or Switzerland; choose one to five, and Finance and Property each keep their own list), with a summary page, owner filter (Mine / Joint / Parent) and a
   month-by-month chart per country.
 
+## Run as an app (Windows, no .exe)
+
+Two ways to get the app in its own window with no tabs and no address bar. Neither is an `.exe`, so Smart App Control has nothing to block.
+
+- **Double-click launcher (the local version).** Install [Node.js](https://nodejs.org) (LTS) once, then double-click **`Run as app.cmd`** in
+  the project folder. The first run installs what the app needs and builds it; then your Edge (or Chrome) opens the app in its own window on
+  `http://localhost:4173`. **Close the window to stop it.** Run `npm run shortcut` once to put a **Finance Dashboard** shortcut (with the app
+  icon) on your Desktop and in the Start menu. Details: it keeps its own browser profile (so the app remembers your settings and your data
+  file separately from your normal browsing), a second double-click reuses the running copy, and `node scripts/run-as-app.mjs --port 5000`,
+  `--rebuild` and `BROWSER_PATH` / `BROWSER_ARGS` let you change the port, rebuild, or pick the browser.
+- **Install from the browser (any address).** Open the web app (your own copy or the demo) in Edge or Chrome and use **Settings → This
+  device → Install as app** (or the install icon in the address bar). You get a Start-menu and taskbar icon, a quick start, and it opens even
+  without a connection (a small service worker keeps this app's own files; it never touches your data, prices, weather or Google).
+  Not offered inside the Windows or Android apps.
+
+For Google sign-in, authorise the address you use (`http://localhost:4173` for the launcher), as in "Google setup" below.
+
 ## Windows app (Electron)
 
 The same app as a Windows program: a **portable `.exe`** (nothing to install) and an **installer**. It is the normal web app in its own
