@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
-import { DEMO_USER, PHASE, nextPhase } from '../lib/auth.js'
+import { DEMO_USER, LOCAL_USER, PHASE, nextPhase } from '../lib/auth.js'
 import { DEFAULT_CLIENT_ID, isClientId, needsSetup, resolveClientId } from '../lib/google.js'
 import { IS_DEMO } from '../lib/demo.js'
 import { isNativeApp } from '../lib/appstorage.js'
@@ -45,7 +45,7 @@ export function AuthProvider({ children }) {
     setPhase((p) => nextPhase(p, event, opts))
   }, [])
   const value = {
-    clientId, setup: !IS_DEMO && !isNativeApp() && needsSetup({ clientId, skipped }),
+    clientId, setup: !IS_DEMO && !isNativeApp() && needsSetup({ clientId, skipped }), // the setup page is for the web and Windows versions; Android always has the built-in client
     saveClientId: (v) => { const id = String(v).trim(); if (!isClientId(id)) return false; setSavedId(id); write('google.clientId', id); setSkipped(false); write('google.setupSkipped', ''); setReviewing(true); return true },
     reviewing, endReview: () => setReviewing(false),
     usingDefault: !IS_DEMO && resolved.usingDefault, hasBuiltIn: !IS_DEMO && !!DEFAULT_CLIENT_ID,
@@ -53,8 +53,8 @@ export function AuthProvider({ children }) {
     turnOffGoogle: () => { setSavedId(''); write('google.clientId', ''); setSkipped(true); write('google.setupSkipped', '1') }, // no Google: the placeholder sign-in
     skipSetup: () => { setSkipped(true); write('google.setupSkipped', '1') },
     demo: IS_DEMO, native: isNativeApp(),
-    phase, user: phase === PHASE.ready ? (realUser || DEMO_USER) : null, mfaRequired, real: !!realUser, busy: busy || checking, checking, error,
-    googleReady: !IS_DEMO && !isNativeApp() && validId(clientId),
+    phase, user: phase === PHASE.ready ? (realUser || (IS_DEMO ? DEMO_USER : LOCAL_USER)) : null, mfaRequired, real: !!realUser, busy: busy || checking, checking, error,
+    googleReady: !IS_DEMO && validId(clientId),
     signIn: async () => {
       setError('')
       if (IS_DEMO || !validId(clientId)) return go('signIn', { mfaRequired }) // the demo and the placeholder
@@ -67,7 +67,9 @@ export function AuthProvider({ children }) {
     },
     mfaPassed: () => go('mfaPassed'),
     mfaCancel: () => go('mfaCancel'),
-    signOut: () => { setRealUser(null); setError(''); go('signOut') },
+    // Signing in is optional: carry on without it (the passphrase still protects the data).
+    continueLocal: () => { setError(''); go('signIn', { mfaRequired: false }) },
+    signOut: () => { setRealUser(null); setError(''); if (!isNativeApp()) go('signOut') }, // the Android app has no sign-in page to return to
     setMfaRequired: (on) => { setMfaRequired(on); write('auth.mfaPreview', on ? '1' : '') },
   }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

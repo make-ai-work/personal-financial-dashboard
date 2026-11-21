@@ -112,3 +112,8 @@ export async function writeVault(id, bytes, { known, force = false, ...opts } = 
 }
 
 export const currentVersion = async (id, opts = {}) => (await (await call(`${API}/files/${encodeURIComponent(id)}?fields=modifiedTime`, {}, opts)).json()).modifiedTime
+
+// Remove the vault file from Drive (it goes to the Drive bin, so it can still be restored from there). Only a file this app made.
+export async function deleteVault(id, opts = {}) {
+  await call(`${API}/files/${encodeURIComponent(id)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ trashed: true }) }, opts)
+}

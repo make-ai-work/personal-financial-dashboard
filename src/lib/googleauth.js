@@ -1,6 +1,8 @@
 // Real "Sign in with Google" for the web and desktop versions, using Google Identity Services (the token popup).
 // Only identity is requested (openid, email, profile): the name and email are shown so you can see who is signed in.
 // Nothing else is read, no token is kept, and the data file keeps its own passphrase. Each person uses their own client ID.
+import { nativeGoogleAvailable, nativeGoogleLogin } from './nativegoogle.js'
+
 export const GSI_URL = 'https://accounts.google.com/gsi/client'
 export const SCOPES = 'openid email profile'
 export const USERINFO_URL = 'https://www.googleapis.com/oauth2/v3/userinfo'
@@ -42,6 +44,10 @@ export function parseUserInfo(j) {
 // app (that signs in through your browser). Nothing is stored either way.
 export async function signInWithGoogle(clientId, { gsi, fetchImpl = fetch, desktop, silent = false, timeoutMs = 8000 } = {}) {
   // The Windows app signs in through the user's browser (Google refuses sign-in inside an app's own window).
+  if (!gsi && nativeGoogleAvailable()) { // the Android app signs in through the phone's Google account
+    if (silent) throw new Error('Silent sign-in is not available here.')
+    return (await nativeGoogleLogin({ clientId })).user
+  }
   const dd = desktop === undefined ? (typeof window !== 'undefined' ? window.desktopApp : null) : desktop
   const useDesktop = !gsi && !!dd?.googleToken
   if (silent && useDesktop) throw new Error('Silent sign-in is not available here.')
@@ -73,7 +79,19 @@ export async function signInWithGoogle(clientId, { gsi, fetchImpl = fetch, deskt
 // A Google access pass for the given scopes (used for Drive storage). `prompt`: 'none' = never show anything (quiet), '' = only if
 // Google needs to ask (first-time approval, or a sign-in), which must come from a click so the browser allows the window.
 // -> { token, expiresAt (ms) }. Held in memory by the caller, never stored.
-export async function requestGoogleToken(clientId, { scope, prompt = '', gsi, timeoutMs = 20_000 } = {}) {
+export async function requestGoogleToken(clientId, { scope, prompt = '', gsi, timeoutMs = 20_000, desktop } = {}) {
+  // Windows app: your normal browser (needs a click each hour). Android app: the phone's Google account. Neither can renew quietly.
+  const dd = desktop === undefined ? (typeof window !== 'undefined' ? window.desktopApp : null) : desktop
+  if (!gsi && (dd?.googleToken || nativeGoogleAvailable())) {
+    if (prompt === 'none') throw new Error('Quiet renewal is not available here.')
+    if (dd?.googleToken) {
+      const token = await dd.googleToken(clientId, scope).catch((e) => { throw new Error(String(e?.message || e).replace(/^Error invoking remote method '[^']+': (Error: )?/, '')) })
+      return { token, expiresAt: Date.now() + 55 * 60_000 }
+    }
+    const r = await nativeGoogleLogin({ clientId, scopes: scope ? scope.split(' ') : [] })
+    if (!r.token) throw new Error('Google did not give this app permission for Drive. Try again and allow access.')
+    return { token: r.token, expiresAt: r.expiresAt }
+  }
   const google = gsi || (await loadGsi())
   const once = new Promise((resolve, reject) => {
     const client = google.accounts.oauth2.initTokenClient({

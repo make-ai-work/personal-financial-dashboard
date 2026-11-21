@@ -60,13 +60,13 @@ try {
 
   step('first launch: "Create your vault" with restore and Excel import; Google Drive is shown as coming later')
   await topTab('Finance Dashboard').click()
-  await page.getByRole('heading', { name: 'Create your vault' }).waitFor()
-  await page.getByText(/inside this app only/).waitFor()
+  await page.getByRole('heading', { name: 'Where should your data live?' }).waitFor()
+  await page.getByText(/Kept inside this app/).first().waitFor()
   await page.getByRole('button', { name: /Restore from a backup file/ }).waitFor()
-  assert.ok(await page.getByRole('button', { name: /Save to Google Drive/ }).isDisabled())
+  await page.getByRole('button', { name: /Create in Google Drive/ }).waitFor() // Drive is offered here too (same choices as everywhere)
 
   step('creating the vault stores an encrypted file in the app folder (no plaintext, no download)')
-  await page.getByRole('button', { name: /Create a new encrypted vault/ }).click()
+  await page.getByRole('button', { name: /Create a new vault file/ }).click()
   await page.getByText(/stored inside this app/).waitFor()
   await page.getByLabel('Passphrase', { exact: true }).fill(PASS)
   await page.getByLabel('Confirm passphrase').fill(PASS)
@@ -104,7 +104,7 @@ try {
 
   step('Settings › Your data: stored in this app, backup reminder, export through the share sheet')
   await page.getByRole('tab', { name: 'Settings' }).click()
-  await page.getByText('🔒 Your data').waitFor()
+  await page.getByText('🔒 Your data & security').waitFor()
   await page.locator('#set-data').getByText('Private to this app').waitFor()
   assert.equal(await page.getByTestId('last-backup').innerText(), 'never')
   assert.equal(await page.getByText('Change file').count(), 0)
@@ -180,7 +180,7 @@ try {
   await dialog().getByLabel('Type DELETE to confirm').fill('DELETE')
   await del.click()
   await topTab('Finance Dashboard').click()
-  await page.getByRole('heading', { name: 'Create your vault' }).waitFor()
+  await page.getByRole('heading', { name: 'Where should your data live?' }).waitFor()
   assert.equal(Object.keys(await disk()).length, 0, 'nothing is left in the app folder')
 
   step('phone layout: no sideways scrolling')
