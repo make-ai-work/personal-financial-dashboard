@@ -1,4 +1,4 @@
-// End-to-end check of the placeholder sign-in. Run:  npm run build && npm run test:e2e:auth
+// End-to-end check of sign-in and the Google setup, on a build with NO built-in client ID. Run:  npm run build:nodefault && npm run test:e2e:auth
 import { createRequire } from 'node:module'
 import { spawn } from 'node:child_process'
 import assert from 'node:assert/strict'
@@ -6,7 +6,7 @@ import { answerFor, signInClick, solveCheck } from './signin.mjs'
 
 const require = createRequire(import.meta.url)
 const { chromium } = require('playwright')
-const server = spawn('npx', ['vite', 'preview', '--port', '4180', '--strictPort'], { stdio: 'ignore' })
+const server = spawn('npx', ['vite', 'preview', '--outDir', 'dist-nodefault', '--port', '4180', '--strictPort'], { stdio: 'ignore' })
 await new Promise((r) => setTimeout(r, 2500))
 const browser = await chromium.launch()
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } })
@@ -84,12 +84,12 @@ try {
   await page.getByRole('button', { name: 'Set up' }).click()
   await page.getByLabel('OAuth client ID').fill('GOCSPX-nope'); assert.ok(await page.getByRole('button', { name: 'Save', exact: true }).isDisabled())
   await page.getByLabel('OAuth client ID').fill(ID); await page.getByRole('button', { name: 'Save', exact: true }).click()
-  await page.getByText(/Client ID 123456789012-abcdefghij1/).waitFor()
+  await page.getByText(/[Cc]lient ID 123456789012-abcdefghij1/).waitFor()
   await page.getByRole('button', { name: 'Change' }).click()
   assert.equal(await page.getByLabel('OAuth client ID').inputValue(), ID)
   await page.getByRole('button', { name: 'Cancel' }).click() // closes just the form
   await page.getByLabel('OAuth client ID').waitFor({ state: 'detached' })
-  await page.getByText(/Client ID 123456789012-abcdefghij1/).waitFor()
+  await page.getByText(/[Cc]lient ID 123456789012-abcdefghij1/).waitFor()
   step('sign out returns to sign-in; with the two-step preview on, the code screen sits in between')
   await page.getByLabel(/Preview the two-step verification/).check()
   await page.getByRole('button', { name: 'Sign out' }).click()

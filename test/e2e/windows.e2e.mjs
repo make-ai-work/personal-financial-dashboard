@@ -35,13 +35,18 @@ try {
   assert.equal(await page.evaluate(() => typeof window.desktopApp?.openVault), 'function')
   assert.equal(await page.evaluate(() => typeof require), 'undefined', 'the page has no Node access')
 
-  step('first run asks for the Google client ID and shows the redirect address to authorise')
-  await page.getByRole('heading', { name: 'Connect your Google account' }).waitFor()
+  step('first run goes straight to sign-in with the built-in Google client; to try the placeholder, Google is switched off first')
+  await page.getByRole('button', { name: /Sign in with Google/ }).waitFor()
+  assert.equal(await page.getByRole('heading', { name: 'Connect your Google account' }).count(), 0)
+  await page.evaluate(() => localStorage.setItem('google.setupSkipped', '1')); await page.reload()
+  await signInClick(page) // the placeholder sign-in
+  await page.getByRole('tab', { name: 'Home' }).waitFor()
+  step('Settings → Account: your own client ID form shows the redirect address to authorise (the Windows app signs in through your browser)')
+  await page.getByRole('button', { name: 'Account', exact: true }).click()
+  await page.getByRole('button', { name: 'Set up' }).click()
   await page.getByText(`http://localhost:${PORT}/oauth-callback`).first().waitFor()
   await page.getByText('Authorized redirect URIs').waitFor()
-  await page.getByRole('button', { name: /Skip for now/ }).click()
-  await signInClick(page) // demo sign-in (no client ID)
-  await page.getByRole('tab', { name: 'Home' }).waitFor()
+  await page.getByRole('button', { name: 'Cancel' }).click()
 
   step('create the encrypted data file: it is written to disk by the app, with no plaintext inside')
   await page.getByRole('tab', { name: 'Finance Dashboard' }).click()

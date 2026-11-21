@@ -221,8 +221,8 @@ have no Google sign-in.
 
 Besides "a file on this computer" you can keep the **encrypted** file in your own Google Drive, so it is on every device you sign in to.
 It is one more choice, never required: the file options (and the Android app's private storage) are unchanged, and the demo, the Windows
-app and the Android app do not offer Drive yet. It needs your Google client ID (see the next section) with the **Google Drive API** enabled
-in your Google Cloud project.
+app and the Android app do not offer Drive yet. It needs a Google client ID (the built-in one, or your own; see the next section) whose Google Cloud project has the
+**Google Drive API** enabled.
 
 - **Start screen:** **Save to Google Drive** creates the encrypted file in your Drive (the app refuses if one already exists, so nothing is
   overwritten by mistake); **Open from Google Drive** opens the one this app saved before. From **Settings → Data & security** you can
@@ -238,13 +238,23 @@ in your Google Cloud project.
   overwritten: you choose **Keep my changes** (replace the Drive copy) or **Use the Drive version** (drop yours).
 - **Tested with a stand-in for Google and Drive**, not against a real account, so tell me about anything odd.
 
-## Google setup (first run)
+## Google setup
 
-Everyone uses their **own** Google client ID, so the first screen asks for it (with a 6-step guide, the address to authorise,
-and a refusal to accept a client *secret*, which the app never needs). It is saved in the browser only and can be changed from
-the Account dialog. The address shown on that screen must be listed under **Authorized JavaScript origins** in Google Cloud, or Google
-refuses with an "authorised list" message. The sign-in has not been tried against a live Google account in development (it is
-tested with a stand-in for Google), so report anything odd.
+The app ships with a **built-in Google client ID** (`VITE_GOOGLE_CLIENT_ID` in `.env`), so on the published site, the local app and the launcher you
+just click **Sign in with Google**: no setup screen. A client ID is public by design, and Google only accepts it from the addresses registered
+for it in Google Cloud, so shipping it is safe. It never needs a client *secret* or an API key, and the app refuses to accept a secret.
+
+- **Your own client ID instead:** **Settings → Account → Use my own…** (it is saved in the browser only). Do this if you host your own copy at a
+  different address, or you want your own Google project. The form has a 6-step guide, the address to authorise, and a Copy button. Authorise
+  the address you use under **Authorized JavaScript origins** (`http://localhost:4173` for the local app and launcher, your site address for a
+  hosted copy), or **Authorized redirect URIs** `http://localhost:53682/oauth-callback` for the Windows app. For Google Drive storage also enable
+  the **Google Drive API** in that project.
+- **Without Google:** **Turn off Google** signs you in as a demo user and uses no Google connection on this device. **Use the built-in one** switches it
+  back on. The demo site and the Android app have no Google sign-in.
+- **Shipping without a built-in ID:** empty `VITE_GOOGLE_CLIENT_ID` in `.env`; everyone then sees the setup screen and brings their own.
+  (`npm run build:nodefault` builds that way into `dist-nodefault`; the sign-in tests use it: `npm run build:nodefault && npm run test:e2e:auth`.)
+- **While your Google project is in "Testing"** only the test users you listed can sign in; publish the consent screen to open it to anyone (no review
+  is needed for the scopes used here).
 
 ## Phone
 
