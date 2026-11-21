@@ -9,6 +9,7 @@ import HomeSettings from '../home/HomeSettings.jsx'
 import { useNav } from '../nav.jsx'
 import { homePrefs } from '../lib/homeprefs.js'
 import { shortId } from '../lib/google.js'
+import { appModeAvailable, canPrompt, isStandalone, promptInstall, subscribe } from '../lib/pwa.js'
 
 // Who is signed in, the Google connection, the two-step preview, and sign-out (which also locks the data file).
 function AccountSettings() {
@@ -34,6 +35,21 @@ function AccountSettings() {
         </label>
         <p className="note">Two-step verification is built into the sign-in flow but is on hold: nothing is enforced, and any 6-digit code passes.</p>
       </div>
+    </div>
+  )
+}
+
+// "Run as an app" (web version): install it so it has its own window, a Start-menu / taskbar icon and opens even offline.
+function RunAsApp() {
+  const [, tick] = useState(0)
+  const [answer, setAnswer] = useState('')
+  useEffect(() => subscribe(() => tick((n) => n + 1)), [])
+  if (!appModeAvailable()) return null
+  if (isStandalone()) return <div className="row" data-testid="run-as-app"><span>Run as an app<small>This window is the installed app.</small></span><span className="chip">Installed</span></div>
+  return (
+    <div className="row" data-testid="run-as-app">
+      <span>Run as an app<small>{canPrompt() ? 'Gives it its own window, a Start-menu and taskbar icon, and it opens even without a connection.' : 'In Edge or Chrome: the install icon in the address bar, or menu → Apps → Install this site as an app.'}{answer === 'dismissed' ? ' (You chose not to install. The browser menu still has it.)' : ''}</small></span>
+      {canPrompt() && <button className="btn primary" onClick={async () => setAnswer(await promptInstall())}>Install as app</button>}
     </div>
   )
 }
@@ -99,6 +115,7 @@ export default function SettingsPage() {
           <div className="panel">
             <div className="p-head"><div className="title">This device</div></div>
             <div className="pad">
+              <RunAsApp />
               <div className="row"><span>Version<small>{auth.native ? 'Android app' : window.desktopApp ? 'Windows app' : auth.demo ? 'Demo site' : 'Web app'}</small></span><span>0.1.0</span></div>
               <div className="row"><span>Your data<small>{vault.demo ? 'Sample data, nothing saved' : vault.isApp ? 'Private to this app' : vault.fileName || 'Encrypted file you choose'}</small></span><span className="chip">{data ? 'Unlocked' : 'Locked'}</span></div>
             </div>

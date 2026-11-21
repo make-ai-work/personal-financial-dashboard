@@ -55,6 +55,7 @@ function createAppServer({ root, onOAuthResult = () => ({ ok: false, message: 'S
     }
     if (req.method !== 'GET' && req.method !== 'HEAD') return send(405, 'text/plain', 'Method not allowed')
     if (pathname === '/oauth-callback') return send(200, 'text/html; charset=utf-8', CALLBACK_PAGE)
+    if (pathname === '/__finance-dashboard') return send(200, 'application/json', JSON.stringify({ app: 'finance-dashboard' })) // lets a second launch recognise a running copy
 
     let file = path.join(resolvedRoot, pathname === '/' ? 'index.html' : pathname)
     if (file !== resolvedRoot && !file.startsWith(resolvedRoot + path.sep)) return send(403, 'text/plain', 'Forbidden') // no climbing out of dist

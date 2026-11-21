@@ -26,7 +26,10 @@
     "test:e2e:windows": "node test/e2e/windows.e2e.mjs",
     "android:assets": "capacitor-assets generate --android --iconBackgroundColor '#0f4c4c' --iconBackgroundColorDark '#0f4c4c' --splashBackgroundColor '#0f4c4c' --splashBackgroundColorDark '#0f4c4c'",
     "win:dev": "vite build && electron .",
-    "win:build": "vite build && electron-builder --win --publish never"
+    "win:build": "vite build && electron-builder --win --publish never",
+    "app": "node scripts/run-as-app.mjs",
+    "shortcut": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/make-shortcut.ps1",
+    "test:e2e:pwa": "node test/e2e/pwa.e2e.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.2",
