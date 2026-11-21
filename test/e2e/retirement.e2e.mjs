@@ -59,7 +59,7 @@ try {
   await page.goto('http://localhost:4179/')
   await topTab('Finance Dashboard').click()
   step('create the vault and three Finance assets (two USD, one INR)')
-  await page.getByRole('button', { name: /Create a new encrypted file/ }).click()
+  await page.getByRole('button', { name: /Create a new vault file/ }).click()
   await page.getByLabel('Passphrase', { exact: true }).fill(PASS)
   await page.getByLabel('Confirm passphrase').fill(PASS)
   await page.getByRole('checkbox').check()

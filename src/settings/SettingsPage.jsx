@@ -22,15 +22,24 @@ function AccountSettings() {
   }
   return (
     <div className="panel" id="set-account">
-      <div className="p-head"><div className="title">Account &amp; sign-in</div><button className="btn primary" onClick={signOut}>Sign out</button></div>
+      <div className="p-head"><div className="title">Account &amp; sign-in</div>{!auth.native || auth.real ? <button className="btn primary" onClick={signOut}>Sign out</button> : null}</div>
       <div className="pad">
-        <p className="note">Signed in as <b>{auth.user.name}</b> ({auth.user.email}). {auth.real ? 'Signed in with your Google account. Your name and email are not stored: closing this page ends the session.' : 'This is a demo sign-in, not a real Google account.'}</p>
+        <p className="note" data-testid="who-note">{auth.real
+          ? <>Signed in as <b>{auth.user.name}</b> ({auth.user.email}). Your name and email are not stored: closing the app ends the session.</>
+          : <>You are <b>not signed in</b>, which is fine: signing in is optional and only shows who you are. Your data is protected by its own passphrase either way.</>}</p>
+        {!auth.real && auth.googleReady && !auth.demo && (
+          <div className="acctrow">
+            <div><b>Sign in with Google</b><div className="hint">Optional. Only your name and email are read.</div></div>
+            <button className="btn sm primary" disabled={auth.busy} onClick={auth.signIn}>{auth.busy ? 'Opening Google…' : 'Sign in with Google'}</button>
+          </div>
+        )}
+        {auth.error && <p className="err" role="alert">{auth.error}</p>}
         <div className="acctrow">
-          <div><b>Google connection</b><div className="hint">{auth.demo ? 'Not available in the demo' : auth.usingDefault ? <>Built-in Google client <code>{shortId(auth.clientId)}</code></> : auth.clientId ? <>Your own client ID <code>{shortId(auth.clientId)}</code></> : 'Not set up (demo sign-in)'}</div></div>
+          <div><b>Google connection</b><div className="hint">{auth.demo ? 'Not available in the demo' : auth.usingDefault ? <>Built-in Google client <code>{shortId(auth.clientId)}</code></> : auth.clientId ? <>Your own client ID <code>{shortId(auth.clientId)}</code></> : 'Not set up'}</div></div>
           <span className="row-actions">
             <button className="btn sm" disabled={auth.demo} title={auth.demo ? 'Not available in the demo' : undefined} onClick={() => setEditId(!editId)}>{editId ? 'Cancel' : auth.usingDefault ? 'Use my own…' : auth.clientId ? 'Change' : 'Set up'}</button>
             {auth.hasBuiltIn && !auth.usingDefault && <button className="btn sm" onClick={auth.useBuiltIn}>Use the built-in one</button>}
-            {auth.clientId && <button className="btn sm" onClick={auth.turnOffGoogle} title="Sign in as a demo user and keep no Google connection on this device">Turn off Google</button>}
+            {auth.clientId && <button className="btn sm" onClick={auth.turnOffGoogle} title="Stop using Google sign-in and Drive on this device">Turn off Google</button>}
           </span>
         </div>
         {editId && <ClientIdForm initial={auth.clientId} submitLabel="Save" onSave={(id) => { if (auth.saveClientId(id)) { auth.endReview(); setEditId(false) } }} />}
@@ -83,12 +92,12 @@ export default function SettingsPage() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const countries = data?.settings?.countries?.length ? data.settings.countries : homePrefs.countries()
-  const list = SECTIONS.filter((s) => (s.id !== 'set-account' || !auth.native) && (!vault.demo || true))
+  const list = SECTIONS
   return (
     <div className="wide-pad">
       <div className="split7030 settings">
         <div className="sp-l">
-          {!auth.native && <AccountSettings />}
+          <AccountSettings />
           {data ? (
             <>
               <FinanceSettings />
@@ -121,7 +130,7 @@ export default function SettingsPage() {
             <div className="pad">
               <RunAsApp />
               <div className="row"><span>Version<small>{auth.native ? 'Android app' : window.desktopApp ? 'Windows app' : auth.demo ? 'Demo site' : 'Web app'}</small></span><span>0.1.0</span></div>
-              <div className="row"><span>Your data<small>{vault.demo ? 'Sample data, nothing saved' : vault.isApp ? 'Private to this app' : vault.fileName || 'Encrypted file you choose'}</small></span><span className="chip">{data ? 'Unlocked' : 'Locked'}</span></div>
+              <div className="row"><span>Your data<small>{vault.demo ? 'Sample data, nothing saved' : vault.storage === 'app' ? 'Vault file inside this app' : vault.storage === 'drive' ? 'Google Drive' : vault.fileName || 'Vault file you choose'}</small></span><span className="chip">{data ? 'Unlocked' : 'Locked'}</span></div>
             </div>
           </div>
         </aside>

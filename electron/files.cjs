@@ -16,6 +16,14 @@ function createVaultFiles({ stateFile }) {
     fs.writeFileSync(tmp, Buffer.from(bytes))
     fs.renameSync(tmp, r)
   }
+  // Delete a vault file the user chose in this app (used for "Delete old copy" after moving to Google Drive). Also forgets it if remembered.
+  function remove(p) {
+    const r = check(p)
+    if (path.extname(r).toLowerCase() !== '.wvault') throw new Error('Only .wvault files can be deleted from here.')
+    fs.rmSync(r, { force: true })
+    allowed.delete(r)
+    if (readState().vaultPath === r) { const s = readState(); delete s.vaultPath; writeState(s) }
+  }
   const read = (p) => new Uint8Array(fs.readFileSync(check(p)))
 
   const readState = () => { try { return JSON.parse(fs.readFileSync(stateFile, 'utf8')) } catch { return {} } }
@@ -29,7 +37,7 @@ function createVaultFiles({ stateFile }) {
     allow(p)
     return { path: p, name: nameOf(p) }
   }
-  return { allow, check, nameOf, writeAtomic, read, remember, forget, last }
+  return { allow, check, nameOf, writeAtomic, read, remove, remember, forget, last }
 }
 
 module.exports = { createVaultFiles }

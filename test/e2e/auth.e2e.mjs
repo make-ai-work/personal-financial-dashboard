@@ -76,11 +76,11 @@ try {
 
   step('the Account button opens the Account part of the Settings tab: the demo user, and the two-step check is on hold')
   await page.getByRole('button', { name: 'Account', exact: true }).click()
-  await page.getByText(/not a real Google account/).waitFor()
+  await page.getByText(/not signed in/).waitFor()
   await page.getByText(/on hold: nothing is enforced/).waitFor()
 
   step('the Google connection can be set up or changed later, in the same place')
-  await page.getByText('Not set up (demo sign-in)').waitFor()
+  await page.getByText('Not set up').waitFor()
   await page.getByRole('button', { name: 'Set up' }).click()
   await page.getByLabel('OAuth client ID').fill('GOCSPX-nope'); assert.ok(await page.getByRole('button', { name: 'Save', exact: true }).isDisabled())
   await page.getByLabel('OAuth client ID').fill(ID); await page.getByRole('button', { name: 'Save', exact: true }).click()
@@ -116,7 +116,7 @@ try {
 
   step('the Account part of Settings shows the real Google identity (from memory); nothing about it is stored anywhere in the browser')
   await page.getByRole('button', { name: 'Account', exact: true }).click()
-  await page.getByText(/Sam Example/).first().waitFor(); await page.getByText(/sam@example\.com/).waitFor(); await page.getByText('Signed in with your Google account.').waitFor()
+  await page.getByText(/Sam Example/).first().waitFor(); await page.getByText(/sam@example\.com/).waitFor(); await page.getByText(/Your name and email are not stored/).waitFor()
   const g = await page.evaluate(() => ({ args: window.__gsiArgs, revoked: window.__revoked, dump: JSON.stringify([Object.entries(localStorage), Object.entries(sessionStorage)]) }))
   assert.deepEqual([g.args.client, g.args.scope, g.args.prompt], [ID, 'openid email profile', 'select_account'])
   assert.ok(!g.revoked, 'the pass is not revoked (that would remove Google’s saved approval and break the quiet sign-in)')

@@ -50,7 +50,12 @@ try {
 
   step('create the encrypted data file: it is written to disk by the app, with no plaintext inside')
   await page.getByRole('tab', { name: 'Finance Dashboard' }).click()
-  await page.getByRole('button', { name: /Create a new encrypted file/ }).click()
+  step('the Windows app offers the same two choices as everywhere; Google Drive is off only because Google is off here, and says why')
+  await page.getByTestId('choice-file').getByText(/folder you choose/).waitFor()
+  const driveBtn = page.getByTestId('choice-drive').getByRole('button', { name: /Create in Google Drive/ })
+  assert.ok(await driveBtn.isDisabled()); assert.match(await driveBtn.innerText(), /client ID/)
+  assert.equal(await page.evaluate(() => typeof window.desktopApp.deleteVault), 'function')
+  await page.getByRole('button', { name: /Create a new vault file/ }).click()
   await page.getByLabel('Passphrase', { exact: true }).fill(PASS)
   await page.getByLabel('Confirm passphrase').fill(PASS)
   await page.getByRole('checkbox').check()

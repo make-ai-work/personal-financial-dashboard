@@ -5,6 +5,7 @@ import { PassphraseForm } from './ui.jsx'
 import { ConfirmDelete, ConfirmRestore } from './AppDialogs.jsx'
 import { backupAgeDays, backupStale, lastBackup, markBackup } from '../lib/nativeapp.js'
 import { download, isAbort, pickExcel } from '../lib/fileio.js'
+import { oldCopyNotice } from '../lib/channel.js'
 
 export default function Settings() {
   const v = useVault()
@@ -14,6 +15,8 @@ export default function Settings() {
   const [busy, setBusy] = useState(false)
   const [dlg, setDlg] = useState('') // app only: 'restore' | 'delete'
   const [backedUp, setBackedUp] = useState(lastBackup())
+  const inApp = v.storage === 'app' // the vault is kept inside the Android app
+  const [confirmOld, setConfirmOld] = useState(false)
   const setSettings = (patch) => update((d) => ({ ...d, settings: { ...d.settings, ...patch } }))
 
   const exportExcel = async () => {
@@ -61,13 +64,36 @@ export default function Settings() {
       </div>
 
       <div className="panel" id="set-data">
-        <div className="p-head"><div className="title">{v.demo ? "Data" : v.isApp ? "🔒 Your data" : "🔒 Security"}</div></div>
+        <div className="p-head"><div className="title">{v.demo ? "Data" : "🔒 Your data & security"}</div></div>
         <div className="col">
           {!v.demo && (
             <>
-          {v.isApp ? (
+          <div className="row" data-testid="storage-row">
+            <span>Stored in<small>{v.storage === 'drive'
+              ? 'Only the encrypted file is in your Google Drive. If a save cannot reach Google, your changes stay in the open app and you are told, so keep it open until it says saved.'
+              : v.storage === 'app' ? 'Private to this app. Other apps cannot see it.' : `${v.fileName || 'Encrypted file'} · AES-256-GCM, key derived from your passphrase`}</small></span>
+            <b>{v.storage === 'drive' ? `Google Drive · ${v.fileName}` : v.storage === 'app' ? 'Vault file · inside this app' : 'Vault file'}</b>
+          </div>
+          <div className="row" data-testid="move-row">
+            <span>Move your data<small>Copies the encrypted vault, checks the copy opens, then switches. Your current copy is left untouched until you delete it.</small></span>
+            {v.storage === 'drive'
+              ? <button className="btn" onClick={async () => { setMsg(''); try { if (await v.moveToFile()) setMsg('Moved to a vault file. Your Google Drive copy is still there; see below.') } catch (e) { setMsg(e.message) } }}>Move to a vault file…</button>
+              : <button className="btn" disabled={!v.driveEnabled} title={v.driveEnabled ? undefined : 'Add a Google client ID first (Account)'} onClick={async () => { setMsg(''); try { await v.moveToDrive(); setMsg('Moved to your Google Drive. Your previous copy is still there; see below.') } catch (e) { setMsg(e.message) } }}>Move to Google Drive…</button>}
+          </div>
+          {v.oldCopy && (
+            <div className="warn" data-testid="old-copy">
+              <b>Your old copy still exists.</b> {oldCopyNotice(v.oldCopy)}
+              <div className="row-actions" style={{ marginTop: 8 }}>
+                {v.canDeleteOldCopy && !confirmOld && <button className="btn danger-btn" onClick={() => setConfirmOld(true)}>Delete old copy…</button>}
+                {confirmOld && <button className="btn danger-btn" onClick={async () => { try { await v.deleteOldCopy(); setConfirmOld(false); setMsg('The old copy was deleted.') } catch (e) { setMsg(e.message); setConfirmOld(false) } }}>Yes, delete the old copy for good</button>}
+                {confirmOld && <button className="btn" onClick={() => setConfirmOld(false)}>Cancel</button>}
+                <button className="btn" onClick={() => { setConfirmOld(false); v.keepOldCopy() }}>Keep it, stop reminding me</button>
+              </div>
+              {!v.canDeleteOldCopy && <p className="note">This app cannot delete that file from here. Delete it yourself in your file manager.</p>}
+            </div>
+          )}
+          {inApp ? (
             <>
-              <div className="row"><span>Stored in<small>Private to this app</small></span><b>This app</b></div>
               <div className="row">
                 <span>Back up<small>Opens the share sheet: Files, Drive, email…</small></span>
                 <button className="btn" onClick={async () => { try { await v.exportBackup(); markBackup(); setBackedUp(lastBackup()) } catch (e) { setMsg(e.message) } }}>Export backup…</button>
@@ -81,26 +107,11 @@ export default function Settings() {
             </>
           ) : (
             <>
-          {v.driveEnabled && (
-            <div className="row" data-testid="drive-row">
-              {v.storage === 'drive' ? (
-                <>
-                  <span>Stored in Google Drive<small>Only the encrypted file is in your Drive. If a save cannot reach Google, your changes stay in the open app and you are told, so keep it open until it says saved.</small></span>
-                  <button className="btn" onClick={v.switchFile}>Use a file on this computer instead</button>
-                </>
-              ) : (
-                <>
-                  <span>Google Drive <span className="opt">optional</span><small>Also keep the encrypted file in your own Google Drive. Your file on this computer stays as it is.</small></span>
-                  <button className="btn" onClick={async () => { setMsg(''); try { await v.moveToDrive(); setMsg('Now stored in your Google Drive. The file on this computer is unchanged.') } catch (e) { setMsg(e.message) } }}>Move to Google Drive…</button>
-                </>
-              )}
-            </div>
-          )}
           <div className="row">
             <span>Data file<small>{v.fileName}{v.storage === 'drive' ? ' (Google Drive)' : ''} · AES-256-GCM, key derived from your passphrase</small></span>
             <span className="row-actions">
               <button className="btn" onClick={v.lock}>Lock now</button>
-              <button className="btn" onClick={v.switchFile}>Change file</button>
+              <button className="btn" onClick={v.switchFile}>{v.storage === 'drive' ? 'Switch vault' : 'Change file'}</button>
             </span>
           </div>
           {!v.canWrite && (
@@ -132,14 +143,14 @@ export default function Settings() {
             <span>Import from Excel<small>Replaces all current data with a workbook exported from this app.</small></span>
             <button className="btn" onClick={importExcel}>Import…</button>
           </div>
-          {v.isApp && !v.demo && (
+          {inApp && !v.demo && (
             <div className="row"><span>Delete the vault<small>Cannot be undone</small></span><button className="btn danger-btn" onClick={() => setDlg('delete')}>Delete…</button></div>
           )}
           {msg && <div className="note">{msg}</div>}
-          {v.isApp && <div className="warn"><b>Uninstalling the app, or clearing its data, deletes your vault.</b> Export a backup now and then. The backup is encrypted, so it is safe to keep in Drive.</div>}
+          {inApp && <div className="warn"><b>Uninstalling the app, or clearing its data, deletes your vault.</b> Export a backup now and then. The backup is encrypted, so it is safe to keep in Drive.</div>}
           {dlg === 'restore' && <ConfirmRestore onClose={() => setDlg('')} onConfirm={async () => { setDlg(''); await v.openFile() }} />}
           {dlg === 'delete' && <ConfirmDelete onClose={() => setDlg('')} onConfirm={async () => { await v.deleteAppVault(); setDlg('') }} />}
-          {!v.demo && !v.isApp && <div className="warn">Also recommended: keep the file on an encrypted disk (BitLocker / FileVault) and keep a second backup copy somewhere private. Data files are excluded from this Git repository.</div>}
+          {!v.demo && v.storage === 'device' && <div className="warn">Also recommended: keep the file on an encrypted disk (BitLocker / FileVault) and keep a second backup copy somewhere private. Data files are excluded from this Git repository.</div>}
         </div>
       </div>
     </>

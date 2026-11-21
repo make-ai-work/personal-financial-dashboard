@@ -6,20 +6,28 @@ import {
   APP_HANDLE, download, driveHandle, driveRemembered, ensurePermission, forgetHandle, hasFS, isAbort, isDesktop, pickNewVaultHandle, pickVault,
   readHandle, recallHandle, rememberHandle, writeHandle,
 } from '../lib/fileio.js'
+import { canDeleteOld } from '../lib/channel.js'
 import * as drive from '../lib/drive.js'
 import { useAuth } from '../auth/AuthContext.jsx'
 import { isClientId } from '../lib/google.js'
 import { appVault, isNativeApp, shareBackup } from '../lib/appstorage.js'
 
+const sameBytes = (a, b) => a.length === b.length && a.every((x, i) => x === b[i])
+
 const Ctx = createContext(null)
 export const useVault = () => useContext(Ctx)
 
 const DEFAULT_NAME = 'WealthTracker.wvault'
+const OLD_KEY = 'vault.oldCopy' // what a move left behind: { kind: 'app' | 'device' | 'drive', name, id?, path? } (no secrets)
+const readOld = () => { try { const j = JSON.parse(localStorage.getItem(OLD_KEY)); return j && j.kind ? j : null } catch { return null } }
+const writeOld = (v) => { try { v ? localStorage.setItem(OLD_KEY, JSON.stringify(v)) : localStorage.removeItem(OLD_KEY) } catch { /* storage unavailable */ } }
+// Describe the place a handle points at, for "your previous copy is still ...".
+const describe = (h) => (h.kind === 'drive' ? { kind: 'drive', name: h.name, id: h.id } : h.kind === 'app' ? { kind: 'app', name: h.name } : { kind: 'device', name: h.name, path: h.path || '' })
 
 export function VaultProvider({ children }) {
   const auth = useAuth()
   drive.setDriveClient(auth.clientId) // before anything below may need Drive
-  const driveEnabled = !IS_DEMO && !isNativeApp() && !isDesktop() && isClientId(auth.clientId || '') // an extra choice, never required
+  const driveEnabled = !IS_DEMO && isClientId(auth.clientId || '') // an extra choice on every version (web, Windows, Android), never required
   const [phase, setPhase] = useState('loading') // loading | start | locked | unlocked
   const [data, setData] = useState(null)
   const [fileName, setFileName] = useState('')
@@ -27,6 +35,7 @@ export function VaultProvider({ children }) {
   const [canWrite, setCanWrite] = useState(false) // true when saving writes straight to the file
   const [error, setError] = useState('')
   const [storage, setStorage] = useState('') // 'drive' | 'device' | 'app' | 'download'
+  const [oldCopy, setOldCopy] = useState(readOld) // the copy a move left behind, until you delete it or choose to keep it
 
   const dataRef = useRef(null)
   const session = useRef(null)
@@ -302,23 +311,68 @@ export function VaultProvider({ children }) {
     } catch (e) { setError(e.message) }
   }, [])
 
-  // Unlocked, from Settings: start keeping the file in Drive. The file on this computer is left exactly as it is (a ready backup).
+  // Unlocked, from Settings: start keeping the vault in Drive. The copy is read back and compared before anything switches over, and the
+  // old copy is NEVER deleted here: it stays until you choose "Delete old copy" (see oldCopy).
   const moveToDrive = useCallback(async () => {
     await drive.connectDrive()
     if ((await drive.listVaults()).length) throw new Error('Your Google Drive already has a vault. Lock this one and choose "Open from Google Drive", or delete the Drive file first.')
     await persist()
     if (!bytes.current) throw new Error('Nothing to move yet.')
     const meta = await drive.createVault(bytes.current)
-    const h = driveHandle(meta)
+    const back = await drive.readVault(meta.id)
+    if (!sameBytes(back.bytes, bytes.current)) throw new Error('The copy in Google Drive did not match, so nothing was changed. Try again.')
+    const old = handle.current ? describe(handle.current) : null
+    const h = driveHandle({ id: meta.id, name: meta.name, modifiedTime: back.modifiedTime })
     setHandle(h)
     setFileName(h.name)
     setCanWrite(true)
     needsDownload.current = false
     pending.current = null
     rememberHandle(h)
+    if (old) { writeOld(old); setOldCopy(old) }
     setError('')
     setSaveState('saved')
   }, [persist])
+
+  // Unlocked, from Settings: leave Google Drive for a vault file (inside the app on Android, a place you choose elsewhere). Same rules:
+  // copy, check, switch, keep the old copy until you delete it.
+  const moveToFile = useCallback(async () => {
+    if (!handle.current || handle.current.kind !== 'drive') throw new Error('The vault is not in Google Drive.')
+    await persist()
+    if (!bytes.current) throw new Error('Nothing to move yet.')
+    const old = describe(handle.current)
+    let h
+    try { h = await pickNewVaultHandle(DEFAULT_NAME) } catch (e) { if (isAbort(e)) return false; throw e }
+    if (!h) { // a browser that cannot keep a file location: offer the download and stay in Drive
+      download(DEFAULT_NAME, bytes.current)
+      throw new Error('This browser cannot save to a chosen location. An encrypted copy was downloaded, and the vault stays in Google Drive.')
+    }
+    await writeHandle(h, bytes.current)
+    if (!sameBytes(await readHandle(h), bytes.current)) throw new Error('The saved file did not match, so nothing was changed. Try again.')
+    setHandle(h)
+    setFileName(h.name)
+    setCanWrite(true)
+    pending.current = null
+    rememberHandle(h)
+    writeOld(old)
+    setOldCopy(old)
+    setError('')
+    setSaveState('saved')
+    return true
+  }, [persist])
+
+  // "Delete old copy": only after a move, only that copy, and the current vault is never touched.
+  const deleteOldCopy = useCallback(async () => {
+    const old = readOld()
+    if (!old) { setOldCopy(null); return }
+    if (old.kind === 'drive') { await drive.connectDrive(); await drive.deleteVault(old.id) } // from a click, so Google may ask first
+    else if (old.kind === 'app') await appVault.remove()
+    else if (isDesktop() && old.path) await window.desktopApp.deleteVault(old.path)
+    else throw new Error('Delete the old file yourself, in your file manager. This app cannot remove a file in the browser.')
+    writeOld(null)
+    setOldCopy(null)
+  }, [])
+  const keepOldCopy = useCallback(() => { writeOld(null); setOldCopy(null) }, [])
 
   // The Drive pass ran out and could not be renewed quietly: ask for it again (from a click), then save what is waiting.
   const reconnectDrive = useCallback(async () => {
@@ -348,7 +402,8 @@ export function VaultProvider({ children }) {
   }, [persist])
 
   const value = {
-    driveEnabled, storage, createInDrive, openFromDrive, moveToDrive, reconnectDrive, resolveConflict,
+    driveEnabled, storage, createInDrive, openFromDrive, moveToDrive, moveToFile, reconnectDrive, resolveConflict,
+    oldCopy, canDeleteOldCopy: canDeleteOld(oldCopy, { desktop: isDesktop() }), deleteOldCopy, keepOldCopy,
     demo: IS_DEMO, resetDemo,
     phase, data, fileName, saveState, canWrite, error, setError,
     update, create, openFile, unlock, lock, switchFile, changePassphrase, downloadNow, exportBackup, deleteAppVault,

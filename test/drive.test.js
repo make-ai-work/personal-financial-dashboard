@@ -116,3 +116,13 @@ test('connect asks for the pass with a window when needed', async () => {
   const r = async (id, o) => { log.push(o.prompt); if (o.prompt === 'none') throw new Error('x'); return { token: 'TOKEN', expiresAt: Date.now() + 3_600_000 } }
   assert.equal(await connectDrive({ requester: r }), true); assert.deepEqual(log, ['none', ''])
 })
+
+test('deleting the Drive copy moves it to the bin (restorable), by id', async () => {
+  const { deleteVault } = await import('../src/lib/drive.js')
+  const calls = []
+  const fetchImpl = async (url, init) => { calls.push([init.method, url, init.body]); return { ok: true, status: 200, json: async () => ({}) } }
+  const requester = async () => ({ token: 'T', expiresAt: Date.now() + 3600_000 })
+  const d = await import('../src/lib/drive.js'); d.setDriveClient('123456789012-abcdefghij1234.apps.googleusercontent.com'); d.forgetDriveToken()
+  await deleteVault('F9', { fetchImpl, requester })
+  assert.equal(calls[0][0], 'PATCH'); assert.match(calls[0][1], /files\/F9$/); assert.equal(calls[0][2], '{"trashed":true}')
+})

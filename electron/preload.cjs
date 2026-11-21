@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('desktopApp', {
   lastVault: () => ipcRenderer.invoke('vault:last'),
   rememberVault: (p) => ipcRenderer.invoke('vault:remember', String(p)),
   forgetVault: () => ipcRenderer.invoke('vault:forget'),
-  googleToken: (clientId) => ipcRenderer.invoke('google:token', String(clientId)),
+  googleToken: (clientId, scope) => ipcRenderer.invoke('google:token', String(clientId), scope ? String(scope) : undefined),
+  deleteVault: (p) => ipcRenderer.invoke('vault:delete', String(p)),
   redirectUri: () => ipcRenderer.invoke('app:redirectUri'),
 })

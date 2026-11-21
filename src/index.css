@@ -424,4 +424,6 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 @media (max-width: 640px) { .settings .rowf { flex-wrap: wrap; } .settings .rowf > span:first-child { flex: 1 1 100%; min-width: 0; } .settings .rowf select, .settings .rowf input, .settings .rowf .inl { max-width: 100%; min-width: 0; } .settings .rowf .inl { display: flex; width: 100%; } .settings .rowf .inl input { flex: 1; } }
 
 .statusbar { flex-wrap: wrap; } .sb-err { flex-basis: 100%; color: var(--red); font-size: .82rem; }
+.choice-h { font-size: .95rem; }
+.choice + .choice { margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--line); }
 .choice .opt { font-size: .7rem; font-weight: 600; color: var(--accent); border: 1px solid var(--accent); border-radius: 99px; padding: 0 7px; margin-left: 6px; vertical-align: middle; }

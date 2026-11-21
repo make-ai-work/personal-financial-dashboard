@@ -1,0 +1,37 @@
+// Which version of the app this is, and which storage choices it offers. The choices are the SAME on every real version, in the same
+// order, with the same wording; only the hint under "Vault file" differs, and anything unavailable says why.
+//   Vault file    Android: kept inside the app.  Windows / web: a .wvault file in a place you choose, remembered for next time.
+//   Google Drive  The same everywhere. Only the encrypted file is uploaded.
+export const channelOf = ({ demo = false, native = false, desktop = false } = {}) => (demo ? 'demo' : native ? 'android' : desktop ? 'windows' : 'web')
+
+export const CHANNEL_NAME = { demo: 'Demo site', android: 'Android app', windows: 'Windows app', web: 'Web app' }
+
+export function storageChoices({ channel, clientReady = false, canRemember = true } = {}) {
+  if (channel === 'demo') {
+    return [
+      { id: 'file', title: 'Vault file', hint: 'Not available in the demo. Nothing is saved here.', available: false },
+      { id: 'drive', title: 'Google Drive', hint: 'Not available in the demo.', available: false },
+    ]
+  }
+  const fileHint = channel === 'android'
+    ? 'Kept inside this app, private to it. No sign-in needed.'
+    : canRemember
+      ? 'An encrypted .wvault file in a folder you choose. The app remembers it. No sign-in needed.'
+      : 'An encrypted .wvault file. This browser cannot remember its location, so you open it each time and download after changes.'
+  return [
+    { id: 'file', title: 'Vault file', hint: fileHint, available: true },
+    clientReady
+      ? { id: 'drive', title: 'Google Drive', hint: 'Only the encrypted file goes to your own Drive, so it is on every device you sign in to.', available: true }
+      : { id: 'drive', title: 'Google Drive', hint: 'Needs a Google client ID first (Settings → Account).', available: false },
+  ]
+}
+
+// What a move leaves behind. `kind` is where the vault was: 'app' | 'device' | 'drive'. -> sentence for the notice, or null.
+export function oldCopyNotice(old) {
+  if (!old) return null
+  const where = old.kind === 'drive' ? 'in your Google Drive' : old.kind === 'app' ? 'inside this app' : 'on this computer'
+  return `Your previous copy${old.name ? ` (${old.name})` : ''} is still ${where}. It is no longer used and is not updated. Delete it when you are happy with the new location.`
+}
+
+// Can the app delete that old copy itself, or must the user do it?
+export const canDeleteOld = (old, { desktop = false } = {}) => !!old && (old.kind === 'drive' || old.kind === 'app' || (old.kind === 'device' && desktop && !!old.path))
