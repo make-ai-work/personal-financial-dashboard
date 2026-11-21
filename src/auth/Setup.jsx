@@ -26,7 +26,7 @@ export function ClientIdForm({ initial = '', onSave, onSkip, submitLabel = 'Save
         <summary>How do I get one? (about 5 minutes)</summary>
         <ol>
           <li>Open <b>Google Cloud Console</b> and create a project (any name).</li>
-          <li><b>APIs &amp; Services › Library:</b> nothing to enable yet. (The <b>Google Drive API</b> is only needed once Drive storage is added.)</li>
+          <li><b>APIs &amp; Services › Library:</b> enable the <b>Google Drive API</b>. (Only needed if you choose to keep your encrypted file in Google Drive.)</li>
           <li><b>OAuth consent screen:</b> choose <i>External</i>, add yourself as a test user.</li>
           <li><b>Credentials › Create credentials › OAuth client ID</b>, type <b>Web application</b>.</li>
           <li>Under <b>{desktop ? 'Authorized redirect URIs' : 'Authorized JavaScript origins'}</b> add this address:
@@ -37,7 +37,7 @@ export function ClientIdForm({ initial = '', onSave, onSkip, submitLabel = 'Save
       </details>
 
       <div className="warn"><b>Never paste a client secret here.</b> This app does not need one. Only the client ID goes in the box.</div>
-      <div className="kvs"><span>Permissions it will ask for</span><div>Your name and email only, to show who is signed in. It cannot see your Drive, mail or anything else.</div></div>
+      <div className="kvs"><span>Permissions it will ask for</span><div>Signing in: your name and email only. Google Drive storage is optional: if you choose it, Google asks separately for access to the files this app creates in your Drive. It cannot see your other files.</div></div>
       <div className="rowend">
         {onSkip ? <button type="button" className="link" onClick={onSkip}>Skip for now, use the demo sign-in</button> : <span />}
         <button className="btn primary" disabled={!v.ok}>{submitLabel}</button>
@@ -68,7 +68,7 @@ export function SavedCard({ onContinue, onChange }) {
       <div className="steps">Setup ✓ › <b>Sign in</b> › Open your data</div>
       <h2>Google is set up</h2>
       <div className="okbox">Client ID saved in this browser. <span className="pill p-ok">ready to sign in</span></div>
-      <div className="kvs"><span>Client ID</span><code>{auth.clientId}</code><span>This address</span><code>{window.location.origin}</code><span>Access asked for</span><div>Your name and email only</div></div>
+      <div className="kvs"><span>Client ID</span><code>{auth.clientId}</code><span>This address</span><code>{window.location.origin}</code><span>Access asked for</span><div>Signing in: your name and email. Google Drive (optional): only files this app creates.</div></div>
       <p className="note" style={{ textAlign: 'left' }}>The next screen opens a Google window to sign in. Only your name and email are read, to show who is signed in. Your data file keeps its own passphrase.</p>
       <div className="rowend"><button className="link" onClick={onChange}>Change client ID</button><button className="btn primary" onClick={onContinue}>Continue to sign in</button></div>
     </div>

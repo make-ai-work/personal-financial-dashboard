@@ -3,9 +3,12 @@ import { decryptVault, encryptVault, newSession, parseVault } from '../lib/vault
 import { emptyData, normalizeData } from '../lib/model.js'
 import { IS_DEMO, loadDemoData } from '../lib/demo.js'
 import {
-  APP_HANDLE, download, ensurePermission, forgetHandle, hasFS, isAbort, pickNewVaultHandle, pickVault,
+  APP_HANDLE, download, driveHandle, driveRemembered, ensurePermission, forgetHandle, hasFS, isAbort, isDesktop, pickNewVaultHandle, pickVault,
   readHandle, recallHandle, rememberHandle, writeHandle,
 } from '../lib/fileio.js'
+import * as drive from '../lib/drive.js'
+import { useAuth } from '../auth/AuthContext.jsx'
+import { isClientId } from '../lib/google.js'
 import { appVault, isNativeApp, shareBackup } from '../lib/appstorage.js'
 
 const Ctx = createContext(null)
@@ -14,12 +17,16 @@ export const useVault = () => useContext(Ctx)
 const DEFAULT_NAME = 'WealthTracker.wvault'
 
 export function VaultProvider({ children }) {
+  const auth = useAuth()
+  drive.setDriveClient(auth.clientId) // before anything below may need Drive
+  const driveEnabled = !IS_DEMO && !isNativeApp() && !isDesktop() && isClientId(auth.clientId || '') // an extra choice, never required
   const [phase, setPhase] = useState('loading') // loading | start | locked | unlocked
   const [data, setData] = useState(null)
   const [fileName, setFileName] = useState('')
   const [saveState, setSaveState] = useState('saved') // saved | saving | unsaved | error
   const [canWrite, setCanWrite] = useState(false) // true when saving writes straight to the file
   const [error, setError] = useState('')
+  const [storage, setStorage] = useState('') // 'drive' | 'device' | 'app' | 'download'
 
   const dataRef = useRef(null)
   const session = useRef(null)
@@ -28,6 +35,8 @@ export function VaultProvider({ children }) {
   const timer = useRef(null)
   const chain = useRef(Promise.resolve())
   const needsDownload = useRef(false) // download-only browsers: changes not yet saved to a file
+  const pending = useRef(null) // newest encrypted copy that could not be saved yet (Drive: reconnect or conflict), kept so it is not lost
+  const setHandle = (h) => { handle.current = h; setStorage(h ? (h.kind === 'drive' ? 'drive' : h.kind === 'app' ? 'app' : 'device') : 'download') }
 
   useEffect(() => {
     let live = true
@@ -44,10 +53,10 @@ export function VaultProvider({ children }) {
       return () => { live = false }
     }
     ;(async () => {
-      const h = hasFS() || isNativeApp() ? await recallHandle() : null
+      const h = hasFS() || isNativeApp() || driveRemembered() ? await recallHandle() : null
       if (!live) return
       if (h) {
-        handle.current = h
+        setHandle(h)
         setFileName(h.name)
         setCanWrite(true)
         setPhase('locked')
@@ -64,7 +73,10 @@ export function VaultProvider({ children }) {
         const out = await encryptVault(session.current, dataRef.current)
         bytes.current = out
         if (handle.current) {
+          pending.current = out
           await writeHandle(handle.current, out)
+          pending.current = null
+          setError('')
           setSaveState('saved')
         } else {
           needsDownload.current = true
@@ -72,7 +84,8 @@ export function VaultProvider({ children }) {
         }
       } catch (e) {
         setError(e.message)
-        setSaveState('error')
+        // Google Drive: the changes stay safe in memory (and in `pending`) until you reconnect or choose what to do about a conflict
+        setSaveState(e instanceof drive.DriveAuthError ? 'reconnect' : e instanceof drive.DriveConflictError ? 'conflict' : 'error')
       }
     })
     return chain.current
@@ -90,7 +103,7 @@ export function VaultProvider({ children }) {
 
   const start = useCallback((initial, sess, h, name) => {
     session.current = sess
-    handle.current = h
+    setHandle(h)
     dataRef.current = initial
     setData(initial)
     setFileName(name)
@@ -137,7 +150,7 @@ export function VaultProvider({ children }) {
       dataRef.current = null
       session.current = null
       setData(null)
-      handle.current = h
+      setHandle(h)
       bytes.current = f.bytes
       needsDownload.current = false
       setFileName(f.name)
@@ -151,10 +164,11 @@ export function VaultProvider({ children }) {
 
   const unlock = useCallback(async (passphrase) => {
     let b = bytes.current
+    const retry = !!pending.current // changes that could not be saved before locking: open those, then try saving again
     if (handle.current) {
       if (!(await ensurePermission(handle.current))) throw new Error('Permission to read the file was not granted.')
-      b = await readHandle(handle.current)
-      bytes.current = b
+      if (retry) b = pending.current
+      else { b = await readHandle(handle.current); bytes.current = b }
     }
     if (!b) throw new Error('No file selected.')
     const { data: d, session: s } = await decryptVault(b, passphrase)
@@ -164,7 +178,8 @@ export function VaultProvider({ children }) {
     setSaveState(!handle.current && needsDownload.current ? 'unsaved' : 'saved')
     setError('')
     setPhase('unlocked')
-  }, [])
+    if (retry) { setSaveState('unsaved'); persist() }
+  }, [persist])
 
   // Encrypted copy for safekeeping: the phone's share sheet in the app, a download in the browser.
   const exportBackup = useCallback(async () => {
@@ -180,7 +195,7 @@ export function VaultProvider({ children }) {
     await appVault.remove()
     dataRef.current = null
     session.current = null
-    handle.current = null
+    setHandle(null)
     bytes.current = null
     setData(null)
     setFileName('')
@@ -200,7 +215,8 @@ export function VaultProvider({ children }) {
 
   const switchFile = useCallback(async () => {
     if (phase === 'unlocked') await lock()
-    handle.current = null
+    setHandle(null)
+    pending.current = null
     bytes.current = null
     forgetHandle()
     setFileName('')
@@ -234,7 +250,7 @@ export function VaultProvider({ children }) {
   // Warn before closing the tab while a download-only vault has unsaved changes.
   useEffect(() => {
     const warn = (e) => {
-      if (phase === 'unlocked' && !canWrite && saveState !== 'saved') {
+      if (phase === 'unlocked' && (!canWrite || ['reconnect', 'conflict', 'error'].includes(saveState)) && saveState !== 'saved') {
         e.preventDefault()
         e.returnValue = ''
       }
@@ -249,7 +265,90 @@ export function VaultProvider({ children }) {
     setData(d)
   }, [])
 
+  // ---- Google Drive (optional): the encrypted file in your own Drive. Never required; the other choices are unchanged. ----
+  const createInDrive = useCallback(async (passphrase, initial = emptyData()) => {
+    await drive.connectDrive() // may show Google's approval window: this runs from a click
+    if ((await drive.listVaults()).length) throw new Error('A vault already exists in your Google Drive. Choose "Open from Google Drive" instead (or delete it in Drive first).')
+    const sess = await newSession(passphrase)
+    const init = normalizeData(initial)
+    const meta = await drive.createVault(await encryptVault(sess, init))
+    const h = driveHandle(meta)
+    await start(init, sess, h, h.name)
+    return true
+  }, [start])
+
+  const openFromDrive = useCallback(async () => {
+    setError('')
+    try {
+      await drive.connectDrive()
+      const files = await drive.listVaults()
+      if (!files.length) throw new Error('No vault was found in your Google Drive. Create one with "Save to Google Drive", or open a file from this computer.')
+      const f = files[0] // the most recently saved
+      const r = await drive.readVault(f.id)
+      parseVault(r.bytes)
+      clearTimeout(timer.current)
+      dataRef.current = null
+      session.current = null
+      pending.current = null
+      setData(null)
+      const h = driveHandle({ id: f.id, name: f.name, modifiedTime: r.modifiedTime })
+      setHandle(h)
+      bytes.current = r.bytes
+      needsDownload.current = false
+      setFileName(h.name)
+      setCanWrite(true)
+      rememberHandle(h)
+      setPhase('locked')
+    } catch (e) { setError(e.message) }
+  }, [])
+
+  // Unlocked, from Settings: start keeping the file in Drive. The file on this computer is left exactly as it is (a ready backup).
+  const moveToDrive = useCallback(async () => {
+    await drive.connectDrive()
+    if ((await drive.listVaults()).length) throw new Error('Your Google Drive already has a vault. Lock this one and choose "Open from Google Drive", or delete the Drive file first.')
+    await persist()
+    if (!bytes.current) throw new Error('Nothing to move yet.')
+    const meta = await drive.createVault(bytes.current)
+    const h = driveHandle(meta)
+    setHandle(h)
+    setFileName(h.name)
+    setCanWrite(true)
+    needsDownload.current = false
+    pending.current = null
+    rememberHandle(h)
+    setError('')
+    setSaveState('saved')
+  }, [persist])
+
+  // The Drive pass ran out and could not be renewed quietly: ask for it again (from a click), then save what is waiting.
+  const reconnectDrive = useCallback(async () => {
+    try { await drive.connectDrive(); setError(''); await persist() } catch (e) { setError(e.message) }
+  }, [persist])
+
+  // Another device saved first. 'overwrite': keep my changes and replace the Drive copy. 'reload': discard mine and open the Drive copy.
+  const resolveConflict = useCallback(async (choice) => {
+    try {
+      if (choice === 'overwrite') {
+        handle.current.version = await drive.currentVersion(handle.current.id)
+        await persist()
+      } else {
+        clearTimeout(timer.current)
+        const r = await drive.readVault(handle.current.id)
+        handle.current.version = r.modifiedTime
+        bytes.current = r.bytes
+        pending.current = null
+        dataRef.current = null
+        session.current = null
+        setData(null)
+        setError('')
+        setSaveState('saved')
+        setPhase('locked')
+      }
+    } catch (e) { setError(e.message) }
+  }, [persist])
+
   const value = {
+    driveEnabled, storage, createInDrive, openFromDrive, moveToDrive, reconnectDrive, resolveConflict,
     demo: IS_DEMO, resetDemo,
     phase, data, fileName, saveState, canWrite, error, setError,
     update, create, openFile, unlock, lock, switchFile, changePassphrase, downloadNow, exportBackup, deleteAppVault,

@@ -69,3 +69,20 @@ export async function signInWithGoogle(clientId, { gsi, fetchImpl = fetch, deskt
   // saved approval for this app, which would make the quiet sign-in at the next visit impossible.
   return user
 }
+
+// A Google access pass for the given scopes (used for Drive storage). `prompt`: 'none' = never show anything (quiet), '' = only if
+// Google needs to ask (first-time approval, or a sign-in), which must come from a click so the browser allows the window.
+// -> { token, expiresAt (ms) }. Held in memory by the caller, never stored.
+export async function requestGoogleToken(clientId, { scope, prompt = '', gsi, timeoutMs = 20_000 } = {}) {
+  const google = gsi || (await loadGsi())
+  const once = new Promise((resolve, reject) => {
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope,
+      callback: (resp) => (resp?.error ? reject(new Error(explainGoogleError(resp.error, resp.error_description))) : resolve({ token: resp.access_token, expiresAt: Date.now() + (Number(resp.expires_in) || 3600) * 1000 })),
+      error_callback: (err) => reject(new Error(explainGoogleError(err?.type, err?.message))),
+    })
+    client.requestAccessToken({ prompt })
+  })
+  return Promise.race([once, new Promise((_, rej) => setTimeout(() => rej(new Error('Google did not answer.')), timeoutMs))])
+}
