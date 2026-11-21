@@ -89,3 +89,26 @@ test('files: only files chosen in a dialog can be read or written; writes are at
   again.forget(); assert.equal(createVaultFiles({ stateFile: path.join(dir, 'state', 'state.json') }).last(), null)
   assert.throws(() => again.remember(path.join(dir, 'unchosen.wvault')), /not chosen/)
 })
+
+test('oauth: Google Drive can be asked for, limited to files this app made; any other permission is refused', async () => {
+  const opened = []
+  const o = createOAuth({ origin: 'http://localhost:53682', openExternal: (u) => opened.push(u), timeoutMs: 50 })
+  const a = o.begin('cid.apps.googleusercontent.com', 'https://www.googleapis.com/auth/drive.file')
+  assert.match(opened[0], /scope=https%3A%2F%2Fwww\.googleapis\.com%2Fauth%2Fdrive\.file/)
+  o.handleResult({ state: a.state, access_token: 'T' }); assert.equal(await a.promise, 'T')
+  assert.throws(() => o.begin('cid', 'https://www.googleapis.com/auth/drive'), /not allowed/)
+  assert.throws(() => o.begin('cid', 'openid https://mail.google.com/'), /not allowed/)
+  const last = o.begin('cid'); last.promise.catch(() => {}); assert.match(opened[1], /scope=openid\+email\+profile/) // the default is still identity only
+})
+
+test('files: a chosen .wvault file can be deleted (and forgotten); anything else cannot', () => {
+  const dir = tmp(); const f = createVaultFiles({ stateFile: path.join(dir, 'state.json') })
+  const v = path.join(dir, 'old.wvault'); writeFileSync(v, 'x'); f.allow(v); f.remember(v)
+  assert.equal(existsSync(v), true)
+  f.remove(v); assert.equal(existsSync(v), false); assert.equal(f.last(), null)
+  assert.throws(() => f.remove(v), /not chosen/) // no longer allowed once removed
+  const other = path.join(dir, 'notes.txt'); writeFileSync(other, 'x'); f.allow(other)
+  assert.throws(() => f.remove(other), /Only \.wvault/); assert.equal(existsSync(other), true)
+  const stranger = path.join(dir, 'x.wvault'); writeFileSync(stranger, 'x')
+  assert.throws(() => f.remove(stranger), /not chosen/); assert.equal(existsSync(stranger), true)
+})

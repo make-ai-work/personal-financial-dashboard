@@ -59,7 +59,8 @@ if (!app.requestSingleInstanceLock()) { app.quit() } else {
     ipcMain.handle('vault:remember', (e, p) => { fromApp(e); files.remember(p); return true })
     ipcMain.handle('vault:forget', (e) => { fromApp(e); files.forget(); return true })
     ipcMain.handle('app:redirectUri', (e) => { fromApp(e); return oauth.redirectUri })
-    ipcMain.handle('google:token', (e, clientId) => { fromApp(e); return oauth.begin(clientId).promise })
+    ipcMain.handle('google:token', (e, clientId, scope) => { fromApp(e); return oauth.begin(String(clientId), scope ? String(scope) : undefined).promise })
+    ipcMain.handle('vault:delete', (e, p) => { fromApp(e); files.remove(p); return true })
 
     Menu.setApplicationMenu(null)
     win = new BrowserWindow({

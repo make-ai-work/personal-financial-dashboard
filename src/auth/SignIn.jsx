@@ -43,7 +43,7 @@ function HumanCheck({ onPass }) {
 }
 
 export function SignIn() {
-  const { signIn, demo, googleReady, busy, checking, error } = useAuth()
+  const { signIn, continueLocal, demo, googleReady, busy, checking, error } = useAuth()
   const [human, setHuman] = useState(false)
   if (demo) {
     return (
@@ -61,10 +61,11 @@ export function SignIn() {
   return (
     <div className="panel center narrow">
       <h2>Welcome</h2>
-      <p className="note">Sign in to open your dashboard. There is no password to remember.</p>
+      <p className="note">Sign in with Google, or carry on without signing in. Signing in is optional: your data is protected by its own passphrase either way.</p>
       <HumanCheck onPass={() => setHuman(true)} />
       <button className="gbtn" onClick={signIn} disabled={busy || !human} title={human ? undefined : 'Answer the quick check first'}><GoogleMark /> {checking ? 'Checking your Google session…' : busy ? 'Opening Google…' : 'Sign in with Google'}</button>
       {error && <p className="err" role="alert">{error}</p>}
+      <button className="btn wide" onClick={continueLocal} disabled={busy}>Continue without signing in</button>
       {googleReady ? (
         <div className="warn">
           <b>Only your name and email are read</b>, to show who is signed in. Nothing else is requested and nothing is kept. Your data file is still protected by its own passphrase.

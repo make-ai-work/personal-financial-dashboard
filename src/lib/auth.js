@@ -16,6 +16,8 @@ export function nextPhase(phase, event, { mfaRequired = false } = {}) {
 }
 
 export const DEMO_USER = { name: 'Demo user', email: 'demo@example.com', demo: true }
+// Signing in is optional on every real version: this is who you are when you did not (it only labels the screen; the passphrase protects the data).
+export const LOCAL_USER = { name: 'Not signed in', email: '', local: true }
 
 // Authentication is on hold: whatever is typed, a code is never treated as proof of anything.
 export const MFA_ENFORCED = false

@@ -19,7 +19,7 @@ Stop it with `Ctrl+C`. Run `npm start` again whenever you want to use it. If por
 
 - **Your data** is one encrypted file (`*.wvault`) that you create on the first screen. In Chrome and Edge the app saves straight
   back to it; in other browsers it asks you to download the file after changes. Keep the passphrase safe: there is no recovery.
-- **Google Drive** is optional and not switched on yet; the first screen lets you skip it.
+- **Google Drive** is optional; the first screen lets you pick a vault file instead.
 - **Hosting it elsewhere:** `npm run build` writes a static site to `dist/`. Upload that folder to any static host over HTTPS.
 - **For development:** `npm run dev` (live reload), `npm test` (unit tests), and the end-to-end tests below.
 
@@ -55,8 +55,8 @@ you unlock your data. It persists between visits on this device but is **not enc
 
 ## Android app
 
-The Android app is this same web app packaged with [Capacitor](https://capacitorjs.com) (one codebase). **First version: your data is
-kept in the app's own private storage**; Google Drive comes later. The project is in `android/`.
+The Android app is this same web app packaged with [Capacitor](https://capacitorjs.com) (one codebase). **Your data is kept in the app's own private
+storage by default, and Google Drive is an optional second choice** (the same two choices as every other version). The project is in `android/`.
 
 **What you need:** [Android Studio](https://developer.android.com/studio) (it brings its own JDK and the Android SDK) and Node.js
 **22 or newer** (Capacitor 8's tooling; the web app itself only needs 18).
@@ -69,8 +69,8 @@ npm run android:open     # opens the project in Android Studio; press Run to sta
 
 After changing the web app, run `npm run android:sync` again before Run.
 
-- **What is different in the app:** it opens straight to the app (no Google setup or sign-in, since nothing leaves the phone), the first
-  screen is "Create your vault", and Finance → Settings → *Your data* has **Export backup…** (the phone's share sheet),
+- **What is different in the app:** it opens straight to the app (signing in is optional: do it from Settings → Account), the first
+  screen is "Where should your data live?" (*Vault file*, kept inside the app, or *Google Drive*), and Finance → Settings → *Your data* has **Export backup…** (the phone's share sheet),
   *Last backup* (a reminder), **Restore…** (asks first, and only a valid backup ever replaces the vault) and **Delete…** (you must
   type DELETE). The Back button closes a dialog, then goes to Home, then leaves the app. The app locks itself when you come back after
   longer than your auto-lock time. Home's weather and prices need internet.
@@ -207,36 +207,63 @@ the file for next time (you only type the passphrase). Everything is in `electro
   `npm run build && xvfb-run -a npm run test:e2e:windows` runs the real Electron app. The packaged `.exe` has not been run on a real
   Windows machine in development, so tell me about anything odd.
 
-## Sign-in with Google
+## Sign-in and storage: the same on every version
 
-The app opens on a **Sign in with Google** screen. Once you have saved your own Google client ID (next section) the button is **real**:
-it opens Google's sign-in window (Google Identity Services, `src/lib/googleauth.js`) and asks only for your **name and email** (scopes
-`openid email profile`), to show who is signed in. No token is kept: the one-hour access pass is held in memory only and is not revoked (revoking would also remove Google's saved approval). Your data file keeps its own passphrase; Google
-sign-in does not unlock it. **Nothing about who you are is stored**: your name and email stay in memory for the session only, so closing the page ends your session. When the app opens it makes one **quiet attempt** to sign you in (prompt `none`): if Google already has you signed in and you approved this app before, you are in without clicking; otherwise you see the normal button. Browsers may block that quiet attempt, and the Windows app, which signs in through your browser, never makes it. (Earlier versions' stored copies are erased.) Without a client ID (skipped setup) the button is the old placeholder and signs you in as a demo user.
-Google's own two-step verification applies to your Google account; the app's **two-step screen** (`src/auth/`) is still only a
-preview that accepts any 6-digit code. Google Drive storage is optional (see above). The demo site and the Android app
-have no Google sign-in.
+**Demo site:** no sign-in, nothing saved (sample data in memory). **Everything else** (local app, installed web app, Windows app, Android app) offers the same
+two things, in the same order, with the same wording:
+
+| | Web / installed web app | Windows app | Android app |
+|---|---|---|---|
+| **Sign-in** (optional) | Google | Google (opens your browser) | Google (the phone's own account) |
+| **Vault file** | a `.wvault` file in a folder you choose, remembered | a `.wvault` file in a folder you choose, exact path remembered | kept inside the app |
+| **Google Drive** (optional) | yes | yes | yes |
+
+- **Signing in is optional.** The sign-in page has **Continue without signing in**; the Android app opens straight in. Signing in only shows who you
+  are (name and email, held in memory for the session, nothing stored). Your data is protected by its own passphrase either way, and neither storage
+  choice needs you to sign in. Quiet sign-in at start (web) and the built-in quick check are unchanged. Two-step verification is still a preview.
+- **Vault file:** Chrome and Edge remember the file you chose (you may click Allow once per session); the Windows app remembers the exact path; browsers
+  that cannot remember a file location (Firefox, Safari) fall back to Open and Download.
+- **Google Drive:** see the next section. It works the same way on all three versions.
+- **Moving between them** (Settings → Your data & security → *Move your data*): the encrypted vault is copied, the copy is read back and checked, and
+  only then does the app switch. **The old copy is never deleted for you.** A notice says exactly where it still is and that it is no longer
+  updated, with **Delete old copy…** (asks you to confirm; a Drive copy goes to the Drive bin, so it can still be restored from there) or
+  **Keep it, stop reminding me**. Where an app cannot delete a file itself (a file you opened in a browser), it tells you to delete it yourself.
+- **Code:** `src/lib/channel.js` (which version, which choices), `src/lib/nativegoogle.js` (Android), `src/lib/googleauth.js` (all three).
 
 ## Google Drive storage (optional)
 
-Besides "a file on this computer" you can keep the **encrypted** file in your own Google Drive, so it is on every device you sign in to.
-It is one more choice, never required: the file options (and the Android app's private storage) are unchanged, and the demo, the Windows
-app and the Android app do not offer Drive yet. It needs a Google client ID (the built-in one, or your own; see the next section) whose Google Cloud project has the
-**Google Drive API** enabled.
+You can keep the **encrypted** file in your own Google Drive, so it is on every device you sign in to. It is one choice next to *Vault file*, never
+required, and the same on the web, the Windows app and the Android app (not the demo). It needs a Google client ID (the built-in one, or your own; see the next section) whose
+Google Cloud project has the **Google Drive API** enabled.
 
-- **Start screen:** **Save to Google Drive** creates the encrypted file in your Drive (the app refuses if one already exists, so nothing is
-  overwritten by mistake); **Open from Google Drive** opens the one this app saved before. From **Settings → Data & security** you can
-  **Move to Google Drive…** (your file on this computer is left as a backup) or go back with **Use a file on this computer instead**.
+- **Start screen:** **Create in Google Drive** creates the encrypted file in your Drive (the app refuses if one already exists, so nothing is
+  overwritten by mistake); **Open from Google Drive** opens the one this app saved before. From **Settings → Your data & security** you can
+  **Move to Google Drive…** or **Move to a vault file…** (see above: the old copy stays until you delete it).
 - **What leaves your device:** only the encrypted file (`WealthTracker.wvault`). The passphrase and your data never do. The app asks Google for
   the **`drive.file`** scope: it can only see files this app created, nothing else in your Drive, and it can't read your mail or contacts.
   The file is visible in My Drive, so you can see it, download it, or restore an earlier version there.
-- **Nothing secret is stored:** Google's access pass lives in memory for about an hour and is renewed quietly while Google still has you
-  signed in. Only the file's id and name are remembered on this device, to find it next time.
+- **Nothing secret is stored:** Google's access pass lives in memory for about an hour. The web version renews it quietly while Google still has you
+  signed in; the **Windows and Android apps cannot renew quietly**, so after about an hour of use the status bar shows **Reconnect Google Drive**
+  (one click; your changes are kept meanwhile). Only the file's id and name are remembered on this device, to find it next time.
 - **If a save cannot reach Drive** (the pass ran out, or you are offline) your changes stay in the open app and the status bar says so, with a
   **Reconnect Google Drive** button. Keep the app open until it says saved.
 - **Two devices:** a save first checks the file has not changed since you opened it. If another device saved in between, nothing is
   overwritten: you choose **Keep my changes** (replace the Drive copy) or **Use the Drive version** (drop yours).
-- **Tested with a stand-in for Google and Drive**, not against a real account, so tell me about anything odd.
+- **Tested with a stand-in for Google and Drive**, not against a real account, and **the Android and Windows Drive paths have not been run on a real phone or PC**, so tell me about anything odd.
+
+### Android: Google Cloud setup (once)
+
+The phone's Google account (Credential Manager) checks the app itself, so Android needs **one more OAuth client** in the same Google Cloud project:
+
+1. **Credentials → Create credentials → OAuth client ID → Android.** Package name `io.github.saurskr.dashboard` (change it if you changed the app id), and the **SHA-1
+   fingerprint** of the key the app is signed with. For a debug build (Android Studio Run): `keytool -list -v -keystore %USERPROFILE%\.android\debug.keystore -alias androiddebugkey -storepass android -keypass android` (Windows).
+   A release build or the Play Store build has its own fingerprint: add it as another Android client.
+2. **Keep the Web client** you already have (the built-in `VITE_GOOGLE_CLIENT_ID`): the app passes it to Google as the *web client ID* alongside the Android client.
+3. Enable the **Google Drive API**, and while the consent screen is in *Testing* add your Google account as a **test user**.
+4. Changes in Google Cloud can take up to a few hours. If sign-in fails with *"Google does not recognise this Android app yet"* (Google error 28444), the
+   package name or fingerprint does not match: check them in Logcat (filter `GoogleProvider`, it prints both).
+
+The app's `MainActivity.java` is changed so the sign-in plugin can ask for the Drive permission; `npm run android:sync` keeps the plugin wired in.
 
 ## Google setup
 
@@ -249,8 +276,8 @@ for it in Google Cloud, so shipping it is safe. It never needs a client *secret*
   the address you use under **Authorized JavaScript origins** (`http://localhost:4173` for the local app and launcher, your site address for a
   hosted copy), or **Authorized redirect URIs** `http://localhost:53682/oauth-callback` for the Windows app. For Google Drive storage also enable
   the **Google Drive API** in that project.
-- **Without Google:** **Turn off Google** signs you in as a demo user and uses no Google connection on this device. **Use the built-in one** switches it
-  back on. The demo site and the Android app have no Google sign-in.
+- **Without Google:** **Turn off Google** uses no Google connection on this device (the sign-in page then offers the placeholder sign-in or **Continue
+  without signing in**). **Use the built-in one** switches it back on. The demo site has no Google sign-in.
 - **Shipping without a built-in ID:** empty `VITE_GOOGLE_CLIENT_ID` in `.env`; everyone then sees the setup screen and brings their own.
   (`npm run build:nodefault` builds that way into `dist-nodefault`; the sign-in tests use it: `npm run build:nodefault && npm run test:e2e:auth`.)
 - **While your Google project is in "Testing"** only the test users you listed can sign in; publish the consent screen to open it to anyone (no review
@@ -287,7 +314,8 @@ Retirement shows the key results and two charts with the detailed assumptions fo
 - [x] Step 7: run on your own computer with `npm start`
 - [x] Step 8: Home rebuild: clocks for each country, weather, markets open/closed, FCS market ticker
 - [x] Step 9: Android app, first version (Capacitor; data in the app's private storage; backup/restore; Back button): tested here, **needs a first run on a device**
-- [ ] Next: run it in Android Studio and fix what a device shows; then Google Drive storage
+- [ ] Next: run it in Android Studio and fix what a device shows
 - [x] Real Google sign-in (name and email only) on the web version
-- [x] Optional Google Drive storage (web)
-- [ ] Then: two-step verification, Google Drive on Windows and Android
+- [x] Optional Google Drive storage (web, Windows, Android: built, tested only with stand-ins; real-device checks pending)
+- [x] Same sign-in (optional) and storage choices on every version; moving keeps the old copy until you delete it
+- [ ] Then: two-step verification

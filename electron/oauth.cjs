@@ -5,14 +5,22 @@ const crypto = require('node:crypto')
 
 const AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
 const SCOPE = 'openid email profile'
+// Only these permissions can be asked for: identity, and Google Drive limited to files this app created.
+const ALLOWED = new Set(['openid', 'email', 'profile', 'https://www.googleapis.com/auth/drive.file'])
+const cleanScope = (scope) => {
+  const parts = String(scope || SCOPE).split(/\s+/).filter(Boolean)
+  if (!parts.length || parts.some((x) => !ALLOWED.has(x))) throw new Error('That Google permission is not allowed in this app.')
+  return parts.join(' ')
+}
 
 function createOAuth({ origin, openExternal, timeoutMs = 5 * 60_000 }) {
   const pending = new Map() // state -> { resolve, reject, timer }
   const redirectUri = `${origin}/oauth-callback`
 
-  function begin(clientId) {
+  function begin(clientId, scope) {
+    const scopes = cleanScope(scope)
     const state = crypto.randomBytes(24).toString('base64url')
-    const url = `${AUTH_URL}?${new URLSearchParams({ client_id: clientId, redirect_uri: redirectUri, response_type: 'token', scope: SCOPE, state, prompt: 'select_account', include_granted_scopes: 'false' })}`
+    const url = `${AUTH_URL}?${new URLSearchParams({ client_id: clientId, redirect_uri: redirectUri, response_type: 'token', scope: scopes, state, prompt: 'select_account', include_granted_scopes: 'false' })}`
     const promise = new Promise((resolve, reject) => {
       const timer = setTimeout(() => { pending.delete(state); reject(new Error('Google sign-in was not finished in time. Try again.')) }, timeoutMs)
       pending.set(state, { resolve, reject, timer })
@@ -34,4 +42,4 @@ function createOAuth({ origin, openExternal, timeoutMs = 5 * 60_000 }) {
   return { begin, handleResult, redirectUri, pendingCount: () => pending.size }
 }
 
-module.exports = { createOAuth, AUTH_URL, SCOPE }
+module.exports = { createOAuth, AUTH_URL, SCOPE, ALLOWED, cleanScope }

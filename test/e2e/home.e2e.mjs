@@ -229,7 +229,7 @@ try {
 
   step('countries come from the data file: create it, add the UK and Australia in Finance, and Home follows')
   await topTab('Finance Dashboard').click()
-  await page.getByRole('button', { name: /Create a new encrypted file/ }).click()
+  await page.getByRole('button', { name: /Create a new vault file/ }).click()
   await page.getByLabel('Passphrase', { exact: true }).fill(PASS)
   await page.getByLabel('Confirm passphrase').fill(PASS)
   await page.getByRole('checkbox').check()

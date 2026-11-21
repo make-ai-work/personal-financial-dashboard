@@ -52,7 +52,7 @@ try {
 
   step('Turn off Google: the placeholder sign-in, remembered; the built-in client is not used again until you switch it back on')
   await page.getByRole('button', { name: 'Turn off Google' }).click()
-  await page.getByText('Not set up (demo sign-in)').waitFor()
+  await page.getByText('Not set up').waitFor()
   await page.getByRole('button', { name: 'Sign out' }).click()
   await page.getByText(/Demo sign-in/).waitFor()
   await page.reload()
@@ -65,8 +65,19 @@ try {
 
   step('with the built-in client, Google Drive is offered on the start screen (optional)')
   await page.getByRole('tab', { name: 'Finance Dashboard' }).click()
-  assert.ok(await page.getByRole('button', { name: /Save to Google Drive/ }).isEnabled())
-  assert.ok(await page.getByRole('button', { name: /Create a new encrypted file/ }).isEnabled())
+  assert.ok(await page.getByRole('button', { name: /Create in Google Drive/ }).isEnabled())
+  assert.ok(await page.getByRole('button', { name: /Create a new vault file/ }).isEnabled())
+
+  step('signing in is optional: continue without it, then sign in later from Settings → Account')
+  await page.reload()
+  await page.getByRole('button', { name: 'Continue without signing in' }).click()
+  await page.getByRole('tab', { name: 'Home' }).waitFor()
+  await page.getByRole('button', { name: 'Account', exact: true }).click()
+  await page.getByTestId('who-note').getByText(/not signed in/).waitFor()
+  await page.getByRole('button', { name: 'Sign in with Google' }).click()
+  await page.getByText(/Signed in as/).waitFor()
+  await page.getByText(/sam@example\.com/).waitFor()
+  assert.equal(await page.getByRole('button', { name: 'Sign in with Google' }).count(), 0)
 } catch (e) {
   console.error('FAILED:', e.message)
   process.exitCode = 1
