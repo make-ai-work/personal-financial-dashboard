@@ -214,8 +214,29 @@ it opens Google's sign-in window (Google Identity Services, `src/lib/googleauth.
 `openid email profile`), to show who is signed in. No token is kept: the one-hour access pass is held in memory only and is not revoked (revoking would also remove Google's saved approval). Your data file keeps its own passphrase; Google
 sign-in does not unlock it. **Nothing about who you are is stored**: your name and email stay in memory for the session only, so closing the page ends your session. When the app opens it makes one **quiet attempt** to sign you in (prompt `none`): if Google already has you signed in and you approved this app before, you are in without clicking; otherwise you see the normal button. Browsers may block that quiet attempt, and the Windows app, which signs in through your browser, never makes it. (Earlier versions' stored copies are erased.) Without a client ID (skipped setup) the button is the old placeholder and signs you in as a demo user.
 Google's own two-step verification applies to your Google account; the app's **two-step screen** (`src/auth/`) is still only a
-preview that accepts any 6-digit code. Storing the data file in Google Drive is a later step. The demo site and the Android app
+preview that accepts any 6-digit code. Google Drive storage is optional (see above). The demo site and the Android app
 have no Google sign-in.
+
+## Google Drive storage (optional)
+
+Besides "a file on this computer" you can keep the **encrypted** file in your own Google Drive, so it is on every device you sign in to.
+It is one more choice, never required: the file options (and the Android app's private storage) are unchanged, and the demo, the Windows
+app and the Android app do not offer Drive yet. It needs your Google client ID (see the next section) with the **Google Drive API** enabled
+in your Google Cloud project.
+
+- **Start screen:** **Save to Google Drive** creates the encrypted file in your Drive (the app refuses if one already exists, so nothing is
+  overwritten by mistake); **Open from Google Drive** opens the one this app saved before. From **Settings → Data & security** you can
+  **Move to Google Drive…** (your file on this computer is left as a backup) or go back with **Use a file on this computer instead**.
+- **What leaves your device:** only the encrypted file (`WealthTracker.wvault`). The passphrase and your data never do. The app asks Google for
+  the **`drive.file`** scope: it can only see files this app created, nothing else in your Drive, and it can't read your mail or contacts.
+  The file is visible in My Drive, so you can see it, download it, or restore an earlier version there.
+- **Nothing secret is stored:** Google's access pass lives in memory for about an hour and is renewed quietly while Google still has you
+  signed in. Only the file's id and name are remembered on this device, to find it next time.
+- **If a save cannot reach Drive** (the pass ran out, or you are offline) your changes stay in the open app and the status bar says so, with a
+  **Reconnect Google Drive** button. Keep the app open until it says saved.
+- **Two devices:** a save first checks the file has not changed since you opened it. If another device saved in between, nothing is
+  overwritten: you choose **Keep my changes** (replace the Drive copy) or **Use the Drive version** (drop yours).
+- **Tested with a stand-in for Google and Drive**, not against a real account, so tell me about anything odd.
 
 ## Google setup (first run)
 
@@ -258,4 +279,5 @@ Retirement shows the key results and two charts with the detailed assumptions fo
 - [x] Step 9: Android app, first version (Capacitor; data in the app's private storage; backup/restore; Back button): tested here, **needs a first run on a device**
 - [ ] Next: run it in Android Studio and fix what a device shows; then Google Drive storage
 - [x] Real Google sign-in (name and email only) on the web version
-- [ ] Then: two-step verification, Google Drive storage (web and Android)
+- [x] Optional Google Drive storage (web)
+- [ ] Then: two-step verification, Google Drive on Windows and Android

@@ -81,8 +81,23 @@ export default function Settings() {
             </>
           ) : (
             <>
+          {v.driveEnabled && (
+            <div className="row" data-testid="drive-row">
+              {v.storage === 'drive' ? (
+                <>
+                  <span>Stored in Google Drive<small>Only the encrypted file is in your Drive. If a save cannot reach Google, your changes stay in the open app and you are told, so keep it open until it says saved.</small></span>
+                  <button className="btn" onClick={v.switchFile}>Use a file on this computer instead</button>
+                </>
+              ) : (
+                <>
+                  <span>Google Drive <span className="opt">optional</span><small>Also keep the encrypted file in your own Google Drive. Your file on this computer stays as it is.</small></span>
+                  <button className="btn" onClick={async () => { setMsg(''); try { await v.moveToDrive(); setMsg('Now stored in your Google Drive. The file on this computer is unchanged.') } catch (e) { setMsg(e.message) } }}>Move to Google Drive…</button>
+                </>
+              )}
+            </div>
+          )}
           <div className="row">
-            <span>Data file<small>{v.fileName} · AES-256-GCM, key derived from your passphrase</small></span>
+            <span>Data file<small>{v.fileName}{v.storage === 'drive' ? ' (Google Drive)' : ''} · AES-256-GCM, key derived from your passphrase</small></span>
             <span className="row-actions">
               <button className="btn" onClick={v.lock}>Lock now</button>
               <button className="btn" onClick={v.switchFile}>Change file</button>
