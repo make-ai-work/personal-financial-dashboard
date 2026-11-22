@@ -6,23 +6,62 @@ import { usePhone } from '../lib/usePhone.js'
 const pct = (x, d = 0) => (x * 100).toFixed(d) + '%'
 
 // The middle column: Chance of success, then Results, then Monthly income (planned vs projected). All in today's money.
+function derive({ plan, a, o, A, problems, corOk }) {
+  const target = a.target / 100
+  const onTrack = A ? A.succ >= target : o ? o.shortfall <= 0 : null
+  const status = onTrack === null ? null : <span className={`pill ${onTrack ? 'ok' : 'bad'}`} data-testid="track">{onTrack ? 'On track' : 'Off track'}</span>
+  const fixes = (
+    <>
+      {problems.map((p) => <div className="badrow" key={p}>{p}</div>)}
+      {!corOk && <div className="badrow">The correlations are not mathematically possible together, so nothing can be simulated. Open Advanced and use “Make valid”.</div>}
+      {plan.missingRates && <div className="warnrow">An exchange rate is missing, so some amounts are counted as 0. Open Assets and set the rate.</div>}
+    </>
+  )
+  return { target, status, fixes }
+}
+
+// The chance of success for the plan you are on. It spans the width of the results and charts columns, right under the plan cards' row.
+export function ChanceBox({ plan, a, o, A, busy, problems, corOk }) {
+  const phone = usePhone()
+  const fmt = (n) => moneyCurrency(plan.currency, n)
+  const { target, status, fixes } = derive({ plan, a, o, A, problems, corOk })
+  const cls = !A ? '' : A.succ >= target ? 'big-ok' : A.succ >= target - 0.15 ? 'big-mid' : 'big-bad'
+  return (
+    <div className="panel" data-testid="chance-box">
+      <div className="p-head"><div className="title">Chance of success <span className="sub">{a.n.toLocaleString()} simulations{busy ? ' · calculating…' : ''}</span></div>{status}</div>
+      {fixes}
+      {A ? (
+        <>
+          <div className="pad rbig" style={busy ? { opacity: 0.5 } : undefined}>
+            <b className={cls} data-testid="chance">{pct(A.succ, 1)}</b>
+            <span className="sub">chance your savings last to age {plan.life}</span>
+          </div>
+          <div className="kpis3" style={busy ? { opacity: 0.5 } : undefined}>
+            {[
+              [fmt(A.atRetirement.p50), 'Median savings at retirement'],
+              [`${fmt(A.atRetirement.p10)} – ${fmt(A.atRetirement.p90)}`, '10th to 90th percentile at retirement'],
+              [fmt(A.atEnd.p50), `Median left at age ${plan.life}`],
+              [A.medianDepletion ? `Age ${A.medianDepletion}` : '—', 'Typical age money runs out, where it does'],
+            ].map(([v, l]) => <div className="kpi" key={l}><small>{l}</small><b>{v}</b></div>)}
+          </div>
+          {A.succ >= target
+            ? <div className="okrow">On track: this plan meets your {a.target}% target.</div>
+            : <div className={A.succ >= target - 0.15 ? 'warnrow' : 'badrow'}>Off track: below your {a.target}% target. Spending about <b>{fmt(A.safe)}</b> a year (today's money) would reach it, against {fmt(plan.spend)} now.</div>}
+          {!phone && <div className="pad sub">Success depends heavily on the assumptions. A single percentage looks more precise than it is, so also look at the spread.</div>}
+        </>
+      ) : <div className="pad sub">Fix the items above to see the chance.</div>}
+    </div>
+
+  )
+}
+
 export default function Results({ plan, a, o, A, busy, problems, corOk }) {
   const { demo } = useVault()
   const phone = usePhone()
   const cur = plan.currency
   const fmt = (n) => moneyCurrency(cur, n)
-  const target = a.target / 100
-  const onTrack = A ? A.succ >= target : o ? o.shortfall <= 0 : null
-  const cls = !A ? '' : A.succ >= target ? 'big-ok' : A.succ >= target - 0.15 ? 'big-mid' : 'big-bad'
+  const { status } = derive({ plan, a, o, A, problems, corOk })
   const surplus = o && o.shortfall <= 0
-  const status = onTrack === null ? null : <span className={`pill ${onTrack ? 'ok' : 'bad'}`} data-testid="track">{onTrack ? 'On track' : 'Off track'}</span>
-  const fixes = (
-    <>
-      {problems.map((p) => <div className="badrow" key={p}>{p}</div>)}
-      {!corOk && <div className="badrow">The correlations are not mathematically possible together, so nothing can be simulated. Open Market conditions → Advanced and use “Make valid”.</div>}
-      {plan.missingRates && <div className="warnrow">An exchange rate is missing, so some amounts are counted as 0. Open Assets and set the rate.</div>}
-    </>
-  )
 
   // Monthly income at the start of retirement. Planned = what you said you want to spend; projected = the spending the simulation can keep
   // up to the plan age with your target chance. Income sources come first, savings withdrawals make up the rest.
@@ -35,31 +74,6 @@ export default function Results({ plan, a, o, A, busy, problems, corOk }) {
 
   return (
     <>
-      <div className="panel" data-testid="chance-box">
-        <div className="p-head"><div className="title">Chance of success <span className="sub">{a.n.toLocaleString()} simulations{busy ? ' · calculating…' : ''}</span></div>{status}</div>
-        {fixes}
-        {A ? (
-          <>
-            <div className="pad rbig" style={busy ? { opacity: 0.5 } : undefined}>
-              <b className={cls} data-testid="chance">{pct(A.succ, 1)}</b>
-              <span className="sub">chance your savings last to age {plan.life}</span>
-            </div>
-            <div className="kpis3" style={busy ? { opacity: 0.5 } : undefined}>
-              {[
-                [fmt(A.atRetirement.p50), 'Median savings at retirement'],
-                [`${fmt(A.atRetirement.p10)} – ${fmt(A.atRetirement.p90)}`, '10th to 90th percentile at retirement'],
-                [fmt(A.atEnd.p50), `Median left at age ${plan.life}`],
-                [A.medianDepletion ? `Age ${A.medianDepletion}` : '—', 'Typical age money runs out, where it does'],
-              ].map(([v, l]) => <div className="kpi" key={l}><small>{l}</small><b>{v}</b></div>)}
-            </div>
-            {A.succ >= target
-              ? <div className="okrow">On track: this plan meets your {a.target}% target.</div>
-              : <div className={A.succ >= target - 0.15 ? 'warnrow' : 'badrow'}>Off track: below your {a.target}% target. Spending about <b>{fmt(A.safe)}</b> a year (today's money) would reach it, against {fmt(plan.spend)} now.</div>}
-            {!phone && <div className="pad sub">Success depends heavily on the assumptions. A single percentage looks more precise than it is, so also look at the spread.</div>}
-          </>
-        ) : <div className="pad sub">Fix the items above to see the chance.</div>}
-      </div>
-
       <div className="panel" data-testid="results-box">
         <div className="p-head"><div className="title">Results</div>{status}</div>
         {o && (

@@ -145,14 +145,15 @@ A picture version of this, which also ships with the site, is in
   left (choose All, Mine, Joint, Spouse or Parent; everything converted into your first country's currency; unlock your data to see it),
   and on the right one compact block per country you selected in Finance → Settings: the **city of its main stock exchange**, the **time**
   (AM/PM with a day or night icon), **market open/closed** (or when it opens) and the **weather**. See "Home settings" below.
-- **Retirement** – one page. Across the top are your **saved plans** (up to three; the highlighted one is the plan you are on, with Open, Save
-  changes, Rename and Delete, and "+ New plan" for an empty slot). Below are three columns: **inputs** on the left (your situation including
+- **Retirement** – one page. The left column starts with your **saved plans** (up to three, stacked within the column's width; click a card or Open to choose one; the
+  highlighted one is the plan you are on, with Save changes, Rename and Delete, and "+ New plan" for an empty slot), then the **inputs** (your situation including
   contribution growth, *Savings used* picked from Finance asset accounts, *Inheritance*, *Income in retirement* with the **insurance survivor benefit**
-  tick-box, and market conditions with a staleness warning; the savings and inheritance sections fold to a one-line summary), **results** in the middle
-  (the **chance of success** with On track / Off track at your target, 85% by default; then nest egg needed, projected balance, surplus or shortfall and
-  the extra saving needed; then **monthly income, planned vs projected**) and **charts** on the right (**Projected Net Worth**, **Chance your savings
-  last**, and folded: when it runs out, the 10-year-yield sensitivity table and a comparison of the saved plans). *Advanced* (volatility, correlations,
-  the spending rule, target chance, number of runs and the seed) is under the columns. On a phone the order is plans, results, charts, inputs.
+  tick-box, and market conditions with a staleness warning; the savings and inheritance sections fold to a one-line summary). The **chance of success**
+  (with On track / Off track at your target, 85% by default) spans the width of the other two columns. Under it, in the middle: **results** (nest egg
+  needed, projected balance, surplus or shortfall, extra saving needed) and **monthly income, planned vs projected**; on the right: the **charts**
+  (**Projected Net Worth**, **Chance your savings last**, and folded: when it runs out, the 10-year-yield sensitivity table and a comparison of the saved plans).
+  *Advanced* (volatility, correlations,
+  the spending rule, target chance, number of runs and the seed) is under the columns. On a phone the order is plans, chance of success, results, charts, inputs.
   The simulation is 1,000 to 10,000 random futures in today's money (lognormal real returns per asset class, correlated, rebalanced yearly). The
   starting return, volatility and correlation figures are **placeholders, not forecasts**; edit them. **Inheritance** is a flat amount added to your
   savings in the calendar year you enter, exactly as typed (not inflation-adjusted); past years and years after the plan-to age are ignored. The

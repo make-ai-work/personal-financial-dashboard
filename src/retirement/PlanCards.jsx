@@ -6,7 +6,7 @@ import { todayISO } from '../lib/format.js'
 
 const pct = (x) => (x * 100).toFixed(0) + '%'
 
-// The three saved plans across the top of the page. The highlighted one is the plan you are looking at; the inputs below edit a working copy of it.
+// The three saved plans, stacked in the left column's width. Choosing one (click the card or Open) shows its chance of success wide across the page. The highlighted one is the plan you are looking at; the inputs below edit a working copy of it.
 //   Open         replaces the working copy with that saved plan
 //   Save changes writes the working copy back into the highlighted plan
 //   + Save as new plan  keeps the working copy as another plan (up to three)
@@ -32,7 +32,7 @@ export default function PlanCards({ A, plan, target, busy }) {
         const on = v.id === activeId
         const succ = on && live ? live.succ : v.summary.succ
         return (
-          <div className={`rplan${on ? ' on' : ''}`} key={v.id} data-testid="plan-card" aria-current={on ? 'true' : undefined}>
+          <div className={`rplan${on ? ' on' : ' pick'}`} key={v.id} data-testid="plan-card" aria-current={on ? 'true' : undefined} onClick={on ? undefined : (e) => { if (!e.target.closest('button,input')) update((d) => loadVersion(d, v.id)) }}>
             <div className="row">
               {renaming === v.id
                 ? <input autoFocus defaultValue={v.name} maxLength={40} aria-label="Plan name" onBlur={(e) => { update((d) => renameVersion(d, v.id, e.target.value)); setRenaming(null) }} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} />
