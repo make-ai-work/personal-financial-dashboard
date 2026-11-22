@@ -297,6 +297,11 @@ for it in Google Cloud, so shipping it is safe. It never needs a client *secret*
 - **While your Google project is in "Testing"** only the test users you listed can sign in; publish the consent screen to open it to anyone (no review
   is needed for the scopes used here).
 
+## Country flags
+
+Windows has no flag emoji of its own (it shows letters such as "US"), so the app bundles a small font that only covers the flag characters
+(`src/assets/TwemojiCountryFlags.woff2`, used first in `--font` in `src/theme.css`). Twemoji graphics © Twitter, licensed CC-BY 4.0; font packaging by TalkJS (MIT).
+
 ## Phone
 
 On a phone-sized screen the app shows a simpler layout: tighter spacing, tables keep only name, owner, amount and actions,

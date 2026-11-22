@@ -2,7 +2,7 @@
    Change the look of the whole app here; styles.css only uses these names. */
 :root {
   color-scheme: light;
-  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font: 'Twemoji Country Flags', 'Segoe UI', system-ui, -apple-system, sans-serif;
   --r: 12px;            /* panels, cards */
   --r-sm: 8px;          /* buttons, inputs */
 
