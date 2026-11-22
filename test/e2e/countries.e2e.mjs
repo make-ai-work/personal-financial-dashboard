@@ -80,7 +80,7 @@ try {
   assert.match(t, /\$\s?2,500/) // 1000 + 84000/84 + 400/0.8, in the reporting currency (USD)
   assert.match(t, /India[\s\S]*₹\s?84,000/) // each country in its own currency too
   await subtab(/USA/).click()
-  assert.match(await page.locator('.fx').innerText(), /1 USD = ₹ 84 · £ 0\.8/)
+  assert.match(await page.locator('.fx').innerText(), /🇺🇸 1 = ₹ 84 · £ 0\.8/)
   assert.ok(fetched.some((f) => f === 'USD->INR,GBP'), `one request for both rates, got ${fetched}`)
   assert.ok(await page.locator('.chart circle').count() > 0 || true)
 
@@ -104,9 +104,9 @@ try {
   await page.getByRole('button', { name: 'Move UK up' }).click() // list is USA, UK, India (India re-ticked last)
   assert.ok(await page.getByRole('button', { name: 'Move UK up' }).isDisabled()) // now first
   await fin(); await subtab(/UK/).click()
-  await page.getByText(/1 GBP = /).waitFor()
+  await page.getByText(/🇬🇧 1 = /).waitFor()
   assert.ok(fetched.includes('GBP->USD,INR'), `rates re-fetched from GBP, got ${fetched}`)
-  assert.match(await page.locator('.fx').innerText(), /1 GBP = \$ 1\.25 · ₹ 105/)
+  assert.match(await page.locator('.fx').innerText(), /🇬🇧 1 = \$ 1\.25 · ₹ 105/)
   assert.match(await summaryText(), /£\s?2,000/) // same wealth, same answer, now in GBP
 
   step('a single country hides combined totals and the exchange-rate bar')

@@ -6,6 +6,8 @@ export const COUNTRIES = {
   ch: { code: 'ch', name: 'Switzerland', flag: '🇨🇭', currency: 'CHF', symbol: 'CHF ', locale: 'de-CH' },
 }
 export const COUNTRY_CODES = Object.keys(COUNTRIES)
+// A currency shown as its country's flag (🇺🇸, 🇮🇳, 🇬🇧, ...) instead of its code (USD, INR, ...). Unknown currencies keep their code.
+export const curFlag = (currency) => Object.values(COUNTRIES).find((c) => c.currency === currency)?.flag || currency
 
 export const OWNERS = ['mine', 'joint', 'spouse', 'parent']
 export const ownerLabel = (owner, parentLabel = 'Parent') =>

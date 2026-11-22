@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { cityClock, EXCHANGE_CITIES } from '../lib/exchangecity.js'
 import { marketStatus, EXCHANGES } from '../lib/markets.js'
-import { COUNTRIES, OWNERS, moneyCurrency, ownerLabel } from '../lib/format.js'
+import { COUNTRIES, OWNERS, moneyCurrency, ownerLabel, curFlag } from '../lib/format.js'
 import { describe, loadPlaceWeather } from '../lib/weather.js'
 import { netWorth } from '../lib/networth.js'
 import { homePrefs } from '../lib/homeprefs.js'
@@ -119,7 +119,7 @@ function NetWorthBody({ data, owner, fx }) {
       <div className="nwtop">
         <div className="nwmain">
           <div className="nwbig" data-testid="networth">{nw.ready ? show(nw.total.net) : fx.loading ? 'Loading rates…' : '—'}</div>
-          <div className="sub">in {cur}{multi ? ' · converted at today’s rates' : ''}{fx.source === 'saved' ? ' (saved rates)' : ''}{!nw.ready && !fx.loading ? ' · exchange rates needed: open Finance Dashboard and set them' : ''}</div>
+          <div className="sub">in {curFlag(cur)}{multi ? ' · converted at today’s rates' : ''}{fx.source === 'saved' ? ' (saved rates)' : ''}{!nw.ready && !fx.loading ? ' · exchange rates needed: open Finance Dashboard and set them' : ''}</div>
         </div>
         <div className="nwrows" aria-label="By country">
           {nw.per.map((p) => (
