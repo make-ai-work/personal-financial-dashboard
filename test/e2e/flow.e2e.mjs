@@ -65,7 +65,7 @@ try {
   await page.locator('.who').getByText('Demo User').waitFor()
   await page.getByRole('tab', { name: /💲 Assets/ }).waitFor()
   assert.equal(await page.getByRole('tab', { name: 'Finance Dashboard' }).count(), 0)
-  const nw0 = await page.getByTestId('networth').innerText(); assert.match(nw0, /\d{2,}/)
+  await page.getByTestId('networth').getByText(/\d{2,}/).first().waitFor({ timeout: 15000 }); const nw0 = await page.getByTestId('networth').innerText()
   await page.getByRole('tab', { name: /Assets/ }).click(); await page.getByText('Update date', { exact: true }).waitFor()
   assert.equal(await page.getByRole('button', { name: /Create a new vault file/ }).count(), 0, 'no save options on the Assets tab')
   await page.getByRole('tab', { name: 'Home' }).click()
@@ -107,7 +107,7 @@ try {
   await page.getByTestId('who-note').getByText(/Signed in as/).waitFor(); await page.getByText(/sam@example\.com/).first().waitFor()
   await page.getByTestId('storage-row').waitFor()
   await page.getByRole('tab', { name: 'Home' }).click()
-  assert.equal(await page.getByTestId('networth').innerText(), nw0, 'the sample data went into the vault')
+  await page.waitForFunction((want) => document.querySelector('[data-testid="networth"]')?.innerText === want, nw0, { timeout: 15000 }).catch(async () => assert.equal(await page.getByTestId('networth').innerText(), nw0, 'the sample data went into the vault'))
 
   step('Danger zone: Wipe data asks you to type WIPE, resets the vault and returns to Where to save')
   await page.getByRole('tab', { name: 'Settings' }).click()

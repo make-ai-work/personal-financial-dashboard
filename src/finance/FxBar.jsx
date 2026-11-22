@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { COUNTRIES, curFlag } from '../lib/format.js'
+import { COUNTRIES, curSym } from '../lib/format.js'
 
 const symbolOf = (currency) => Object.values(COUNTRIES).find((c) => c.currency === currency)
 const fmtRate = (currency, r) => {
@@ -7,7 +7,7 @@ const fmtRate = (currency, r) => {
   return `${c.symbol}${r.toLocaleString(c.locale, { maximumFractionDigits: 4 })}`
 }
 
-// Shows "🇺🇸 1 = ₹ 84 · £ 0.78" with its source, and lets you refresh or set the rates by hand.
+// Shows "$1 = ₹84 · £0.78" with its source, and lets you refresh or set the rates by hand.
 export default function FxBar({ fx, note }) {
   const [editing, setEditing] = useState(false)
   const [vals, setVals] = useState({})
@@ -25,7 +25,7 @@ export default function FxBar({ fx, note }) {
       <span>
         Exchange rate:{' '}
         {fx.ready || Object.keys(fx.rates).length
-          ? <b>{curFlag(fx.base)} 1 = {fx.quotes.filter((q) => fx.rates[q] > 0).map((q) => fmtRate(q, fx.rates[q])).join(' · ')}</b>
+          ? <b>{curSym(fx.base)}1 = {fx.quotes.filter((q) => fx.rates[q] > 0).map((q) => fmtRate(q, fx.rates[q])).join(' · ')}</b>
           : <b>unavailable</b>}
         {fx.source && <span className={`tag t-${fx.source}`}>{fx.source}</span>}
         {fx.at && fx.source === 'live' && ` fetched ${fx.at.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}`}
@@ -38,7 +38,7 @@ export default function FxBar({ fx, note }) {
         {editing ? (
           <form onSubmit={submit}>
             {fx.quotes.map((q) => (
-              <input key={q} className="pw sm" inputMode="decimal" aria-label={`${curFlag(fx.base)} 1 in ${curFlag(q)}`} placeholder={`${curFlag(fx.base)} 1 = ? ${curFlag(q)}`}
+              <input key={q} className="pw sm" inputMode="decimal" aria-label={`${curSym(fx.base)}1 in ${curSym(q)}`} placeholder={`${curSym(fx.base)}1 = ? ${curSym(q)}`}
                 value={vals[q] ?? ''} onChange={(e) => setVals({ ...vals, [q]: e.target.value })} />
             ))}
             <button className="btn">Use</button>

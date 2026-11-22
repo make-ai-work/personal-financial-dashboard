@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { COUNTRIES, MIX, parseAmount, curFlag } from '../lib/format.js'
+import { COUNTRIES, MIX, parseAmount, curSym } from '../lib/format.js'
 import { Modal, OwnerPicker } from './ui.jsx'
 
 const str = (v) => (v == null ? '' : String(v))
 
 export function AccountModal({ type, country, initial, locked, parentLabel, onSave, onClose }) {
   const cur = COUNTRIES[country].currency
-  const flag = curFlag(cur)
+  const sym = curSym(cur)
   const isAsset = type === 'asset'
   const [f, setF] = useState({
     name: initial?.name || '',
@@ -52,7 +52,7 @@ export function AccountModal({ type, country, initial, locked, parentLabel, onSa
         </div>
         <div className="two">
           <label className="field">{isAsset ? 'Bank / holding company' : 'Lender'}<input value={f.institution} onChange={set('institution')} /></label>
-          <label className="field">Current balance ({flag})<input inputMode="decimal" value={f.balance} onChange={set('balance')} disabled={locked} />{locked && <small>Comes from the linked portfolio. Change holdings or prices in Portfolio.</small>}</label>
+          <label className="field">Current balance ({sym})<input inputMode="decimal" value={f.balance} onChange={set('balance')} disabled={locked} />{locked && <small>Comes from the linked portfolio. Change holdings or prices in Portfolio.</small>}</label>
         </div>
         <div className="field">Who owns it?<OwnerPicker value={f.owner} onChange={(owner) => setF({ ...f, owner })} parentLabel={parentLabel} /></div>
         {isAsset && !locked && (
@@ -70,7 +70,7 @@ export function AccountModal({ type, country, initial, locked, parentLabel, onSa
             </div>
             <div className="two">
               <label className="field">Deposit maturity date (optional)<input type="date" value={f.maturityDate} onChange={set('maturityDate')} /></label>
-              <label className="field">Value at maturity (optional, {flag})<input inputMode="decimal" value={f.maturityValue} onChange={set('maturityValue')} /></label>
+              <label className="field">Value at maturity (optional, {sym})<input inputMode="decimal" value={f.maturityValue} onChange={set('maturityValue')} /></label>
             </div>
           </>
         )}
@@ -82,7 +82,7 @@ export function AccountModal({ type, country, initial, locked, parentLabel, onSa
 
 export function PolicyModal({ country, initial, parentLabel, onSave, onClose }) {
   const cur = COUNTRIES[country].currency
-  const flag = curFlag(cur)
+  const sym = curSym(cur)
   const [f, setF] = useState({
     name: initial?.name || '', number: initial?.number || '', company: initial?.company || '',
     deathBenefit: str(initial?.deathBenefit), owner: initial?.owner || 'mine',
@@ -115,11 +115,11 @@ export function PolicyModal({ country, initial, parentLabel, onSave, onClose }) 
         </div>
         <div className="two">
           <label className="field">Policy company<input value={f.company} onChange={set('company')} /></label>
-          <label className="field">Death benefit ({flag})<input inputMode="decimal" value={f.deathBenefit} onChange={set('deathBenefit')} /></label>
+          <label className="field">Death benefit ({sym})<input inputMode="decimal" value={f.deathBenefit} onChange={set('deathBenefit')} /></label>
         </div>
         <div className="two">
           <label className="field">Maturity date (optional)<input type="date" value={f.maturityDate} onChange={set('maturityDate')} /></label>
-          <label className="field">Value on maturity (optional, {flag})<input inputMode="decimal" placeholder="none for term policies" value={f.maturityValue} onChange={set('maturityValue')} /></label>
+          <label className="field">Value on maturity (optional, {sym})<input inputMode="decimal" placeholder="none for term policies" value={f.maturityValue} onChange={set('maturityValue')} /></label>
         </div>
         <div className="field">Whose policy?<OwnerPicker value={f.owner} onChange={(owner) => setF({ ...f, owner })} parentLabel={parentLabel} /></div>
         {err && <div className="err">{err}</div>}

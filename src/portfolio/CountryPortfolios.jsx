@@ -2,7 +2,7 @@ import { useVault } from '../finance/VaultContext.jsx'
 import Allocation from './Allocation.jsx'
 import Rebalance from './Rebalance.jsx'
 import PortfolioPanel from './PortfolioPanel.jsx'
-import { COUNTRIES, money, todayISO, curFlag } from '../lib/format.js'
+import { COUNTRIES, money, todayISO, curSym } from '../lib/format.js'
 import { concentration, countryOf, holdingsOf, portfolioTotals, staleHoldings } from '../lib/portfolio.js'
 
 const VIEWS = [['class', 'Asset class'], ['sector', 'Sector'], ['geo', 'Geography'], ['portfolio', 'Portfolio']]
@@ -25,7 +25,7 @@ export default function CountryPortfolios({ code, onAddPortfolio, onAddHolding, 
       <div className="sp-l">
       <div className="panel">
         <div className="p-head">
-          <div className="title">{c.flag} {c.name}</div>
+          <div className="title">{c.flag} {c.name} <span className="cur">{curSym(c.currency)}</span></div>
           <div className="row-actions">
             <button className="btn" onClick={() => onPrices(code)} disabled={!holdings.length}>Update prices</button>
             <button className="btn primary" onClick={() => onAddPortfolio(code)}>+ Add portfolio</button>
@@ -35,7 +35,7 @@ export default function CountryPortfolios({ code, onAddPortfolio, onAddHolding, 
       </div>
 
       {pfs.length === 0 && (
-        <div className="panel"><div className="empty">No portfolios in {c.name} yet. A portfolio is linked to one of your Finance asset accounts; its holdings then drive that account's balance and asset mix.</div></div>
+        <div className="panel"><div className="empty">No portfolios in {c.flag} {c.name} yet. A portfolio is linked to one of your Finance asset accounts; its holdings then drive that account's balance and asset mix.</div></div>
       )}
       {pfs.map((p) => (
         <PortfolioPanel key={p.id} portfolio={p} country={code} account={data.accounts.find((a) => a.id === p.accountId)} staleDays={staleDays}
@@ -44,7 +44,7 @@ export default function CountryPortfolios({ code, onAddPortfolio, onAddHolding, 
       </div>
       <aside className="sp-r">
       {holdings.length > 0 && (
-        <Allocation holdings={holdings} names={names} format={fmt} views={VIEWS} title="Allocation" sub={`all ${c.name} portfolios`}>
+        <Allocation holdings={holdings} names={names} format={fmt} views={VIEWS} title="Allocation" sub={`all ${c.flag} ${c.name} portfolios`}>
           {conc.length > 0
             ? <div className="warnrow">⚠ Above your {limit}% single-stock limit: {conc.map((x) => `${x.holding.name} is ${x.share.toFixed(1)}% of ${x.portfolio.name}`).join(' · ')}</div>
             : <div className="okrow">No single stock is above your {limit}% limit.</div>}
