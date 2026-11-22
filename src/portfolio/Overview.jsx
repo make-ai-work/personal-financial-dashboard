@@ -2,7 +2,7 @@ import { useVault } from '../finance/VaultContext.jsx'
 import FxBar from '../finance/FxBar.jsx'
 import Allocation from './Allocation.jsx'
 import { convert } from '../lib/model.js'
-import { COUNTRIES, money, moneyCurrency, todayISO } from '../lib/format.js'
+import { COUNTRIES, money, moneyCurrency, todayISO, curSym } from '../lib/format.js'
 import { concentration, countryOf, holdingValue, holdingsOf, portfolioTotals, rebalance, staleHoldings } from '../lib/portfolio.js'
 
 const VIEWS = [['class', 'Asset class'], ['geo', 'Geography'], ['ccy', 'Currency']]
@@ -43,10 +43,10 @@ export default function Overview({ fx, onOpenCountry }) {
         <div className="p-head"><div className="title">Portfolio summary</div></div>
         <div className="tblw"><table><thead><tr><th>Country</th><th>Portfolios</th><th>Holdings</th><th>Value</th></tr></thead><tbody>
           {per.map(({ c, t }) => (
-            <tr key={c}><td><button className="link" onClick={() => onOpenCountry(c)}>{COUNTRIES[c].flag} {COUNTRIES[c].name}</button> <span className="cur">{cur(c)}</span></td><td>{t.count}</td><td>{t.holdings}</td><td>{money(c, t.value)}</td></tr>
+            <tr key={c}><td><button className="link" onClick={() => onOpenCountry(c)}>{COUNTRIES[c].flag} {COUNTRIES[c].name}</button> <span className="cur">{curSym(cur(c))}</span></td><td>{t.count}</td><td>{t.holdings}</td><td>{money(c, t.value)}</td></tr>
           ))}
           {multi && codes.slice(0, 1).map((c) => (
-            <tr key={`tot-${c}`} className="total"><td>Total in {cur(c)}</td><td>{per.reduce((s, p) => s + p.t.count, 0)}</td><td>{per.reduce((s, p) => s + p.t.holdings, 0)}</td><td>{fmtc(cur(c), sumIn(cur(c)))}</td></tr>
+            <tr key={`tot-${c}`} className="total"><td>Total in {curSym(cur(c))}</td><td>{per.reduce((s, p) => s + p.t.count, 0)}</td><td>{per.reduce((s, p) => s + p.t.holdings, 0)}</td><td>{fmtc(cur(c), sumIn(cur(c)))}</td></tr>
           ))}
         </tbody></table></div>
         {multi ? <FxBar fx={fx} note="These totals are already inside your Finance totals, through the linked accounts." /> : <div className="fx"><span>These totals are already inside your Finance totals, through the linked accounts.</span></div>}
@@ -55,7 +55,7 @@ export default function Overview({ fx, onOpenCountry }) {
       <aside className="sp-r">
       {converted.length > 0 && (
         <Allocation holdings={converted} names={{}} format={(n) => moneyCurrency(cur(base), n)} views={multi ? VIEWS : VIEWS.slice(0, 2)}
-          title="Combined allocation" sub={multi ? `all countries, in ${cur(base)} at today's rate` : ''} />
+          title="Combined allocation" sub={multi ? `all countries, in ${curSym(cur(base))} at today's rate` : ''} />
       )}
       {!fx.ready && shown.length > 0 && <div className="panel"><div className="empty">The combined allocation needs exchange rates. Press Refresh above or set them manually.</div></div>}
 

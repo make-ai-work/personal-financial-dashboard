@@ -1,5 +1,5 @@
 import { useVault } from '../finance/VaultContext.jsx'
-import { moneyCurrency, COUNTRIES, ownerLabel } from '../lib/format.js'
+import { moneyCurrency, COUNTRIES, ownerLabel, curSym } from '../lib/format.js'
 import { addIncome, assetAccounts, accountCurrency, marketAgeDays, planCurrencies, planProblems, removeIncome, runPlan, setPlan, toggleAccount, updateIncome } from '../lib/retirement.js'
 import { usePhone } from '../lib/usePhone.js'
 import { portfolioFor } from '../lib/portfolio.js'
@@ -40,12 +40,12 @@ export default function PlanPage({ plan, fx }) {
   const accounts = assetAccounts(data)
   const currencies = planCurrencies(data)
   const rateOf = (c) => (c === fx.base ? 1 : fx.rates[c])
-  const rateText = currencies.filter((c) => c !== cur && rateOf(c) > 0 && rateOf(cur) > 0).map((c) => `1 ${cur} = ${(rateOf(c) / rateOf(cur)).toLocaleString('en-US', { maximumFractionDigits: 2 })} ${c}`).join(' · ')
+  const rateText = currencies.filter((c) => c !== cur && rateOf(c) > 0 && rateOf(cur) > 0).map((c) => `${curSym(cur)}1 = ${curSym(c)}${(rateOf(c) / rateOf(cur)).toLocaleString('en-US', { maximumFractionDigits: 2 })}`).join(' · ')
 
   const results = (
     <>
       <div className="panel">
-        <div className="p-head"><div className="title">Results <span className="sub">in {cur}{rateText ? `, at ${rateText}` : ''}</span></div></div>
+        <div className="p-head"><div className="title">Results <span className="sub">in {curSym(cur)}{rateText ? `, at ${rateText}` : ''}</span></div></div>
         {problems.length > 0 && problems.map((p) => <div className="badrow" key={p}>{p}</div>)}
         {plan.missingRates && <div className="warnrow">An exchange rate is missing, so some amounts are counted as 0. Open Finance and set the rate.</div>}
         {o && (
@@ -110,14 +110,14 @@ export default function PlanPage({ plan, fx }) {
           <NumRow label="Current age" value={r.age} onChange={(v) => set({ age: v })} width={90} />
           <NumRow label="Retirement age" value={r.retAge} onChange={(v) => set({ retAge: v })} width={90} />
           <NumRow label="Plan to age" value={r.life} onChange={(v) => set({ life: v })} width={90} />
-          <NumRow label="Annual contribution" hint={`in ${cur}`} value={r.ac} onChange={(v) => set({ ac: v })} />
+          <NumRow label="Annual contribution" hint={`in ${curSym(cur)}`} value={r.ac} onChange={(v) => set({ ac: v })} />
           <NumRow label="Spending in retirement" hint="today's money, per year" value={r.spend} onChange={(v) => set({ spend: v })} />
           {!phone && <NumRow label="Contribution growth / yr (%)" value={r.g} step="0.1" onChange={(v) => set({ g: v })} width={90} />}
           {!phone && <NumRow label="Effective tax on withdrawals (%)" value={r.tax} step="0.5" onChange={(v) => set({ tax: v })} width={90} />}
           {!phone && (
             <Row label="Plan currency">
               <select value={cur} aria-label="Plan currency" onChange={(e) => set({ currency: e.target.value })}>
-                {currencies.map((c) => <option key={c}>{c}</option>)}
+                {currencies.map((c) => <option key={c} value={c}>{curSym(c)}</option>)}
               </select>
             </Row>
           )}
@@ -159,7 +159,7 @@ export default function PlanPage({ plan, fx }) {
               <label>Per year (today's money)
                 <span className="two-in">
                   <input type="number" inputMode="decimal" value={s.amt} aria-label={`${s.name} amount`} onChange={(e) => update((d) => updateIncome(d, s.id, { amt: e.target.value === '' ? '' : Number(e.target.value) }))} />
-                  <select value={s.cur || cur} aria-label={`${s.name} currency`} onChange={(e) => update((d) => updateIncome(d, s.id, { cur: e.target.value }))}>{currencies.map((c) => <option key={c}>{c}</option>)}</select>
+                  <select value={s.cur || cur} aria-label={`${s.name} currency`} onChange={(e) => update((d) => updateIncome(d, s.id, { cur: e.target.value }))}>{currencies.map((c) => <option key={c} value={c}>{curSym(c)}</option>)}</select>
                 </span>
               </label>
               <label>From age<input type="number" value={s.from} aria-label={`${s.name} from age`} onChange={(e) => update((d) => updateIncome(d, s.id, { from: e.target.value === '' ? '' : Number(e.target.value) }))} /></label>

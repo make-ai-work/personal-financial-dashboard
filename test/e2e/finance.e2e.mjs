@@ -55,13 +55,13 @@ try {
 
   step('add accounts and policy in USA')
   await page.getByRole('button', { name: /USA/ }).first().click()
-  await addAccount('+ Add asset', { 'Account name': 'Checking', 'Account number': '000123456821', 'Bank / holding company': 'Chase', 'Current balance (USD)': '8200', 'Cash equivalents': '100' })
-  await addAccount('+ Add asset', { 'Account name': 'Brokerage', 'Account number': 'X55203718', 'Bank / holding company': 'Schwab', 'Current balance (USD)': '96000', Equities: '85', 'Cash equivalents': '10', Bonds: '5' }, 'Joint')
-  await addAccount('+ Add asset', { 'Account name': 'CD', 'Account number': '7710334450', 'Bank / holding company': 'Ally', 'Current balance (USD)': '22000', 'Cash equivalents': '100', 'Deposit maturity date (optional)': '2027-02-01', 'Value at maturity (optional, USD)': '23100' }, 'Parent')
-  await addAccount('+ Add liability', { 'Account name': 'Mortgage', 'Account number': '3300918823', Lender: 'Wells Fargo', 'Current balance (USD)': '78000' }, 'Joint')
+  await addAccount('+ Add asset', { 'Account name': 'Checking', 'Account number': '000123456821', 'Bank / holding company': 'Chase', 'Current balance ($)': '8200', 'Cash equivalents': '100' })
+  await addAccount('+ Add asset', { 'Account name': 'Brokerage', 'Account number': 'X55203718', 'Bank / holding company': 'Schwab', 'Current balance ($)': '96000', Equities: '85', 'Cash equivalents': '10', Bonds: '5' }, 'Joint')
+  await addAccount('+ Add asset', { 'Account name': 'CD', 'Account number': '7710334450', 'Bank / holding company': 'Ally', 'Current balance ($)': '22000', 'Cash equivalents': '100', 'Deposit maturity date (optional)': '2027-02-01', 'Value at maturity (optional, $)': '23100' }, 'Parent')
+  await addAccount('+ Add liability', { 'Account name': 'Mortgage', 'Account number': '3300918823', Lender: 'Wells Fargo', 'Current balance ($)': '78000' }, 'Joint')
   await page.getByRole('button', { name: '+ Add policy' }).click()
   const pm = page.getByRole('dialog')
-  for (const [l, v] of Object.entries({ 'Policy name': 'Term life', 'Policy number': 'POL-100234', 'Policy company': 'AIG', 'Death benefit (USD)': '750000' })) await pm.getByLabel(l).fill(v)
+  for (const [l, v] of Object.entries({ 'Policy name': 'Term life', 'Policy number': 'POL-100234', 'Policy company': 'AIG', 'Death benefit ($)': '750000' })) await pm.getByLabel(l).fill(v)
   await pm.getByRole('button', { name: 'Save' }).click()
 
   step('masking, totals, validation')
@@ -73,7 +73,7 @@ try {
   assert.match(await page.locator('.kpis').innerText(), /\$ 48,200/) // net = 8200+96000+22000-78000
   await page.getByRole('button', { name: '+ Add asset' }).click()
   await page.getByLabel('Account name').fill('Bad mix')
-  await page.getByLabel('Current balance (USD)').fill('1')
+  await page.getByLabel('Current balance ($)').fill('1')
   await page.getByLabel('Equities').fill('50')
   await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click()
   assert.match(await page.getByRole('dialog').innerText(), /must total 100%/)
@@ -84,7 +84,7 @@ try {
   await page.getByRole('button', { name: 'Save update' }).click()
   assert.ok(await page.locator('.banner').count() === 0)
   await page.getByRole('button', { name: 'Edit' }).first().click()
-  await page.getByLabel('Current balance (USD)').fill('9200')
+  await page.getByLabel('Current balance ($)').fill('9200')
   await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click()
   assert.ok(await page.locator('.banner').isVisible()) // unsaved balance change detected
   await page.locator('.upd input[type=date]').fill('2026-10-27')
@@ -99,7 +99,7 @@ try {
   await page.locator('.filterbar .seg').getByRole('button', { name: 'All' }).click()
 
   step('rates bar on the Finance page, and the combined total (now on Home) uses them')
-  await page.getByText('1 USD = ₹ 84').waitFor()
+  await page.getByText('$1 = ₹ 84').waitFor()
   await page.getByRole('tab', { name: 'Home' }).click()
   await page.getByTestId('networth').getByText(/\$\s?49,200/).waitFor() // Checking edited to 9,200 -> net 49,200
   await page.getByRole('tab', { name: /Assets/ }).click()

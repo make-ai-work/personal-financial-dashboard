@@ -250,7 +250,7 @@ try {
   await financeRow('Brokerage').getByRole('button', { name: 'Delete' }).click()
   await page.getByText('Nothing here yet').or(page.getByText('No assets')).first().waitFor().catch(() => {})
   await topTab(/Portfolio/).click(); await subtab(/USA/).click()
-  await page.getByText(/No portfolios in USA yet/).waitFor()
+  await page.getByText(/No portfolios in .*USA yet/).waitFor()
 } catch (e) {
   await page.screenshot({ path: `${OUT}/failure.png`, fullPage: true })
   console.error('FAILED:', e.message)
