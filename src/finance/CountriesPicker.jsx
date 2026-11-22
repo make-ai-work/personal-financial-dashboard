@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { COUNTRIES, COUNTRY_CODES, curFlag } from '../lib/format.js'
+import { COUNTRIES, COUNTRY_CODES, curSym } from '../lib/format.js'
 import { moveCountry, toggleCountry } from '../lib/countries.js'
 
 // Choose which countries a section shows (1-5), in order. The first is the reporting currency.
@@ -33,7 +33,7 @@ export default function CountriesPicker({ value, onChange, describe, noun }) {
               <input type="checkbox" aria-label={`Show ${c.name}`} checked={on} disabled={on && value.length === 1} onChange={() => toggle(code)} />
               <span className="fl">{c.flag}</span>
               <span className="nm">
-                {c.name}
+                {c.name} <span className="cur">{curSym(c.currency)}</span>
                 {on && value[0] === code && <span className="base">reporting currency</span>}
                 <small>{d.text}</small>
               </span>
@@ -54,8 +54,8 @@ export default function CountriesPicker({ value, onChange, describe, noun }) {
       {pending && (
         <div className="pad" style={{ borderTop: '1px solid var(--line)' }}>
           <div className="warn" style={{ margin: 0 }}>
-            Unticking <b>{COUNTRIES[pending].name}</b> will hide {describe(pending).count} {describe(pending).count === 1 ? noun[0] : noun[1]}. Nothing is deleted.{' '}
-            <button className="btn" onClick={confirmHide}>Hide {COUNTRIES[pending].name}</button>{' '}
+            Unticking <b>{COUNTRIES[pending].flag} {COUNTRIES[pending].name}</b> will hide {describe(pending).count} {describe(pending).count === 1 ? noun[0] : noun[1]}. Nothing is deleted.{' '}
+            <button className="btn" onClick={confirmHide}>Hide {COUNTRIES[pending].flag} {COUNTRIES[pending].name}</button>{' '}
             <button className="btn" onClick={() => setPending(null)}>Cancel</button>
           </div>
         </div>
