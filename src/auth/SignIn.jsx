@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { checkAnswer, createLimiter, makeChallenge } from '../lib/humancheck.js'
 import { useAuth } from './AuthContext.jsx'
-import { looksLikeCode } from '../lib/auth.js'
 
 const GoogleMark = () => (
   <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
@@ -43,57 +42,28 @@ function HumanCheck({ onPass }) {
 }
 
 export function SignIn() {
-  const { signIn, continueLocal, demo, googleReady, busy, checking, error } = useAuth()
+  const { signIn, continueDemo, demoSite, googleReady, busy, checking, error } = useAuth()
   const [human, setHuman] = useState(false)
-  if (demo) {
-    return (
-      <div className="panel center narrow">
-        <h2>Welcome</h2>
-        <p className="note">Sign in to open your dashboard. There is no password to remember.</p>
-        <button className="gbtn" disabled title="Not available in the demo"><GoogleMark /> Sign in with Google</button>
-        <button className="btn primary wide" onClick={signIn}>Demo Mode (skip sign in)</button>
-        <div className="warn">
-          <b>This is the demo.</b> Google sign-in is switched off here. Demo Mode opens the app with made-up sample data. You can change anything; nothing is saved or sent anywhere, and a reload resets it.
-        </div>
-      </div>
-    )
-  }
+  // The demo site has no Google and no quick check; everywhere else the real sign-in sits behind the quick check.
+  const googleOff = demoSite || !googleReady
   return (
     <div className="panel center narrow">
       <h2>Welcome</h2>
-      <p className="note">Sign in with Google, or carry on without signing in. Signing in is optional: your data is protected by its own passphrase either way.</p>
-      <HumanCheck onPass={() => setHuman(true)} />
-      <button className="gbtn" onClick={signIn} disabled={busy || !human} title={human ? undefined : 'Answer the quick check first'}><GoogleMark /> {checking ? 'Checking your Google session…' : busy ? 'Opening Google…' : 'Sign in with Google'}</button>
+      <p className="note">{demoSite
+        ? 'This is the demo. Google sign-in is switched off here.'
+        : 'Sign in with Google to keep your own data, or carry on in demo mode with sample data.'}</p>
+      {!googleOff && <HumanCheck onPass={() => setHuman(true)} />}
+      <button className="gbtn" onClick={signIn} disabled={googleOff || busy || !human}
+        title={demoSite ? 'Not available in the demo' : !googleReady ? 'Google sign-in is not set up in this copy of the app' : human ? undefined : 'Answer the quick check first'}>
+        <GoogleMark /> {checking ? 'Checking your Google session…' : busy ? 'Opening Google…' : 'Sign in with Google'}
+      </button>
       {error && <p className="err" role="alert">{error}</p>}
-      <button className="btn wide" onClick={continueLocal} disabled={busy}>Continue without signing in</button>
-      {googleReady ? (
-        <div className="warn">
-          <b>Only your name and email are read</b>, to show who is signed in. Nothing else is requested and nothing is kept. Your data file is still protected by its own passphrase.
-        </div>
-      ) : (
-        <div className="warn">
-          <b>Demo sign-in.</b> Google is not set up on this device yet (Account → Google connection), so this button signs you in as a demo user and sends nothing anywhere. Your data file is still protected by its own passphrase.
-        </div>
-      )}
-    </div>
-  )
-}
-
-// Built but not enforced: authentication is on hold, so this only appears when you turn the preview on.
-export function MfaStep() {
-  const { mfaPassed, mfaCancel } = useAuth()
-  const [code, setCode] = useState('')
-  return (
-    <div className="panel center narrow">
-      <div className="lock">🔐</div>
-      <h2>Two-step verification</h2>
-      <p className="note">Enter the 6-digit code from your authenticator app.</p>
-      <form onSubmit={(e) => { e.preventDefault(); if (looksLikeCode(code)) mfaPassed() }}>
-        <input className="pw center-text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="123456" aria-label="Verification code" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} />
-        <button className="btn primary wide" disabled={!looksLikeCode(code)}>Verify</button>
-      </form>
-      <div className="warn"><b>On hold.</b> The real verification step is not built yet, so any 6-digit code is accepted. This screen only shows where it will go.</div>
-      <button className="link" onClick={mfaCancel}>Cancel</button>
+      <button className="btn wide" onClick={continueDemo} disabled={busy}>Continue without signing in</button>
+      <div className="warn">
+        {googleOff
+          ? <><b>Demo mode.</b> Continue without signing in opens the app as Demo User with made-up sample data. You can change anything; nothing is saved or sent anywhere, and a reload resets it.</>
+          : <><b>Only your name and email are read</b>, to show who is signed in. Nothing else is requested and nothing is kept. Without signing in you get demo mode: sample data, nothing saved.</>}
+      </div>
     </div>
   )
 }

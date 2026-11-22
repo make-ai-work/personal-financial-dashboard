@@ -4,6 +4,7 @@ import { createRequire } from 'node:module'
 import { spawn } from 'node:child_process'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import assert from 'node:assert/strict'
+import { autoSignIn, solveCheck } from './signin.mjs'
 
 const require = createRequire(import.meta.url)
 const { chromium } = require('playwright')
@@ -28,6 +29,7 @@ await ctx.addInitScript(() => {
       remove: async (p) => { const d = disk(); delete d[p]; save(d) },
     },
     share: async ({ name, bytes }) => { window.__shared.push({ name, size: bytes.length }) },
+    google: { login: async () => ({ accessToken: null, profile: { id: '1', email: 'sam@example.com', name: 'Sam Example' } }) }, // the phone's Google account
     app: { onBack: async (cb) => { window.__back = cb; return () => {} }, onState: async (cb) => { window.__state = cb; return () => {} }, exit: () => { window.__exited = true } },
   }
 })
@@ -52,18 +54,20 @@ const showAssets = async () => { const t = page.locator('.ctoggle', { hasText: '
 
 try {
   await page.goto('http://localhost:4184/')
-  step('the app opens straight to Home: no Google setup, no sign-in, no Account button')
-  await page.getByRole('heading', { name: /^Markets · time · weather/ }).waitFor()
-  assert.equal(await page.getByRole('heading', { name: 'Connect your Google account' }).count(), 0)
-  assert.equal(await page.getByRole('button', { name: /Sign in with Google/ }).count(), 0)
-  assert.equal(await page.getByRole('button', { name: 'Account', exact: true }).count(), 0)
+  step('the app opens on the sign-in screen like every other version; signing in uses the phone’s Google account')
+  await page.getByRole('heading', { name: 'Welcome' }).waitFor()
+  assert.equal(await page.getByRole('tab').count(), 0)
+  await page.getByRole('button', { name: 'Continue without signing in' }).waitFor()
+  await solveCheck(page)
+  await page.getByRole('button', { name: /Sign in with Google/ }).click()
+  autoSignIn(page, { stub: false }) // later launches sign in the same way
 
-  step('first launch: "Create your vault" with restore and Excel import; Google Drive is shown as coming later')
-  await topTab('Finance Dashboard').click()
+  step('first launch: Where should your data live? Vault file (inside this app, restore, Excel import) and Google Drive; demo mode greyed out')
   await page.getByRole('heading', { name: 'Where should your data live?' }).waitFor()
   await page.getByText(/Kept inside this app/).first().waitFor()
   await page.getByRole('button', { name: /Restore from a backup file/ }).waitFor()
   await page.getByRole('button', { name: /Create in Google Drive/ }).waitFor() // Drive is offered here too (same choices as everywhere)
+  assert.ok(await page.getByRole('button', { name: /Demo mode – nothing will be saved/ }).isDisabled())
 
   step('creating the vault stores an encrypted file in the app folder (no plaintext, no download)')
   await page.getByRole('button', { name: /Create a new vault file/ }).click()
@@ -72,6 +76,8 @@ try {
   await page.getByLabel('Confirm passphrase').fill(PASS)
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create vault' }).click()
+  await topTab('Home').waitFor() // every sign-in lands on Home
+  await topTab(/Assets/).click()
   await page.getByText('Update date', { exact: true }).waitFor()
   assert.ok('WealthTracker.wvault' in (await disk()))
   await page.getByText(/saved$/).first().waitFor()
@@ -93,12 +99,12 @@ try {
 
   step('relaunch: "Your vault" asks for the passphrase; a wrong one is refused; the right one restores the data')
   await page.reload()
-  await topTab('Finance Dashboard').click()
   await page.getByRole('heading', { name: 'Your vault' }).waitFor()
   await page.getByRole('button', { name: 'Restore from a backup…' }).waitFor(); await page.getByRole('button', { name: 'Delete the vault in this app…' }).waitFor()
   await unlock('not the passphrase')
   await page.getByText(/wrong passphrase|could not|incorrect|failed/i).first().waitFor()
   await unlock(PASS)
+  await topTab(/Assets/).click()
   await page.getByText('Update date', { exact: true }).waitFor()
   await subtab(/USA/).click(); await showAssets(); await page.getByText('Brokerage').first().waitFor()
 
@@ -131,21 +137,21 @@ try {
   await page.getByRole('button', { name: 'Restore…' }).click()
   const [good] = await Promise.all([page.waitForEvent('filechooser'), dialog().getByRole('button', { name: 'Choose a backup file…' }).click()])
   await good.setFiles(`${OUT}/backup.wvault`)
-  await topTab('Finance Dashboard').click() // the unlock screen lives on the Finance tab
   await page.getByRole('heading', { name: 'Your vault' }).waitFor()
   await unlock(PASS)
+  await topTab(/Assets/).click()
   await page.getByText('Update date', { exact: true }).waitFor()
   await subtab(/USA/).click(); await showAssets(); await page.getByText('Brokerage').first().waitFor()
 
   step('Back button: closes a dialog first, then goes to Home, then leaves the app from Home')
   await topTab(/Property/).click()
   await page.getByRole('tab', { name: /Property/, selected: true }).waitFor()
-  await topTab('Finance Dashboard').click()
+  await topTab(/Assets/).click()
   await page.getByRole('button', { name: '+ Add asset' }).click()
   await dialog().waitFor()
   await back() // closes the dialog and nothing else
   await dialog().waitFor({ state: 'detached' })
-  await page.getByRole('tab', { name: 'Finance Dashboard', selected: true }).waitFor()
+  await page.getByRole('tab', { name: /Assets/, selected: true }).waitFor()
   await back() // now Home
   await page.getByRole('tab', { name: 'Home', selected: true }).waitFor()
   await topTab(/Retirement/).click()
@@ -156,7 +162,7 @@ try {
   assert.equal(await page.evaluate(() => !!window.__exited), true)
 
   step('coming back after a long time away locks the vault; a short break does not')
-  await topTab('Finance Dashboard').click()
+  await topTab(/Assets/).click()
   await page.getByText('Update date', { exact: true }).waitFor()
   await page.evaluate(() => { window.__realNow = Date.now; window.__state(false); Date.now = () => window.__realNow() + 60_000; window.__state(true) }) // away 1 minute
   await page.waitForTimeout(300)
@@ -179,13 +185,15 @@ try {
   await page.getByRole('button', { name: 'Delete…' }).click()
   await dialog().getByLabel('Type DELETE to confirm').fill('DELETE')
   await del.click()
-  await topTab('Finance Dashboard').click()
   await page.getByRole('heading', { name: 'Where should your data live?' }).waitFor()
   assert.equal(Object.keys(await disk()).length, 0, 'nothing is left in the app folder')
 
   step('phone layout: no sideways scrolling')
   assert.equal(await overflow(), 0)
-  await topTab('Home').click()
+  await page.getByRole('button', { name: /Create a new vault file/ }).click()
+  await page.getByLabel('Passphrase', { exact: true }).fill(PASS); await page.getByLabel('Confirm passphrase').fill(PASS); await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create vault' }).click()
+  await topTab('Home').waitFor()
   assert.equal(await overflow(), 0)
   await page.screenshot({ path: `${OUT}/phone-home.png`, fullPage: true })
 } catch (e) {

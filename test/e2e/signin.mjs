@@ -20,6 +20,24 @@ export async function signInClick(page) {
   await solveCheck(page)
   await page.getByRole('button', { name: /Sign in with Google/ }).click()
 }
-export function autoSignIn(page) {
+// Stand-in for Google's sign-in script and "who is this" call, so every test can sign in as Sam Example without touching Google.
+const GSI = "window.__clients=[];window.google={accounts:{oauth2:{initTokenClient:function(c){window.__clients.push(c.client_id);return{requestAccessToken:function(o){if(o&&o.prompt==='none'){c.callback({error:'interaction_required'});return}setTimeout(function(){c.callback({access_token:'T',expires_in:3600})},20)}}}}}}"
+export async function stubGoogle(ctx) {
+  await ctx.route(/accounts\.google\.com\/gsi\/client/, (r) => r.fulfill({ contentType: 'text/javascript', body: GSI }))
+  await ctx.route(/googleapis\.com\/oauth2\/v3\/userinfo/, (r) => r.fulfill({ headers: { 'access-control-allow-origin': '*' }, json: { sub: '1', email: 'sam@example.com', name: 'Sam Example', email_verified: true } }))
+}
+// Every page load starts at the sign-in screen (nothing about the user is stored): sign in with Google each time. { stub: false } when the test routes Google itself.
+export function autoSignIn(page, { stub = true } = {}) {
+  if (stub) stubGoogle(page.context())
   page.on('load', async () => { try { await signInClick(page) } catch { /* already past it, or a test that handles sign-in itself */ } })
+}
+
+// Demo mode (no Google): Continue without signing in, then "Demo mode – nothing will be saved". Every page load starts at sign-in again.
+export async function enterDemo(page) {
+  await page.getByRole('button', { name: 'Continue without signing in' }).click()
+  await page.getByRole('button', { name: /Demo mode – nothing will be saved/ }).click()
+  await page.getByRole('status').filter({ hasText: 'DEMO MODE' }).waitFor()
+}
+export function autoDemo(page) {
+  page.on('load', async () => { try { await enterDemo(page) } catch { /* a test that handles sign-in itself */ } })
 }

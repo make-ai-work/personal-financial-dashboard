@@ -16,7 +16,7 @@ await new Promise((r) => setTimeout(r, 2500))
 const browser = await chromium.launch()
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true })
 await ctx.route(/open-meteo\.com/, (r) => r.fulfill({ json: { current: { temperature_2m: 20, relative_humidity_2m: 50, weather_code: 1, wind_speed_10m: 5, us_aqi: 40 }, daily: { time: ['2026-11-16', '2026-11-17'], weather_code: [1, 1], temperature_2m_max: [22, 22], temperature_2m_min: [12, 12] } } })) // Home's weather: not under test here
-await ctx.addInitScript(() => { delete window.showSaveFilePicker; delete window.showOpenFilePicker; localStorage.setItem('google.setupSkipped', '1') })
+await ctx.addInitScript(() => { delete window.showSaveFilePicker; delete window.showOpenFilePicker })
 const PER_USD = { USD: 1, INR: 84, GBP: 0.8, AUD: 1.5, CHF: 0.9 }
 await ctx.route('**/api.frankfurter.dev/**', (r) => {
   const u = new URL(r.request().url())
@@ -57,13 +57,13 @@ const overflow = () => page.evaluate(() => document.documentElement.scrollWidth 
 
 try {
   await page.goto('http://localhost:4179/')
-  await topTab('Finance Dashboard').click()
   step('create the vault and three Finance assets (two USD, one INR)')
   await page.getByRole('button', { name: /Create a new vault file/ }).click()
   await page.getByLabel('Passphrase', { exact: true }).fill(PASS)
   await page.getByLabel('Confirm passphrase').fill(PASS)
   await page.getByRole('checkbox').check()
   await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Create encrypted file' }).click()])
+  await page.getByRole('tab', { name: /Assets/ }).click()
   await page.getByText('Update date', { exact: true }).waitFor()
   await subtab(/USA/).click()
   await addFinanceAsset('Brokerage', 'Schwab', '96000', 'Joint')

@@ -16,7 +16,7 @@ const server = spawn('npx', ['vite', 'preview', '--port', '4183', '--strictPort'
 await new Promise((r) => setTimeout(r, 2500))
 const browser = await chromium.launch()
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, timezoneId: 'America/Chicago', acceptDownloads: true })
-await ctx.addInitScript(() => { Object.defineProperty(document, 'visibilityState', { get: () => window.__hidden ? 'hidden' : 'visible', configurable: true }); delete window.showSaveFilePicker; delete window.showOpenFilePicker; localStorage.setItem('google.setupSkipped', '1') })
+await ctx.addInitScript(() => { Object.defineProperty(document, 'visibilityState', { get: () => window.__hidden ? 'hidden' : 'visible', configurable: true }); delete window.showSaveFilePicker; delete window.showOpenFilePicker })
 
 // ---- stubs ----
 const PER_USD = { USD: 1, INR: 84, GBP: 0.8, AUD: 1.5, CHF: 0.9 }
@@ -81,11 +81,29 @@ const subtab = (name) => page.locator('.subtabs').getByRole('button', { name })
 const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
 const ticker = () => page.getByRole('marquee', { name: 'Market ticker' })
 const openSettings = async () => { await page.getByRole('button', { name: '⚙ Home settings' }).click(); await page.getByLabel('Temperature unit').waitFor() } // the Home part of the Settings tab
+// Nothing about the user is stored, so every reload returns to sign-in and then "Where should your data live?": make a fresh empty vault each time.
+const landHome = async () => {
+  const create = page.getByRole('button', { name: /Create a new vault file/ })
+  await create.waitFor()
+  await create.click()
+  await page.getByLabel('Passphrase', { exact: true }).fill(PASS)
+  await page.getByLabel('Confirm passphrase').fill(PASS)
+  await page.getByRole('checkbox').check()
+  await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Create encrypted file' }).click()])
+  await page.getByRole('tab', { name: 'Home' }).waitFor()
+}
 const saveHome = async () => { await page.getByRole('button', { name: 'Save Home settings' }).click(); await page.getByText('Saved.').waitFor(); await topTab('Home').click() }
 
 try {
   await page.goto('http://localhost:4183/')
-  step('Home is the landing page: one row per country with city, time (AM/PM, day or night icon) and market status; locked data asks to unlock')
+  step('sign in and create the vault: every sign-in lands on Home')
+  await page.getByRole('button', { name: /Create a new vault file/ }).click()
+  await page.getByLabel('Passphrase', { exact: true }).fill(PASS)
+  await page.getByLabel('Confirm passphrase').fill(PASS)
+  await page.getByRole('checkbox').check()
+  await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Create encrypted file' }).click()])
+  await page.getByRole('tab', { name: 'Home' }).waitFor()
+  step('Home is the landing page: one row per country with city, time (AM/PM, day or night icon) and market status; a new empty vault shows zero')
   const ny = page.getByTestId('row-us'), mum = page.getByTestId('row-in')
   await ny.waitFor()
   assert.match(await ny.innerText(), /New York[\s\S]*10:42 AM[\s\S]*Mon[\s\S]*Open[\s\S]*Closes in 5h 18m/)
@@ -93,7 +111,7 @@ try {
   assert.equal(await ny.getByRole('img', { name: 'Daytime' }).count(), 1); assert.equal(await mum.getByRole('img', { name: 'Night' }).count(), 1)
   assert.equal(await page.locator('.hcrow').count(), 2) // USA and India are the default countries
   assert.match(await page.getByLabel('Markets, time and weather').innerText(), /public holidays are not included/i)
-  await page.getByText('Unlock your data to see this.').waitFor()
+  await page.getByTestId('networth').waitFor()
 
   step('weather: no city to set; each row shows its own exchange city, in °F for the US and °C elsewhere, with AQI when there is data')
   await ny.getByText('68°F').waitFor(); await mum.getByText('20°C').waitFor()
@@ -132,7 +150,7 @@ try {
   assert.equal(callsAfterFirst - beforeSave, 3) // one call per group: indices, gold, Bitcoin
 
   step('key and weather persist: after a reload nothing is asked again within the refresh interval')
-  await page.reload()
+  await page.reload(); await landHome()
   await ny.getByText('68°F').waitFor(); await page.getByText(/Prices as of/).waitFor()
   await page.waitForTimeout(500)
   assert.equal(fcs.calls.length, callsAfterFirst, 'cached prices are reused'); assert.equal(meteo.calls, 2, 'cached weather is reused')
@@ -148,7 +166,7 @@ try {
   step('free FCS plan: gold and Bitcoin still show, with a plain note that indices need a stock plan')
   fcs.mode = 'free'
   await page.evaluate(() => localStorage.removeItem('home.quotes'))
-  await page.reload()
+  await page.reload(); await landHome()
   await page.getByText(/does not include index prices/).waitFor()
   const free = await ticker().innerText()
   assert.ok(/Gold[\s\S]*4,120\.55/.test(free) && /Bitcoin[\s\S]*98,450/.test(free) && !/S&P 500[^\n]*6,412/.test(free))
@@ -156,7 +174,7 @@ try {
   step('an invalid key: dashes, an explanation and Try again; fixing it brings prices back')
   fcs.mode = 'badkey'
   await page.evaluate(() => localStorage.removeItem('home.quotes'))
-  await page.reload()
+  await page.reload(); await landHome()
   await page.getByText('Prices unavailable.').waitFor()
   await page.getByText(/key is not valid/).first().waitFor()
   assert.ok((await ticker().innerText()).includes('S&P 500'), 'the strip stays')
@@ -168,7 +186,7 @@ try {
   await page.evaluate(() => { localStorage.removeItem('home.weatherBy'); localStorage.removeItem('home.quotes') })
   const hiddenWx = meteo.calls
   await page.addInitScript(() => { window.__hidden = true })
-  await page.reload()
+  await page.reload(); await landHome()
   await ny.getByText(/°F/).waitFor()
   await page.getByText('6,412.30').first().waitFor()
   assert.ok(meteo.calls > hiddenWx)
@@ -176,7 +194,7 @@ try {
   step('no air quality data: the weather still shows, without an AQI chip')
   await page.evaluate(() => localStorage.removeItem('home.weatherBy'))
   meteo.noAir = true
-  await page.reload()
+  await page.reload(); await landHome()
   await ny.getByText(/°F/).waitFor()
   assert.ok(!/AQI/.test(await ny.innerText()))
   meteo.noAir = false
@@ -184,7 +202,7 @@ try {
   step('weather: a blocked service is explained and Try again recovers')
   meteo.block = true
   await page.evaluate(() => localStorage.removeItem('home.weatherBy'))
-  await page.reload()
+  await page.reload(); await landHome()
   await page.getByText(/Could not reach the weather service[\s\S]*getting the forecast/).first().waitFor({ timeout: 20_000 }) // after two quiet retries
   meteo.block = false
   await ny.getByRole('button', { name: 'Try again' }).click()
@@ -211,7 +229,7 @@ try {
   assert.equal(await page.evaluate(() => localStorage.getItem('home.avKey')), 'MYAVKEY')
   await page.getByText(/refreshed every 6 hours/).waitFor()
   const avCalls = av.calls.length
-  await page.reload(); await page.getByText('Source: Alpha Vantage (index ETFs)').waitFor(); await page.waitForTimeout(400)
+  await page.reload(); await landHome(); await page.getByText('Source: Alpha Vantage (index ETFs)').waitFor(); await page.waitForTimeout(400)
   assert.equal(av.calls.length, avCalls, 'cached: a reload does not use the daily quota')
   av.mode = 'limit'
   await page.getByRole('button', { name: 'Refresh now' }).click()
@@ -227,14 +245,7 @@ try {
   await page.getByText('Source: FCS API').waitFor()
   await ticker().getByText('6,412.30').first().waitFor()
 
-  step('countries come from the data file: create it, add the UK and Australia in Finance, and Home follows')
-  await topTab('Finance Dashboard').click()
-  await page.getByRole('button', { name: /Create a new vault file/ }).click()
-  await page.getByLabel('Passphrase', { exact: true }).fill(PASS)
-  await page.getByLabel('Confirm passphrase').fill(PASS)
-  await page.getByRole('checkbox').check()
-  await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Create encrypted file' }).click()])
-  await page.getByText('Update date', { exact: true }).waitFor()
+  step('countries come from the data file: add the UK and Australia in Settings, and Home follows')
   await page.getByRole('tab', { name: 'Settings' }).click()
   await page.locator('#set-countries').getByLabel('Show United Kingdom').check().catch(async () => page.locator('#set-countries').getByLabel('Show UK').check())
   await page.locator('#set-countries').getByLabel('Show Australia').check()
@@ -262,7 +273,7 @@ try {
   assert.match(await nw.getByTestId('networth').innerText(), /^\$\s?0$/)
   await nw.getByRole('button', { name: 'Spouse' }).click()
   assert.equal(await page.evaluate(() => localStorage.getItem('home.owner')), 'spouse')
-  await page.reload()
+  await page.reload(); await landHome()
   assert.equal(await page.getByLabel('Total net worth').locator('button.on').innerText(), 'Spouse')
 
   step('desktop layout: 70 : 30; Summary and ownership side by side (half each) in the 70%; the right column holds net worth and the countries')

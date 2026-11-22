@@ -117,3 +117,8 @@ export const currentVersion = async (id, opts = {}) => (await (await call(`${API
 export async function deleteVault(id, opts = {}) {
   await call(`${API}/files/${encodeURIComponent(id)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ trashed: true }) }, opts)
 }
+
+// Permanently delete the vault file (not the bin). Used only by "Wipe data". Only a file this app made.
+export async function wipeVault(id, opts = {}) {
+  await call(`${API}/files/${encodeURIComponent(id)}`, { method: 'DELETE' }, opts)
+}

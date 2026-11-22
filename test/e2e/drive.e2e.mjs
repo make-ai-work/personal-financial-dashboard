@@ -46,6 +46,7 @@ const routeDrive = async (route) => {
   const m = /^\/(?:upload\/)?drive\/v3\/files\/([^/]+)$/.exec(u.pathname)
   if (m) {
     const f = drive.files.get(m[1]); if (!f) return json({ error: { message: 'File not found' } }, 404)
+    if (method === 'DELETE') { drive.files.delete(m[1]); return route.fulfill({ status: 204, headers: cors }) } // gone for good
     if (method === 'PATCH' && /json/.test(req.headers()['content-type'] || '')) { if (JSON.parse(req.postData()).trashed) drive.files.delete(m[1]); return json({}) } // moved to the bin
     if (method === 'PATCH') { f.bytes = req.postDataBuffer(); f.modifiedTime = stamp(); return json({ modifiedTime: f.modifiedTime }) }
     if (u.searchParams.get('alt') === 'media') return route.fulfill({ status: 200, headers: cors, contentType: 'application/octet-stream', body: f.bytes })
@@ -61,7 +62,7 @@ async function newPage(ctx) {
   await ctx.route(/www\.googleapis\.com\/(upload\/)?drive\//, routeDrive)
   await ctx.route(/open-meteo|fcsapi|frankfurter/, (r) => r.abort('failed'))
   const page = await ctx.newPage()
-  autoSignIn(page)
+  autoSignIn(page, { stub: false })
   return page
 }
 const errors = []
@@ -69,22 +70,6 @@ const step = (s) => console.log('•', s)
 const base = `http://localhost:${PORT}`
 
 try {
-  // ---------- without Google set up: Drive is offered but off, and every other choice is there ----------
-  {
-    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } })
-    await ctx.addInitScript(() => { delete window.showSaveFilePicker; delete window.showOpenFilePicker; localStorage.setItem('google.setupSkipped', '1') })
-    const page = await newPage(ctx)
-    page.on('pageerror', (e) => errors.push(e.message))
-    await page.goto(`${base}/`)
-    await page.getByRole('tab', { name: 'Finance Dashboard' }).click()
-    step('no client ID: Drive is shown as optional but off, with the reason; the file options are all there')
-    for (const n of [/Create a new vault file/, /Open an existing vault file/, /Import from an Excel file/]) assert.ok(await page.getByRole('button', { name: n }).isEnabled())
-    const off = page.getByRole('button', { name: /Create in Google Drive/ })
-    assert.ok(await off.isDisabled()); assert.match(await off.innerText(), /Needs a Google client ID first/i)
-    assert.equal(await page.getByRole('button', { name: /Open from Google Drive/ }).count(), 0)
-    await ctx.close()
-  }
-
   // ---------- with Google set up ----------
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } })
   await ctx.addInitScript((id) => { delete window.showSaveFilePicker; delete window.showOpenFilePicker; localStorage.setItem('google.clientId', id); localStorage.setItem('test.gsi', 'on') }, ID)
@@ -92,10 +77,9 @@ try {
   page.on('pageerror', (e) => errors.push(e.message))
   page.on('console', (m) => m.type() === 'error' && !/401|ERR_FAILED/.test(m.text()) && errors.push(m.text()))
   await page.goto(`${base}/`)
-  await page.getByRole('tab', { name: 'Home' }).waitFor() // the quiet sign-in worked
+  await page.getByRole('heading', { name: 'Where should your data live?' }).waitFor() // the quiet sign-in worked
 
-  step('Drive is an extra choice next to the file options (nothing is forced)')
-  await page.getByRole('tab', { name: 'Finance Dashboard' }).click()
+  step('Where to save: Drive sits next to the vault file options (both need the Google sign-in; demo mode is greyed out)')
   for (const n of [/Create a new vault file/, /Open an existing vault file/, /Import from an Excel file/, /Create in Google Drive/, /Open from Google Drive/]) assert.ok(await page.getByRole('button', { name: n }).isEnabled(), String(n))
 
   step('create the vault in Drive: the passphrase never leaves the device; only a WVLT1 ciphertext file is uploaded')
@@ -105,6 +89,8 @@ try {
   await page.getByLabel('Confirm passphrase').fill(PASS)
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create in Google Drive' }).click()
+  await page.getByRole('tab', { name: 'Home', selected: true }).waitFor()
+  await page.getByRole('tab', { name: /Assets/ }).click()
   await page.getByText('Update date', { exact: true }).waitFor()
   await page.getByText(/WealthTracker\.wvault · Google Drive · encrypted · saved/).waitFor()
   assert.equal(drive.files.size, 1)
@@ -130,12 +116,11 @@ try {
 
   step('after a reload the app finds the Drive file again and only needs the passphrase')
   await page.reload()
-  await page.getByRole('tab', { name: 'Home' }).waitFor()
-  await page.getByRole('tab', { name: 'Finance Dashboard' }).click()
   await page.getByText('Stored in your Google Drive.').waitFor()
   await page.getByPlaceholder('Passphrase').fill('wrong passphrase here'); await page.getByRole('button', { name: 'Unlock' }).click()
   await page.getByText('Wrong passphrase or damaged file.').waitFor()
   await page.getByPlaceholder('Passphrase').fill(PASS); await page.getByRole('button', { name: 'Unlock' }).click()
+  await page.getByRole('tab', { name: /Assets/ }).click()
   await page.getByText('Update date', { exact: true }).waitFor()
   await page.locator('.ctoggle', { hasText: 'Assets' }).waitFor()
   if ((await page.locator('.ctoggle', { hasText: 'Assets' }).getAttribute('aria-expanded')) === 'false') await page.locator('.ctoggle', { hasText: 'Assets' }).click()
@@ -191,10 +176,10 @@ try {
   await page.getByText(/cannot save to a chosen location/).waitFor()
   await row.getByText('Google Drive · WealthTracker.wvault').waitFor()
   await page.getByRole('button', { name: 'Switch vault' }).click()
-  await page.getByRole('tab', { name: 'Finance Dashboard' }).click()
   await page.getByRole('button', { name: /Create a new vault file/ }).click()
   await page.getByLabel('Passphrase', { exact: true }).fill(PASS); await page.getByLabel('Confirm passphrase').fill(PASS); await page.getByRole('checkbox').check()
   await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Create encrypted file' }).click()])
+  await page.getByRole('tab', { name: /Assets/ }).click()
   await page.getByText('Update date', { exact: true }).waitFor()
   assert.equal(await page.evaluate(() => localStorage.getItem('vault.drive')), null, 'the Drive choice was dropped')
 
@@ -208,6 +193,14 @@ try {
   await page.getByText(/Moved to your Google Drive/).waitFor()
   assert.equal(drive.files.size, 1); assert.equal([...drive.files.values()][0].bytes.subarray(0, 5).toString(), 'WVLT1')
   await row.getByText('Google Drive · WealthTracker.wvault').waitFor()
+
+  step('Danger zone: Wipe data deletes the Drive file for good and returns to Where to save')
+  await page.getByRole('tab', { name: 'Settings' }).click()
+  assert.equal(drive.files.size, 1)
+  await page.locator('#set-danger').getByRole('button', { name: 'Wipe data…' }).click()
+  await page.getByLabel('Type WIPE to confirm').fill('WIPE'); await page.getByRole('dialog').getByRole('button', { name: 'Wipe data' }).click()
+  await page.getByRole('heading', { name: 'Where should your data live?' }).waitFor()
+  assert.equal(drive.files.size, 0, 'the vault in Drive is erased'); assert.equal(await page.evaluate(() => localStorage.getItem('vault.drive')), null)
 
   step('phone width: no sideways scrolling on the start screen')
   await page.setViewportSize({ width: 390, height: 844 })
@@ -235,12 +228,11 @@ try {
     page.on('pageerror', (e) => errors.push(e.message))
     const disk = () => page.evaluate(() => JSON.parse(localStorage.getItem('fakeDisk') || '{}'))
     await page.goto(`${base}/`)
-    await page.getByRole('tab', { name: 'Finance Dashboard' }).click()
-    await page.getByRole('button', { name: /Create in Google Drive/ }).waitFor()
+    await page.getByRole('button', { name: /Create in Google Drive/ }).waitFor() // signed in through the phone; Where should your data live?
     await page.getByRole('button', { name: /Create a new vault file/ }).click()
     await page.getByLabel('Passphrase', { exact: true }).fill(PASS); await page.getByLabel('Confirm passphrase').fill(PASS); await page.getByRole('checkbox').check()
     await page.getByRole('button', { name: 'Create vault' }).click()
-    await page.getByText('Update date', { exact: true }).waitFor()
+    await page.getByRole('tab', { name: 'Home', selected: true }).waitFor()
     assert.equal(Object.keys(await disk()).filter((k) => !k.endsWith('.tmp')).length, 1, 'the vault is inside the app')
 
     await page.getByRole('tab', { name: 'Settings' }).click()
@@ -271,9 +263,8 @@ try {
     await row.getByText('Vault file · inside this app').waitFor()
     assert.equal(drive.files.size, 1, 'the Drive copy was not deleted by the move')
     await page.reload()
-    await page.getByRole('tab', { name: 'Finance Dashboard' }).click()
     await page.getByPlaceholder('Passphrase').fill(PASS); await page.getByRole('button', { name: 'Unlock' }).click()
-    await page.getByText('Update date', { exact: true }).waitFor()
+    await page.getByRole('tab', { name: 'Home', selected: true }).waitFor()
     await page.getByRole('tab', { name: 'Settings' }).click()
     await old.getByText(/still in your Google Drive/).waitFor()
     await old.getByRole('button', { name: 'Delete old copy…' }).click()
@@ -282,11 +273,9 @@ try {
     assert.equal(drive.files.size, 0, 'the Drive copy is now deleted (moved to the bin)')
     assert.equal(Object.keys(await disk()).filter((k) => !k.endsWith('.tmp')).length, 1, 'the vault in the app is untouched')
 
-    step('Android: signing in is optional too; it is offered in Settings → Account and uses the phone’s Google account')
-    await page.getByTestId('who-note').getByText(/not signed in/).waitFor()
-    await page.getByRole('button', { name: 'Sign in with Google' }).click()
-    await page.getByText(/Signed in as/).waitFor(); await page.getByText(/sam@example\.com/).waitFor()
-    assert.deepEqual(await page.evaluate(() => window.__logins.at(-1)), [], 'identity only: no extra permissions')
+    step('Android: signing in used the phone’s Google account with identity only, and nothing about the user is stored')
+    await page.getByTestId('who-note').getByText(/Signed in as Sam Example/).waitFor()
+    assert.deepEqual(await page.evaluate(() => window.__logins[0]), [], 'identity only: no extra permissions at sign-in')
     assert.equal(await page.evaluate(() => JSON.stringify(localStorage)).then((j) => /sam@example|Sam Example/.test(j)), false, 'nothing about the user is stored')
     await ctx.close()
   }

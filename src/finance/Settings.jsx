@@ -76,9 +76,10 @@ export default function Settings() {
           </div>
           <div className="row" data-testid="move-row">
             <span>Move your data<small>Copies the encrypted vault, checks the copy opens, then switches. Your current copy is left untouched until you delete it.</small></span>
-            {v.storage === 'drive'
-              ? <button className="btn" onClick={async () => { setMsg(''); try { if (await v.moveToFile()) setMsg('Moved to a vault file. Your Google Drive copy is still there; see below.') } catch (e) { setMsg(e.message) } }}>Move to a vault file…</button>
-              : <button className="btn" disabled={!v.driveEnabled} title={v.driveEnabled ? undefined : 'Add a Google client ID first (Account)'} onClick={async () => { setMsg(''); try { await v.moveToDrive(); setMsg('Moved to your Google Drive. Your previous copy is still there; see below.') } catch (e) { setMsg(e.message) } }}>Move to Google Drive…</button>}
+            <span className="row-actions">
+              <button className="btn" disabled={v.storage !== 'drive'} title={v.storage === 'drive' ? undefined : 'Current location'} onClick={async () => { setMsg(''); try { if (await v.moveToFile()) setMsg('Moved to a vault file. Your Google Drive copy is still there; see below.') } catch (e) { setMsg(e.message) } }}>{v.storage === 'drive' ? 'Move to a vault file…' : 'Vault file (current)'}</button>
+              <button className="btn" disabled={v.storage === 'drive' || !v.driveEnabled} title={v.storage === 'drive' ? 'Current location' : v.driveEnabled ? undefined : 'Google sign-in is not set up in this copy of the app'} onClick={async () => { setMsg(''); try { await v.moveToDrive(); setMsg('Moved to your Google Drive. Your previous copy is still there; see below.') } catch (e) { setMsg(e.message) } }}>{v.storage === 'drive' ? 'Google Drive (current)' : 'Move to Google Drive…'}</button>
+            </span>
           </div>
           {v.oldCopy && (
             <div className="warn" data-testid="old-copy">

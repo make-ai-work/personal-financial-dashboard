@@ -16,7 +16,7 @@ await new Promise((r) => setTimeout(r, 2500))
 const browser = await chromium.launch()
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true })
 await ctx.route(/open-meteo\.com/, (r) => r.fulfill({ json: { current: { temperature_2m: 20, relative_humidity_2m: 50, weather_code: 1, wind_speed_10m: 5, us_aqi: 40 }, daily: { time: ['2026-11-16', '2026-11-17'], weather_code: [1, 1], temperature_2m_max: [22, 22], temperature_2m_min: [12, 12] } } })) // Home's weather: not under test here
-await ctx.addInitScript(() => { delete window.showSaveFilePicker; delete window.showOpenFilePicker; localStorage.setItem('google.setupSkipped', '1') }) // start signed in
+await ctx.addInitScript(() => { delete window.showSaveFilePicker; delete window.showOpenFilePicker }) // start signed in
 const PER_USD = { USD: 1, INR: 84, GBP: 0.8, AUD: 1.5, CHF: 0.9 }
 await ctx.route('**/api.frankfurter.dev/**', (r) => {
   const u = new URL(r.request().url())
@@ -69,13 +69,13 @@ const financeRow = (name) => page.getByRole('row', { name: new RegExp(name) })
 
 try {
   await page.goto('http://localhost:4178/')
-  await topTab('Finance Dashboard').click()
   step('create the vault, then two Finance asset accounts with typed balances')
   await page.getByRole('button', { name: /Create a new vault file/ }).click()
   await page.getByLabel('Passphrase', { exact: true }).fill(PASS)
   await page.getByLabel('Confirm passphrase').fill(PASS)
   await page.getByRole('checkbox').check()
   await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Create encrypted file' }).click()])
+  await page.getByRole('tab', { name: /Assets/ }).click()
   await page.getByText('Update date', { exact: true }).waitFor()
   await subtab(/USA/).click()
   await addFinanceAsset('Brokerage', 'Schwab', '96000', 'Joint')
@@ -115,7 +115,7 @@ try {
   assert.match(pfText, /linked to Finance: Brokerage · Schwab/)
 
   step('Finance now follows the portfolio: balance unchanged, tag shown, mix derived from holdings, balance locked')
-  await topTab('Finance Dashboard').click()
+  await topTab(/Assets/).click()
   await subtab(/USA/).click()
   let row = await financeRow('Brokerage').innerText()
   assert.match(row, /from portfolio/)
@@ -142,7 +142,7 @@ try {
   assert.equal(await b2.getByRole('radio').count(), 0)
   await b2.getByRole('button', { name: 'Finish linking' }).click()
   await b2.waitFor({ state: 'detached' })
-  await topTab('Finance Dashboard').click(); await subtab(/USA/).click()
+  await topTab(/Assets/).click(); await subtab(/USA/).click()
   assert.match(await financeRow('401\\(k\\)').innerText(), /\$ 194,000/)
 
   step('allocation by class and portfolio, concentration limit, price age')
@@ -181,12 +181,12 @@ try {
   step('add the missing gold ETF with an old price, then clear the unallocated line: Finance returns to $96,000')
   await addHolding(P, { name: 'SPDR Gold Shares', ticker: 'GLD', units: 20, price: 250, date: '2026-08-19' }, { cls: 'Precious metals', sector: 'Commodities', geo: 'Global' })
   assert.match(await page.locator('.warnrow').filter({ hasText: 'Old prices' }).innerText(), /SPDR Gold Shares \(73 days\)/)
-  await topTab('Finance Dashboard').click(); await subtab(/USA/).click()
+  await topTab(/Assets/).click(); await subtab(/USA/).click()
   assert.match(await financeRow('Brokerage').innerText(), /\$ 101,000/) // holdings 96,000 + unallocated 5,000
   await topTab(/Portfolio/).click(); await subtab(/USA/).click()
   accept()
   await panelOf(P).getByRole('row', { name: /Unallocated/ }).getByRole('button', { name: 'Delete' }).click()
-  await topTab('Finance Dashboard').click(); await subtab(/USA/).click()
+  await topTab(/Assets/).click(); await subtab(/USA/).click()
   row = await financeRow('Brokerage').innerText()
   assert.match(row, /\$ 96,000/); assert.match(row, /Metals 5\.2/)
 
@@ -198,7 +198,7 @@ try {
   await dialog().getByRole('button', { name: 'Save prices' }).click()
   await dialog().waitFor({ state: 'detached' })
   assert.equal(await page.locator('.warnrow').filter({ hasText: 'Old prices' }).count(), 0)
-  await topTab('Finance Dashboard').click(); await subtab(/USA/).click()
+  await topTab(/Assets/).click(); await subtab(/USA/).click()
   assert.match(await financeRow('Brokerage').innerText(), /\$ 96,248/) // + 20 x 12.40
 
   step('overview: totals, attention list')
@@ -243,7 +243,7 @@ try {
   await topTab(/Portfolio/).click(); await subtab(/USA/).click()
   accept()
   await panelOf(K).getByRole('button', { name: 'Delete portfolio' }).click()
-  await topTab('Finance Dashboard').click(); await subtab(/USA/).click()
+  await topTab(/Assets/).click(); await subtab(/USA/).click()
   row = await financeRow('401\\(k\\)').innerText()
   assert.match(row, /\$ 194,000/); assert.ok(!/from portfolio/.test(row)) // plain account again, mix kept
   accept()

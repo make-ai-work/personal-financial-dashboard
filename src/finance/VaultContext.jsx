@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { decryptVault, encryptVault, newSession, parseVault } from '../lib/vault.js'
 import { emptyData, normalizeData } from '../lib/model.js'
-import { IS_DEMO, loadDemoData } from '../lib/demo.js'
+import { loadDemoData } from '../lib/demo.js'
 import {
   APP_HANDLE, download, driveHandle, driveRemembered, ensurePermission, forgetHandle, hasFS, isAbort, isDesktop, pickNewVaultHandle, pickVault,
   readHandle, recallHandle, rememberHandle, writeHandle,
@@ -27,8 +27,11 @@ const describe = (h) => (h.kind === 'drive' ? { kind: 'drive', name: h.name, id:
 export function VaultProvider({ children }) {
   const auth = useAuth()
   drive.setDriveClient(auth.clientId) // before anything below may need Drive
-  const driveEnabled = !IS_DEMO && isClientId(auth.clientId || '') // an extra choice on every version (web, Windows, Android), never required
-  const [phase, setPhase] = useState('loading') // loading | start | locked | unlocked
+  const driveEnabled = auth.real && isClientId(auth.clientId || '') // Google Drive is one of the two places to keep your data; it needs a Google sign-in
+  const [phase, setPhase] = useState('loading') // loading | start (nothing chosen yet) | locked | unlocked
+  const [demo, setDemo] = useState(false) // demo mode: sample data in memory, nothing saved (until you sign in and choose where to keep your data)
+  const demoRef = useRef(false)
+  const setDemoMode = (on) => { demoRef.current = on; setDemo(on) }
   const [data, setData] = useState(null)
   const [fileName, setFileName] = useState('')
   const [saveState, setSaveState] = useState('saved') // saved | saving | unsaved | error
@@ -49,18 +52,7 @@ export function VaultProvider({ children }) {
 
   useEffect(() => {
     let live = true
-    if (IS_DEMO) {
-      // Demo: sample data, kept in memory only. No file, passphrase or saving.
-      loadDemoData().then((d) => {
-        if (!live) return
-        dataRef.current = d
-        setData(d)
-        setFileName('Sample data')
-        setSaveState('saved')
-        setPhase('unlocked')
-      })
-      return () => { live = false }
-    }
+    if (!auth.real) { setPhase('start'); return undefined } // not signed in: only demo mode is on offer
     ;(async () => {
       const h = hasFS() || isNativeApp() || driveRemembered() ? await recallHandle() : null
       if (!live) return
@@ -72,11 +64,23 @@ export function VaultProvider({ children }) {
       } else setPhase('start')
     })()
     return () => { live = false }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // "Demo mode – nothing will be saved": sample data in memory. Signing in later (Settings) lets you keep it by choosing where to save.
+  const startDemo = useCallback(async () => {
+    const d = await loadDemoData()
+    dataRef.current = d
+    session.current = null
+    setData(d)
+    setFileName('Sample data')
+    setSaveState('saved')
+    setDemoMode(true)
+    setPhase('unlocked')
   }, [])
 
   const persist = useCallback(() => {
     chain.current = chain.current.then(async () => {
-      if (!session.current || !dataRef.current) return
+      if (demoRef.current || !session.current || !dataRef.current) return
       setSaveState('saving')
       try {
         const out = await encryptVault(session.current, dataRef.current)
@@ -104,13 +108,14 @@ export function VaultProvider({ children }) {
     const next = fn(dataRef.current)
     dataRef.current = next
     setData(next)
-    if (IS_DEMO) return // nothing is saved in the demo
+    if (demoRef.current) return // nothing is saved in demo mode
     setSaveState('unsaved')
     clearTimeout(timer.current)
     timer.current = setTimeout(persist, 500)
   }, [persist])
 
   const start = useCallback((initial, sess, h, name) => {
+    setDemoMode(false) // a real vault now: the demo data (if any) is what it starts with
     session.current = sess
     setHandle(h)
     dataRef.current = initial
@@ -156,6 +161,7 @@ export function VaultProvider({ children }) {
       if (isNativeApp()) { await appVault.write(f.bytes); h = APP_HANDLE } // restoring a backup: the app keeps its own copy
       // whatever was open is gone: a pending autosave must never overwrite the file that was just opened
       clearTimeout(timer.current)
+      setDemoMode(false)
       dataRef.current = null
       session.current = null
       setData(null)
@@ -213,7 +219,7 @@ export function VaultProvider({ children }) {
   }, [])
 
   const lock = useCallback(async () => {
-    if (IS_DEMO) return
+    if (demoRef.current) return
     clearTimeout(timer.current)
     if (dataRef.current) await persist()
     dataRef.current = null
@@ -241,7 +247,7 @@ export function VaultProvider({ children }) {
   // Auto-lock after idle time.
   const autoLockMin = data?.settings?.autoLockMin
   useEffect(() => {
-    if (IS_DEMO || phase !== 'unlocked' || !autoLockMin) return
+    if (demo || phase !== 'unlocked' || !autoLockMin) return
     let t
     const arm = () => {
       clearTimeout(t)
@@ -254,7 +260,7 @@ export function VaultProvider({ children }) {
       clearTimeout(t)
       evts.forEach((e) => window.removeEventListener(e, arm))
     }
-  }, [phase, autoLockMin, lock])
+  }, [phase, autoLockMin, lock, demo])
 
   // Warn before closing the tab while a download-only vault has unsaved changes.
   useEffect(() => {
@@ -296,6 +302,7 @@ export function VaultProvider({ children }) {
       const r = await drive.readVault(f.id)
       parseVault(r.bytes)
       clearTimeout(timer.current)
+      setDemoMode(false)
       dataRef.current = null
       session.current = null
       pending.current = null
@@ -401,10 +408,39 @@ export function VaultProvider({ children }) {
     } catch (e) { setError(e.message) }
   }, [persist])
 
+  // Danger zone: reset the vault and erase the data in its current storage. The vault file / Drive file is deleted (a browser file that cannot
+  // be deleted is emptied instead), what this device remembers about it is forgotten, and the app returns to "Where should your data live?".
+  const wipe = useCallback(async () => {
+    clearTimeout(timer.current)
+    const h = handle.current
+    if (h?.kind === 'app') await appVault.remove()
+    else if (h?.kind === 'drive') { await drive.connectDrive(); await drive.wipeVault(h.id) } // permanently, not just to the bin
+    else if (h?.kind === 'desktop') await window.desktopApp.deleteVault(h.path)
+    else if (h?.createWritable) {
+      try { const w = await h.createWritable(); await w.write(new Uint8Array(0)); await w.close() } catch { throw new Error('The file could not be erased. Check that this browser still has permission to it, then try again.') }
+      try { await h.remove?.() } catch { /* emptied is enough where deleting is not allowed */ }
+    }
+    await forgetHandle()
+    writeOld(null); setOldCopy(null)
+    dataRef.current = null
+    session.current = null
+    bytes.current = null
+    pending.current = null
+    needsDownload.current = false
+    setHandle(null)
+    setData(null)
+    setFileName('')
+    setCanWrite(false)
+    setError('')
+    setSaveState('saved')
+    setDemoMode(false)
+    setPhase('start')
+  }, [])
+
   const value = {
     driveEnabled, storage, createInDrive, openFromDrive, moveToDrive, moveToFile, reconnectDrive, resolveConflict,
     oldCopy, canDeleteOldCopy: canDeleteOld(oldCopy, { desktop: isDesktop() }), deleteOldCopy, keepOldCopy,
-    demo: IS_DEMO, resetDemo,
+    demo, startDemo, resetDemo, wipe,
     phase, data, fileName, saveState, canWrite, error, setError,
     update, create, openFile, unlock, lock, switchFile, changePassphrase, downloadNow, exportBackup, deleteAppVault,
     isApp: isNativeApp(),
