@@ -152,3 +152,39 @@ test('market figures older than a month are detectable', () => {
   assert.equal(marketAgeDays('', new Date()), null)
   assert.equal(marketAgeDays('2026-10-15', new Date('2026-11-15T00:00:00')), 31)
 })
+
+test('inheritance is a flat amount added in its year; past years and years after the plan age are ignored', () => {
+  const base = pick(withAccounts(), ['a1'], { age: 35, retAge: 65, life: 95, inherit: [
+    { id: 'i1', name: 'Parents', amt: 150000, year: 2038 }, { id: 'i2', name: 'Old', amt: 1000, year: 2020 }, { id: 'i3', name: 'Too late', amt: 1000, year: 2200 }, { id: 'i4', name: 'Blank', amt: 5, year: '' },
+  ] })
+  const p = resolvePlan(base, fx, 2026)
+  assert.deepEqual(p.lumps.map((l) => [l.t, l.amt, l.age]), [[12, 150000, 47]]) // 2038 is 12 years away, age 47
+  const without = runPlan({ ...p, lumps: [] })
+  const o = runPlan(p)
+  // flat, as typed: it then grows at the blended return for the remaining years of saving (N = 30)
+  const grown = 150000 * Math.pow(1 + o.r, 30 - 12)
+  assert.ok(Math.abs(o.balRet - without.balRet - grown) < 1, `${o.balRet - without.balRet} vs ${grown}`)
+  assert.ok(o.shortfall < without.shortfall)
+})
+
+test('the insurance survivor benefit adds the Finance policies’ death benefits to the nest egg at retirement, only when ticked', () => {
+  let d = pick(withAccounts(), ['a1'], { age: 35, retAge: 65, life: 95 })
+  d = { ...d, policies: [{ id: 'p1', country: 'us', name: 'Term', deathBenefit: 500000 }, { id: 'p2', country: 'in', name: 'LIC', deathBenefit: 8000000 }] } // $500,000 + 8,000,000 INR = $100,000
+  const off = resolvePlan(d, fx, 2026)
+  assert.ok(Math.abs(off.insurance - 600000) < 1e-6); assert.deepEqual(off.lumps, [])
+  const on = resolvePlan({ ...d, retirement: { ...d.retirement, plan: { ...d.retirement.plan, includeInsurance: true } } }, fx, 2026)
+  assert.deepEqual(on.lumps.map((l) => [l.t, Math.round(l.amt), !!l.insurance]), [[30, 600000, true]])
+  assert.ok(Math.abs(runPlan(on).balRet - runPlan(off).balRet - 600000) < 1e-3) // flat, in the retirement year, so not grown
+})
+
+test('versions: the saved plan you are on is remembered, and old vaults load without it', () => {
+  assert.equal(normalizeRetirement({}).activeId, null)
+  let d = emptyData()
+  d = saveVersion(d, 'Retire at 60', { succ: 0.9 }, '2026-11-22')
+  assert.equal(d.retirement.activeId, d.retirement.versions[0].id)
+  const id = d.retirement.versions[0].id
+  assert.equal(normalizeRetirement(d.retirement).activeId, id)
+  assert.equal(normalizeRetirement({ ...d.retirement, activeId: 'nope' }).activeId, null)
+  d = deleteVersion(d, id); assert.equal(d.retirement.activeId, null)
+  d = saveVersion(d, '', { succ: 0.5 }, '2026-11-22'); assert.equal(d.retirement.versions[0].name, 'Plan 1')
+})
