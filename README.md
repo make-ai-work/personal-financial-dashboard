@@ -145,8 +145,8 @@ A picture version of this, which also ships with the site, is in
   left (choose All, Mine, Joint, Spouse or Parent; everything converted into your first country's currency; unlock your data to see it),
   and on the right one compact block per country you selected in Finance → Settings: the **city of its main stock exchange**, the **time**
   (AM/PM with a day or night icon), **market open/closed** (or when it opens) and the **weather**. See "Home settings" below.
-- **Retirement** – one page. The left column starts with your **saved plans** (up to three, stacked within the column's width; click a card or Open to choose one; the
-  highlighted one is the plan you are on, with Save changes, Rename and Delete, and "+ New plan" for an empty slot), then the **inputs** (your situation including
+- **Retirement** – one page. The left column starts with your **saved plans** (up to three small square-ish tiles side by side within the column's width; click a tile to choose
+  one; the highlighted one is the plan you are on, and under the tiles it has Save changes, Rename and Delete; an empty "+" tile saves your current inputs as another plan), then the **inputs** (your situation including
   contribution growth, *Savings used* picked from Finance asset accounts, *Inheritance*, *Income in retirement* with the **insurance survivor benefit**
   tick-box, and market conditions with a staleness warning; the savings and inheritance sections fold to a one-line summary). The **chance of success**
   (with On track / Off track at your target, 85% by default) spans the width of the other two columns. Under it, in the middle: **results** (nest egg
