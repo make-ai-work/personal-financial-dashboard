@@ -1,7 +1,7 @@
 import Chart from '../finance/Chart.jsx'
 import FxBar from '../finance/FxBar.jsx'
 import { OwnerChip } from '../finance/ui.jsx'
-import { COUNTRIES, OWNERS, moneyCurrency, money, ownerLabel, curFlag } from '../lib/format.js'
+import { COUNTRIES, OWNERS, moneyCurrency, money, ownerLabel } from '../lib/format.js'
 import { combinedSeries, netWorth, ownerBreakdown } from '../lib/networth.js'
 
 const fmtc = (cur, n) => (Number.isNaN(n) ? '—' : moneyCurrency(cur, n))
@@ -30,7 +30,7 @@ export function SummaryPanel({ data, owner, fx, parentLabel }) {
           <tbody>
             {nw.per.map((p) => (
               <tr key={p.code}>
-                <td>{COUNTRIES[p.code].flag} {COUNTRIES[p.code].name}</td>
+                <td>{COUNTRIES[p.code].flag} {COUNTRIES[p.code].name} <span className="cur">{p.currency}</span></td>
                 <td>{money(p.code, p.assets)}</td><td className="neg">{money(p.code, p.liabilities)}</td><td className={p.net >= 0 ? 'pos' : 'neg'}>{money(p.code, p.net)}</td>
               </tr>
             ))}

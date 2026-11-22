@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Modal, OwnerPicker } from '../finance/ui.jsx'
-import { COUNTRIES, MIX, parseAmount, todayISO, curFlag } from '../lib/format.js'
+import { COUNTRIES, MIX, parseAmount, todayISO } from '../lib/format.js'
 import { CLASSES, HOLDING_TYPES, CLASSES as CLS, holdingValue, targetsTotal } from '../lib/portfolio.js'
 
 const s = (v) => (v == null ? '' : String(v))
@@ -20,8 +20,6 @@ export function PortfolioModal({ countries, defaultCountry, accounts, linkedIds,
   const creating = accountId === 'new' || (free.length === 0)
   const cur = COUNTRIES[country].currency
 
-  const flag = curFlag(cur)
-
   const submit = (e) => {
     e.preventDefault()
     if (creating && !newAcc.name.trim()) return setErr('Name the new Finance account.')
@@ -40,7 +38,7 @@ export function PortfolioModal({ countries, defaultCountry, accounts, linkedIds,
         <div className="two">
           <label className="field">Country
             <select value={country} onChange={(e) => { setCountry(e.target.value); setAccountId('') }}>
-              {countries.map((c) => <option key={c} value={c}>{COUNTRIES[c].flag} {COUNTRIES[c].name}</option>)}
+              {countries.map((c) => <option key={c} value={c}>{COUNTRIES[c].flag} {COUNTRIES[c].name} ({COUNTRIES[c].currency})</option>)}
             </select>
           </label>
           <label className="field">Portfolio name (optional)<input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Defaults to the account name" /></label>
@@ -74,7 +72,6 @@ export function PortfolioModal({ countries, defaultCountry, accounts, linkedIds,
 
 export function HoldingModal({ portfolio, country, initial, onSave, onClose }) {
   const cur = COUNTRIES[country].currency
-  const flag = curFlag(cur)
   const unalloc = initial?.cls === 'unallocated'
   const [f, setF] = useState({
     name: initial?.name || '', ticker: initial?.ticker || '', type: initial?.type || 'etf', cls: initial?.cls || 'equities',
@@ -152,9 +149,9 @@ export function HoldingModal({ portfolio, country, initial, onSave, onClose }) {
           {f.trackBy === 'units' && !unalloc ? (
             <>
               <label className="field">Units<input inputMode="decimal" value={f.units} onChange={set('units')} /></label>
-              <label className="field">Price per unit ({flag})<input inputMode="decimal" value={f.price} onChange={set('price')} /></label>
+              <label className="field">Price per unit ({cur})<input inputMode="decimal" value={f.price} onChange={set('price')} /></label>
             </>
-          ) : <label className="field">Total value ({flag})<input inputMode="decimal" value={f.value} onChange={set('value')} /></label>}
+          ) : <label className="field">Total value ({cur})<input inputMode="decimal" value={f.value} onChange={set('value')} /></label>}
           <label className="field">Price date<input type="date" value={f.priceDate} onChange={set('priceDate')} /></label>
         </div>
         {f.trackBy === 'units' && !unalloc && <div className="sub">Value: <b>{COUNTRIES[country].symbol}{fmt2(live)}</b></div>}
@@ -191,7 +188,7 @@ export function PricesModal({ country, portfolios, holdingsOf, onSave, onClose }
         <p className="note">Type the new price per unit, or the new total for holdings you track by value. Rows you leave blank keep their old price.</p>
         {portfolios.map((p) => (
           <div key={p.id} className="tblw tbl-in" style={{ marginBottom: 12 }}>
-            <table className="t-left"><thead><tr><th>{p.name}</th><th className="r">Units</th><th className="r">Old</th><th>Priced</th><th className="r">New {`(${c.flag})`}</th></tr></thead><tbody>
+            <table className="t-left"><thead><tr><th>{p.name}</th><th className="r">Units</th><th className="r">Old</th><th>Priced</th><th className="r">New {`(${c.currency})`}</th></tr></thead><tbody>
               {holdingsOf(p.id).filter((h) => h.type !== 'unallocated').map((h) => (
                 <tr key={h.id}>
                   <td><b>{h.name}</b> <span className="sub">{h.ticker}</span></td>

@@ -263,7 +263,7 @@ try {
   step('exchange rates have their own box in the right column, above markets, time and weather')
   const order = await page.locator('.h-right > .card').evaluateAll((els) => els.map((e) => e.getAttribute('aria-label')))
   assert.deepEqual(order, ['Total net worth', 'Exchange rates', 'Markets, time and weather'])
-  await page.getByLabel('Exchange rates').getByText(/🇺🇸 1 = /).waitFor()
+  await page.getByLabel('Exchange rates').getByText(/1 USD = /).waitFor()
   assert.equal(await page.getByLabel('Summary', { exact: true }).locator('.fx').count(), 0, 'no longer inside the Summary box')
 
   step('net worth card: owner choices include Spouse, an empty file shows zero, the choice is remembered')

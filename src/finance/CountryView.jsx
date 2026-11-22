@@ -4,7 +4,7 @@ import {
   addAccount, addPolicy, byOwner, hasUnsavedBalances, inCountry, monthSeries, removeAccount, removePolicy,
   saveUpdate, totals, updateAccount, updatePolicy,
 } from '../lib/model.js'
-import { COUNTRIES, fmtDate, maskNumber, maturesSoon, money, ownerLabel, MIX, todayISO, curFlag } from '../lib/format.js'
+import { COUNTRIES, fmtDate, maskNumber, maturesSoon, money, ownerLabel, MIX, todayISO } from '../lib/format.js'
 import { AccountModal, PolicyModal } from './Forms.jsx'
 import { Collapsible, MixBar, OwnerChip } from './ui.jsx'
 import { usePhone } from '../lib/usePhone.js'
@@ -68,7 +68,7 @@ export default function CountryView({ code, owner, reveal, fx }) {
       <div className="fin-left">
       <div className="panel">
         <div className="p-head">
-          <div className="title">{c.flag} {c.name}</div>
+          <div className="title">{c.flag} {c.name} <span className="cur">{c.currency}</span></div>
           <div className="upd">
             <label>Update date <input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></label>
             <button className="btn primary" onClick={doSaveUpdate} disabled={!date}>Save update</button>
@@ -155,7 +155,7 @@ export default function CountryView({ code, owner, reveal, fx }) {
       <aside className="fin-right">
       <div className="panel">
         <div className="p-head">
-          <div className="title">Net worth by month <span className="cur">{c.flag}</span></div>
+          <div className="title">Net worth by month <span className="cur">{c.currency}</span></div>
           <div className="seg">
             <button className={mode === 'net' ? 'on' : ''} onClick={() => setMode('net')}>Net worth</button>
             <button className={mode === 'split' ? 'on' : ''} onClick={() => setMode('split')}>Assets &amp; liabilities</button>

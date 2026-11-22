@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { COUNTRIES, COUNTRY_CODES, curFlag } from '../lib/format.js'
+import { COUNTRIES, COUNTRY_CODES } from '../lib/format.js'
 import { moveCountry, toggleCountry } from '../lib/countries.js'
 
 // Choose which countries a section shows (1-5), in order. The first is the reporting currency.
@@ -33,7 +33,7 @@ export default function CountriesPicker({ value, onChange, describe, noun }) {
               <input type="checkbox" aria-label={`Show ${c.name}`} checked={on} disabled={on && value.length === 1} onChange={() => toggle(code)} />
               <span className="fl">{c.flag}</span>
               <span className="nm">
-                {c.name}
+                {c.name} <span className="cur">{c.currency}</span>
                 {on && value[0] === code && <span className="base">reporting currency</span>}
                 <small>{d.text}</small>
               </span>

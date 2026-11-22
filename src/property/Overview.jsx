@@ -3,7 +3,7 @@ import FxBar from '../finance/FxBar.jsx'
 import StatusChip from '../components/StatusChip.jsx'
 import PropertyList from './PropertyList.jsx'
 import { byOwner, convert } from '../lib/model.js'
-import { COUNTRIES, moneyCurrency, money, todayISO, curFlag } from '../lib/format.js'
+import { COUNTRIES, moneyCurrency, money, todayISO } from '../lib/format.js'
 import { dueItems, snapshot, totalsFor } from '../lib/property.js'
 
 const WINDOW_DAYS = 90
@@ -28,11 +28,11 @@ export default function Overview({ owner, fx, onOpen }) {
         <div className="p-head"><div className="title">Property summary</div></div>
         <div className="tblw"><table><thead><tr><th>Country</th><th>Properties</th><th>Value</th><th>Mortgage balance</th><th>Equity</th></tr></thead><tbody>
           {per.map(({ c, t }) => (
-            <tr key={c}><td>{COUNTRIES[c].flag} {COUNTRIES[c].name}</td><td>{t.count}</td><td>{money(c, t.value)}</td><td className="neg">{money(c, t.balance)}</td><td className={t.equity >= 0 ? 'pos' : 'neg'}>{money(c, t.equity)}</td></tr>
+            <tr key={c}><td>{COUNTRIES[c].flag} {COUNTRIES[c].name} <span className="cur">{cur(c)}</span></td><td>{t.count}</td><td>{money(c, t.value)}</td><td className="neg">{money(c, t.balance)}</td><td className={t.equity >= 0 ? 'pos' : 'neg'}>{money(c, t.equity)}</td></tr>
           ))}
           {multi && codes.slice(0, 1).map((c) => (
             <tr key={`tot-${c}`} className="total">
-              <td>Total in {curFlag(cur(c))}</td><td>{per.reduce((s, p) => s + p.t.count, 0)}</td>
+              <td>Total in {cur(c)}</td><td>{per.reduce((s, p) => s + p.t.count, 0)}</td>
               <td>{fmtc(cur(c), sumIn(cur(c), 'value'))}</td><td>{fmtc(cur(c), sumIn(cur(c), 'balance'))}</td><td>{fmtc(cur(c), sumIn(cur(c), 'equity'))}</td>
             </tr>
           ))}

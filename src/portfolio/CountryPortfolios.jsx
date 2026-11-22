@@ -2,7 +2,7 @@ import { useVault } from '../finance/VaultContext.jsx'
 import Allocation from './Allocation.jsx'
 import Rebalance from './Rebalance.jsx'
 import PortfolioPanel from './PortfolioPanel.jsx'
-import { COUNTRIES, money, todayISO, curFlag } from '../lib/format.js'
+import { COUNTRIES, money, todayISO } from '../lib/format.js'
 import { concentration, countryOf, holdingsOf, portfolioTotals, staleHoldings } from '../lib/portfolio.js'
 
 const VIEWS = [['class', 'Asset class'], ['sector', 'Sector'], ['geo', 'Geography'], ['portfolio', 'Portfolio']]
@@ -25,7 +25,7 @@ export default function CountryPortfolios({ code, onAddPortfolio, onAddHolding, 
       <div className="sp-l">
       <div className="panel">
         <div className="p-head">
-          <div className="title">{c.flag} {c.name}</div>
+          <div className="title">{c.flag} {c.name} <span className="cur">{c.currency}</span></div>
           <div className="row-actions">
             <button className="btn" onClick={() => onPrices(code)} disabled={!holdings.length}>Update prices</button>
             <button className="btn primary" onClick={() => onAddPortfolio(code)}>+ Add portfolio</button>

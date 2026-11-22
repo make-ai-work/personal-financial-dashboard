@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Modal, OwnerPicker } from '../finance/ui.jsx'
-import { COUNTRIES, parseAmount, todayISO, curFlag } from '../lib/format.js'
+import { COUNTRIES, parseAmount, todayISO } from '../lib/format.js'
 import { PROPERTY_TYPES, VALUE_SOURCES } from '../lib/property.js'
 
 const s = (v) => (v == null ? '' : String(v))
@@ -18,7 +18,6 @@ export function PropertyModal({ initial, countries, parentLabel, onSave, onClose
   const [err, setErr] = useState('')
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value })
   const cur = COUNTRIES[f.country].currency
-  const flag = curFlag(cur)
   const options = countries.includes(f.country) ? countries : [f.country, ...countries]
 
   const submit = (e) => {
@@ -41,14 +40,14 @@ export function PropertyModal({ initial, countries, parentLabel, onSave, onClose
         <div className="two">
           <label className="field">Name<input autoFocus value={f.name} onChange={set('name')} placeholder="e.g. Maple Street home" /></label>
           <label className="field">Country
-            <select value={f.country} onChange={set('country')}>{options.map((c) => <option key={c} value={c}>{COUNTRIES[c].flag} {COUNTRIES[c].name}</option>)}</select>
+            <select value={f.country} onChange={set('country')}>{options.map((c) => <option key={c} value={c}>{COUNTRIES[c].flag} {COUNTRIES[c].name} ({COUNTRIES[c].currency})</option>)}</select>
           </label>
         </div>
         <label className="field">Address<input value={f.address} onChange={set('address')} /></label>
         <div className="three">
           <label className="field">Type<select value={f.type} onChange={set('type')}>{PROPERTY_TYPES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}</select></label>
           <label className="field">Purchase date<input type="date" value={f.purchaseDate} onChange={set('purchaseDate')} /></label>
-          <label className="field">Purchase price ({flag})<input inputMode="decimal" value={f.purchasePrice} onChange={set('purchasePrice')} /></label>
+          <label className="field">Purchase price ({cur})<input inputMode="decimal" value={f.purchasePrice} onChange={set('purchasePrice')} /></label>
         </div>
         <div className="three">
           <label className="field">Bedrooms (optional)<input inputMode="numeric" value={f.bedrooms} onChange={set('bedrooms')} /></label>
@@ -63,7 +62,7 @@ export function PropertyModal({ initial, countries, parentLabel, onSave, onClose
         <label className="field">Next property tax due (optional)<input type="date" value={f.taxDue} onChange={set('taxDue')} /></label>
         <div className="field">Who owns it?<OwnerPicker value={f.owner} onChange={(owner) => setF({ ...f, owner })} parentLabel={parentLabel} /></div>
         {!initial && (
-          <label className="field">Current value ({flag}) — optional, becomes the first entry in the value history
+          <label className="field">Current value ({cur}) — optional, becomes the first entry in the value history
             <input inputMode="decimal" value={f.currentValue} onChange={set('currentValue')} />
           </label>
         )}
@@ -76,7 +75,6 @@ export function PropertyModal({ initial, countries, parentLabel, onSave, onClose
 
 export function ValuationModal({ property, initial, onSave, onClose }) {
   const cur = COUNTRIES[property.country].currency
-  const flag = curFlag(cur)
   const [f, setF] = useState({ date: initial?.date || todayISO(), value: s(initial?.value), source: initial?.source || 'zillow', notes: initial?.notes || '' })
   const [err, setErr] = useState('')
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value })
@@ -101,7 +99,7 @@ export function ValuationModal({ property, initial, onSave, onClose }) {
         )}
         <div className="two">
           <label className="field">Date<input type="date" value={f.date} onChange={set('date')} /></label>
-          <label className="field">Value ({flag})<input autoFocus inputMode="decimal" value={f.value} onChange={set('value')} /></label>
+          <label className="field">Value ({cur})<input autoFocus inputMode="decimal" value={f.value} onChange={set('value')} /></label>
         </div>
         <div className="two">
           <label className="field">Source<select value={f.source} onChange={set('source')}>{VALUE_SOURCES.map((x) => <option key={x.key} value={x.key}>{x.label}</option>)}</select></label>
@@ -117,7 +115,6 @@ export const zillowUrl = (address) => `https://www.zillow.com/homes/${encodeURIC
 
 export function LoanModal({ property, initial, onSave, onClose }) {
   const cur = COUNTRIES[property.country].currency
-  const flag = curFlag(cur)
   const [f, setF] = useState({
     lender: initial?.lender || '', number: initial?.number || '', originalAmount: s(initial?.originalAmount), startDate: initial?.startDate || property.purchaseDate || '',
     termYears: s(initial?.termYears), rate: s(initial?.rate), rateType: initial?.rateType || 'fixed', monthlyPayment: s(initial?.monthlyPayment),
@@ -146,7 +143,7 @@ export function LoanModal({ property, initial, onSave, onClose }) {
           <label className="field">Loan number (optional)<input className="mono" autoComplete="off" value={f.number} onChange={set('number')} /></label>
         </div>
         <div className="three">
-          <label className="field">Original loan ({flag})<input inputMode="decimal" value={f.originalAmount} onChange={set('originalAmount')} /></label>
+          <label className="field">Original loan ({cur})<input inputMode="decimal" value={f.originalAmount} onChange={set('originalAmount')} /></label>
           <label className="field">Start date<input type="date" value={f.startDate} onChange={set('startDate')} /></label>
           <label className="field">Term (years)<input inputMode="decimal" value={f.termYears} onChange={set('termYears')} /></label>
         </div>
@@ -156,7 +153,7 @@ export function LoanModal({ property, initial, onSave, onClose }) {
           <label className="field">Payment day of month (optional)<input inputMode="numeric" value={f.paymentDay} onChange={set('paymentDay')} /></label>
         </div>
         <div className="two">
-          <label className="field">Monthly payment ({flag})<input inputMode="decimal" value={f.monthlyPayment} onChange={set('monthlyPayment')} /></label>
+          <label className="field">Monthly payment ({cur})<input inputMode="decimal" value={f.monthlyPayment} onChange={set('monthlyPayment')} /></label>
           <label className="field">…of which escrow (optional)<input inputMode="decimal" value={f.escrow} onChange={set('escrow')} /></label>
         </div>
         <p className="note">Rate, term and start date let the app estimate your balance for months before your first recorded update.</p>
@@ -169,7 +166,6 @@ export function LoanModal({ property, initial, onSave, onClose }) {
 
 export function LoanUpdateModal({ property, loan, initial, onSave, onClose }) {
   const cur = COUNTRIES[property.country].currency
-  const flag = curFlag(cur)
   const [f, setF] = useState({ date: initial?.date || todayISO(), balance: s(initial?.balance), principal: s(initial?.principal), interest: s(initial?.interest), escrow: s(initial?.escrow), notes: initial?.notes || '' })
   const [alsoEdit, setAlsoEdit] = useState(false)
   const [err, setErr] = useState('')
@@ -192,7 +188,7 @@ export function LoanUpdateModal({ property, loan, initial, onSave, onClose }) {
       <form id="upd-form" onSubmit={submit}>
         <div className="two">
           <label className="field">Date<input type="date" value={f.date} onChange={set('date')} /></label>
-          <label className="field">Balance after this payment ({flag})<input autoFocus inputMode="decimal" value={f.balance} onChange={set('balance')} /></label>
+          <label className="field">Balance after this payment ({cur})<input autoFocus inputMode="decimal" value={f.balance} onChange={set('balance')} /></label>
         </div>
         <div className="three">
           <label className="field">Principal paid (optional)<input inputMode="decimal" value={f.principal} onChange={set('principal')} /></label>
