@@ -133,6 +133,9 @@ export function simulate(a, plan, G, T, spend, keep) {
   const B = keep ? new Float32Array((T + 1) * n) : null
   const realGrowth = (1 + plan.g) / (1 + plan.inf)
   const tax = plan.tax
+  // Lump sums (inheritance, insurance benefit) are flat amounts in the year they arrive; in today's money that is amt / (1 + inflation)^years.
+  const lump = new Float64Array(T + 1)
+  for (const l of plan.lumps || []) if (l.t >= 0 && l.t < T) lump[l.t] += l.amt / Math.pow(1 + plan.inf, l.t)
   let ok = 0
   for (let p = 0; p < n; p++) {
     let bal = plan.savings
@@ -140,7 +143,7 @@ export function simulate(a, plan, G, T, spend, keep) {
     let iwr = 0
     if (keep) B[p] = bal
     for (let t = 0; t < N; t++) {
-      bal = bal * G[p * T + t] + c
+      bal = (bal + lump[t]) * G[p * T + t] + c
       c *= realGrowth
       if (keep) B[(t + 1) * n + p] = bal
     }
@@ -153,6 +156,7 @@ export function simulate(a, plan, G, T, spend, keep) {
         if (k === 0) iwr = bal > 0 ? gross / bal : 0
         else if (bal > 0 && gross / bal > iwr * 1.2) gross = Math.max(0, spend * (1 - a.cut / 100) - inc) / (1 - tax)
       }
+      bal += lump[N + k]
       bal -= gross
       if (bal < 0 && dep[p] < 0) dep[p] = age
       bal = Math.max(0, bal) * G[p * T + N + k]

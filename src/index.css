@@ -435,3 +435,24 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 .choice-h { font-size: .95rem; }
 .choice + .choice { margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--line); }
 .choice .opt { font-size: .7rem; font-weight: 600; color: var(--accent); border: 1px solid var(--accent); border-radius: 99px; padding: 0 7px; margin-left: 6px; vertical-align: middle; }
+
+/* Retirement: one page. Saved plans across the top, then inputs | results | charts (stacked on a phone: plans, results, charts, inputs). */
+.rplans { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-bottom: 14px; }
+.rplan { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.rplan.on { border: 2px solid var(--accent); padding: 11px 13px; }
+.rplan.empty { border-style: dashed; color: var(--muted); }
+.rplan .row { display: flex; justify-content: space-between; gap: 8px; align-items: center; flex-wrap: wrap; }
+.rplan .row input { min-width: 0; flex: 1; }
+.rplan .acts { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
+.rplan .m { font-size: .82rem; color: var(--muted); }
+.rplan .namefld { display: flex; gap: 6px; flex-wrap: wrap; } .rplan .namefld input { flex: 1; min-width: 0; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 5px 7px; font-size: .85rem; }
+.pill.ok { color: var(--green); border-color: var(--green); } .pill.bad { color: var(--red); border-color: var(--red); } .pill.sel { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.rcols { display: grid; grid-template-columns: minmax(280px, 3fr) minmax(320px, 4fr) minmax(320px, 4fr); gap: 14px; align-items: start; }
+.rc { display: flex; flex-direction: column; gap: 14px; min-width: 0; } .rc > .panel { margin-bottom: 0; }
+@media (max-width: 980px) { .rcols { grid-template-columns: 1fr; } .rc-mid { order: 1; } .rc-ch { order: 2; } .rc-in { order: 3; } }
+.rbig { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; } .rbig b { font-size: 1.9rem; font-variant-numeric: tabular-nums; }
+.knote { display: block; color: var(--muted); text-transform: none; letter-spacing: 0; margin-top: 2px; }
+.rfold > summary .rsum { margin-left: 8px; font-weight: 400; }
+.rfold-act { padding-bottom: 0; } .rfold-adv { margin-top: 10px; } .rfold-adv > summary { cursor: pointer; font-size: .86rem; }
+.rfold-adv .assume { grid-template-columns: 1fr; }
+.sect { margin: 14px 0 6px; font-size: .95rem; }
