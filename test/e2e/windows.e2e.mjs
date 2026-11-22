@@ -5,7 +5,7 @@ import { mkdtempSync, existsSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import assert from 'node:assert/strict'
-import { signInClick } from './signin.mjs'
+import { solveCheck } from './signin.mjs'
 
 const require = createRequire(import.meta.url)
 const { _electron } = require('playwright')
@@ -35,35 +35,50 @@ try {
   assert.equal(await page.evaluate(() => typeof window.desktopApp?.openVault), 'function')
   assert.equal(await page.evaluate(() => typeof require), 'undefined', 'the page has no Node access')
 
-  step('first run goes straight to sign-in with the built-in Google client; to try the placeholder, Google is switched off first')
-  await page.getByRole('button', { name: /Sign in with Google/ }).waitFor()
-  assert.equal(await page.getByRole('heading', { name: 'Connect your Google account' }).count(), 0)
-  await page.evaluate(() => localStorage.setItem('google.setupSkipped', '1')); await page.reload()
-  await signInClick(page) // the placeholder sign-in
-  await page.getByRole('tab', { name: 'Home' }).waitFor()
-  step('Settings → Account: your own client ID form shows the redirect address to authorise (the Windows app signs in through your browser)')
-  await page.getByRole('button', { name: 'Account', exact: true }).click()
-  await page.getByRole('button', { name: 'Set up' }).click()
-  await page.getByText(`http://localhost:${PORT}/oauth-callback`).first().waitFor()
-  await page.getByText('Authorized redirect URIs').waitFor()
-  await page.getByRole('button', { name: 'Cancel' }).click()
+  // Google opens in your normal browser; here the test plays that browser: it reads the sign-in address the app opened and sends the answer
+  // back to the app's local address, as Google's redirect page would.
+  const answerGoogle = async (pg) => {
+    const f = path.join(work, 'oauth-url.txt')
+    for (let i = 0; i < 100 && !existsSync(f); i++) await new Promise((r) => setTimeout(r, 100))
+    const url = new URL(readFileSync(f, 'utf8')); rmSync(f)
+    assert.equal(url.searchParams.get('scope'), 'openid email profile'); assert.match(url.searchParams.get('redirect_uri'), /\/oauth-callback$/)
+    await pg.evaluate((state) => fetch('/oauth-result', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ state, access_token: 'T' }) }), url.searchParams.get('state'))
+  }
+  const signInWindows = async (pg) => { await solveCheck(pg); await pg.getByRole('button', { name: /Sign in with Google/ }).click(); await answerGoogle(pg) }
+  await page.route(/googleapis\.com\/oauth2\/v3\/userinfo/, (r) => r.fulfill({ headers: { 'access-control-allow-origin': '*' }, json: { sub: '1', email: 'sam@example.com', name: 'Sam Example', email_verified: true } }))
 
-  step('create the encrypted data file: it is written to disk by the app, with no plaintext inside')
-  await page.getByRole('tab', { name: 'Finance Dashboard' }).click()
-  step('the Windows app offers the same two choices as everywhere; Google Drive is off only because Google is off here, and says why')
+  step('first run: the sign-in screen, then Google in your browser, then Where should your data live?')
+  await page.getByRole('heading', { name: 'Welcome' }).waitFor()
+  await signInWindows(page)
+  await page.getByRole('heading', { name: 'Where should your data live?' }).waitFor()
+
+  step('the Windows app offers the same choices as everywhere: Vault file (a folder you choose) and Google Drive; demo mode is greyed out')
   await page.getByTestId('choice-file').getByText(/folder you choose/).waitFor()
   const driveBtn = page.getByTestId('choice-drive').getByRole('button', { name: /Create in Google Drive/ })
-  assert.ok(await driveBtn.isDisabled()); assert.match(await driveBtn.innerText(), /client ID/)
+  assert.ok(await driveBtn.isEnabled(), 'Google Drive works here too')
+  assert.ok(await page.getByRole('button', { name: /Demo mode – nothing will be saved/ }).isDisabled())
   assert.equal(await page.evaluate(() => typeof window.desktopApp.deleteVault), 'function')
+
+  step('create the encrypted data file: it is written to disk by the app, with no plaintext inside')
   await page.getByRole('button', { name: /Create a new vault file/ }).click()
   await page.getByLabel('Passphrase', { exact: true }).fill(PASS)
   await page.getByLabel('Confirm passphrase').fill(PASS)
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Create encrypted file' }).click()
+  await page.getByRole('tab', { name: 'Home', selected: true }).waitFor()
+  await page.getByRole('tab', { name: /Assets/ }).click()
   await page.getByText('Update date', { exact: true }).waitFor()
   const file = path.join(work, 'WealthTracker.wvault')
   assert.ok(existsSync(file), 'the vault file exists')
   assert.equal(readFileSync(file).subarray(0, 5).toString(), 'WVLT1')
+
+  step('Settings → Account: your own client ID form shows the redirect address to authorise (the Windows app signs in through your browser)')
+  await page.getByRole('button', { name: 'Account', exact: true }).click()
+  await page.getByRole('button', { name: 'Use my own…' }).click()
+  await page.getByText(`http://localhost:${PORT}/oauth-callback`).first().waitFor()
+  await page.getByText('Authorized redirect URIs').waitFor()
+  await page.getByRole('button', { name: 'Cancel' }).click()
+  await page.getByRole('tab', { name: /Assets/ }).click()
 
   step('data entered is saved to the same file on its own')
   await page.getByRole('button', { name: '+ Add asset' }).click()
@@ -89,13 +104,14 @@ try {
   await page.route(/frankfurter/, (r) => r.fulfill({ json: { base: 'USD', date: '2026-11-14', rates: { INR: 84 } } }))
   await page.route(/open-meteo/, (r) => r.fulfill({ json: { current: { temperature_2m: 20, relative_humidity_2m: 50, weather_code: 1, wind_speed_10m: 5, us_aqi: 40 }, daily: { time: ['2026-11-16', '2026-11-17'], weather_code: [1, 1], temperature_2m_max: [22, 22], temperature_2m_min: [12, 12] } } }))
   await page.waitForLoadState('domcontentloaded')
-  await signInClick(page) // nothing about the user is stored: sign in again
-  await page.getByRole('tab', { name: 'Home' }).waitFor()
-  await page.getByRole('tab', { name: 'Finance Dashboard' }).click()
-  await page.getByText('WealthTracker.wvault').first().waitFor()
+  await page.route(/googleapis\.com\/oauth2\/v3\/userinfo/, (r) => r.fulfill({ headers: { 'access-control-allow-origin': '*' }, json: { sub: '1', email: 'sam@example.com', name: 'Sam Example', email_verified: true } }))
+  await signInWindows(page) // nothing about the user is stored: sign in again
+  await page.getByText('WealthTracker.wvault').first().waitFor() // the app found the remembered file: only the passphrase is needed
   await page.getByPlaceholder('Passphrase').fill('wrong passphrase here'); await page.getByRole('button', { name: 'Unlock' }).click()
   await page.getByText('Wrong passphrase or damaged file.').waitFor()
   await page.getByPlaceholder('Passphrase').fill(PASS); await page.getByRole('button', { name: 'Unlock' }).click()
+  await page.getByRole('tab', { name: 'Home', selected: true }).waitFor()
+  await page.getByRole('tab', { name: /Assets/ }).click()
   await page.getByText('Private Brokerage 777').first().waitFor()
 
   step('Home shows the net worth from the unlocked file')

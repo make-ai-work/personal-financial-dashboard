@@ -25,7 +25,7 @@ Stop it with `Ctrl+C`. Run `npm start` again whenever you want to use it. If por
 
 ```bash
 npm test             # unit tests (encryption, data model, retirement engine, demo data, ...)
-npm run build && npm run test:e2e && npm run test:e2e:countries && npm run test:e2e:property && npm run test:e2e:portfolio && npm run test:e2e:retirement && npm run test:e2e:auth && npm run test:e2e:home && npm run test:e2e:android
+npm run build && npm run test:e2e && npm run test:e2e:countries && npm run test:e2e:property && npm run test:e2e:portfolio && npm run test:e2e:retirement && npm run build:nodefault && npm run test:e2e:flow && npm run test:e2e:home && npm run test:e2e:android
 npm run build:demo && npm run test:e2e:demo      # the demo build
                      # end-to-end browser tests need Playwright + Chromium
 ```
@@ -69,8 +69,8 @@ npm run android:open     # opens the project in Android Studio; press Run to sta
 
 After changing the web app, run `npm run android:sync` again before Run.
 
-- **What is different in the app:** it opens straight to the app (signing in is optional: do it from Settings → Account), the first
-  screen is "Where should your data live?" (*Vault file*, kept inside the app, or *Google Drive*), and Finance → Settings → *Your data* has **Export backup…** (the phone's share sheet),
+- **What is different in the app:** it opens on the same sign-in screen as every other version, then "Where should your data live?" (*Vault file*,
+  kept inside the app, or *Google Drive*), then Home; and Settings → *Your data* has **Export backup…** (the phone's share sheet),
   *Last backup* (a reminder), **Restore…** (asks first, and only a valid backup ever replaces the vault) and **Delete…** (you must
   type DELETE). The Back button closes a dialog, then goes to Home, then leaves the app. The app locks itself when you come back after
   longer than your auto-lock time. Home's weather and prices need internet.
@@ -201,34 +201,48 @@ the file for next time (you only type the passphrase). Everything is in `electro
   The page can only read or write files you picked in a dialog.
 - **Google sign-in in this app** opens your normal browser (Google does not allow sign-in inside an app's own window). The app runs on
   the fixed address `http://localhost:53682`. In Google Cloud, on your **Web application** client, add
-  `http://localhost:53682/oauth-callback` under **Authorized redirect URIs** (the setup screen shows it and has a Copy button).
+  `http://localhost:53682/oauth-callback` under **Authorized redirect URIs** (Settings → Account → Use my own… shows it and has a Copy button).
   If another program already uses port 53682 the app says so and does not start.
 - **Tests:** `npm test` (server, sign-in return, file allow-list) and, on Linux with a virtual screen,
   `npm run build && xvfb-run -a npm run test:e2e:windows` runs the real Electron app. The packaged `.exe` has not been run on a real
   Windows machine in development, so tell me about anything odd.
 
-## Sign-in and storage: the same on every version
+## Sign-in and storage: the same screen flow on every version
 
-**Demo site:** no sign-in, nothing saved (sample data in memory). **Everything else** (local app, installed web app, Windows app, Android app) offers the same
-two things, in the same order, with the same wording:
+Demo site, web, installed web app, Windows app and Android app all open the same way:
+
+**1. Sign in → 2. Where should your data live? → 3. Unlock (only if a vault already exists) → 4. Home.** Every sign-in lands on Home.
+
+1. **Sign in** is always the first screen. **Sign in with Google** (behind the quick check) opens Google's page; once it is done you go to step 2.
+   **Continue without signing in** logs you in as **Demo User**: sample data, a *Demo Mode* banner ("Change anything you like: it stays in this
+   session and is gone when you reload. Nothing is saved or sent."), and no saving. On the demo site the Google button is greyed out; the screen is
+   otherwise identical. A copy built without a Google client ID greys it out too, and says why.
+2. **Where should your data live?** (after Google sign-in): **Vault file** (Android: inside the app; Windows and web: a `.wvault` file in a
+   folder you choose, remembered) or **Google Drive**. After *Continue without signing in* both are greyed out and only
+   **Demo mode – nothing will be saved** works. There are no save options on the Assets tab any more.
+3. **Unlock:** if a vault is already remembered on this device, signing in goes straight to the passphrase.
+4. **Home:** always the landing page. (The Finance tab is now **💲 Assets**.)
 
 | | Web / installed web app | Windows app | Android app |
 |---|---|---|---|
-| **Sign-in** (optional) | Google | Google (opens your browser) | Google (the phone's own account) |
-| **Vault file** | a `.wvault` file in a folder you choose, remembered | a `.wvault` file in a folder you choose, exact path remembered | kept inside the app |
-| **Google Drive** (optional) | yes | yes | yes |
+| **Sign in with Google** | Google's page | opens your browser | the phone's Google account |
+| **Vault file** | a folder you choose, remembered | a folder you choose, exact path remembered | kept inside the app |
+| **Google Drive** | yes | yes | yes |
 
-- **Signing in is optional.** The sign-in page has **Continue without signing in**; the Android app opens straight in. Signing in only shows who you
-  are (name and email, held in memory for the session, nothing stored). Your data is protected by its own passphrase either way, and neither storage
-  choice needs you to sign in. Quiet sign-in at start (web) and the built-in quick check are unchanged. Two-step verification is still a preview.
-- **Vault file:** Chrome and Edge remember the file you chose (you may click Allow once per session); the Windows app remembers the exact path; browsers
-  that cannot remember a file location (Firefox, Safari) fall back to Open and Download.
-- **Google Drive:** see the next section. It works the same way on all three versions.
-- **Moving between them** (Settings → Your data & security → *Move your data*): the encrypted vault is copied, the copy is read back and checked, and
-  only then does the app switch. **The old copy is never deleted for you.** A notice says exactly where it still is and that it is no longer
-  updated, with **Delete old copy…** (asks you to confirm; a Drive copy goes to the Drive bin, so it can still be restored from there) or
-  **Keep it, stop reminding me**. Where an app cannot delete a file itself (a file you opened in a browser), it tells you to delete it yourself.
-- **Code:** `src/lib/channel.js` (which version, which choices), `src/lib/nativegoogle.js` (Android), `src/lib/googleauth.js` (all three).
+- **Nothing about who you are is stored.** Name and email live in memory for the session, so closing the app signs you out. Quiet sign-in at start
+  (web) only works if Google already has you signed in. Your data is protected by its own passphrase either way.
+- **Settings → Account & sign-in:** in demo mode it offers **Sign in with Google**. Signing in there shows "Where should your data live?" and
+  **your demo changes go into the vault you choose** (nothing is saved until you choose). Once a vault is in use you see where it lives and can
+  **move** it. **Google connection** shows only **Use my own…** (your own Google client ID, kept in this browser, never displayed; the form has a small
+  link to go back to the app's own). The two-step verification preview has been removed.
+- **Moving between Vault file and Google Drive** (Settings → Your data & security → *Move your data*): the encrypted vault is copied, the copy is read
+  back and checked, and only then does the app switch. **The old copy is never deleted for you.** A notice says exactly where it still is and that it
+  is no longer updated, with **Delete old copy…** (asks you to confirm; a Drive copy goes to the Drive bin) or **Keep it, stop reminding me**.
+- **Danger zone → Wipe data…** (type WIPE): resets the vault and erases the data in its current storage (the app's vault file, the chosen
+  `.wvault` file, or the Google Drive file, permanently), forgets it on this device, and returns to "Where should your data live?". The unlock screen
+  has the same thing as *Forgot the passphrase? Wipe data…*. An old copy left by an earlier move is not touched.
+- **Code:** `src/lib/channel.js` (the choices), `src/lib/nativegoogle.js` (Android), `src/lib/googleauth.js`, `src/auth/` (sign-in), `src/finance/Gate.jsx`
+  (Where-to-save and unlock), `src/settings/SettingsPage.jsx`.
 
 ## Google Drive storage (optional)
 
@@ -268,7 +282,7 @@ The app's `MainActivity.java` is changed so the sign-in plugin can ask for the D
 ## Google setup
 
 The app ships with a **built-in Google client ID** (`VITE_GOOGLE_CLIENT_ID` in `.env`), so on the published site, the local app and the launcher you
-just click **Sign in with Google**: no setup screen. A client ID is public by design, and Google only accepts it from the addresses registered
+just click **Sign in with Google**: nothing to set up. A client ID is public by design, and Google only accepts it from the addresses registered
 for it in Google Cloud, so shipping it is safe. It never needs a client *secret* or an API key, and the app refuses to accept a secret.
 
 - **Your own client ID instead:** **Settings → Account → Use my own…** (it is saved in the browser only). Do this if you host your own copy at a
@@ -276,10 +290,10 @@ for it in Google Cloud, so shipping it is safe. It never needs a client *secret*
   the address you use under **Authorized JavaScript origins** (`http://localhost:4173` for the local app and launcher, your site address for a
   hosted copy), or **Authorized redirect URIs** `http://localhost:53682/oauth-callback` for the Windows app. For Google Drive storage also enable
   the **Google Drive API** in that project.
-- **Without Google:** **Turn off Google** uses no Google connection on this device (the sign-in page then offers the placeholder sign-in or **Continue
-  without signing in**). **Use the built-in one** switches it back on. The demo site has no Google sign-in.
-- **Shipping without a built-in ID:** empty `VITE_GOOGLE_CLIENT_ID` in `.env`; everyone then sees the setup screen and brings their own.
-  (`npm run build:nodefault` builds that way into `dist-nodefault`; the sign-in tests use it: `npm run build:nodefault && npm run test:e2e:auth`.)
+- **Without Google:** **Continue without signing in** (demo mode). In Settings → Account, **Use my own…** replaces the built-in client ID (its form can go back
+  to the app's own). The demo site has no Google sign-in.
+- **Shipping without a built-in ID:** empty `VITE_GOOGLE_CLIENT_ID` in `.env`; Google sign-in is then greyed out (demo mode still works) until someone adds their own client ID under Settings → Account → Use my own….
+  (`npm run build:nodefault` builds that way into `dist-nodefault`; `npm run test:e2e:flow` uses it.)
 - **While your Google project is in "Testing"** only the test users you listed can sign in; publish the consent screen to open it to anyone (no review
   is needed for the scopes used here).
 

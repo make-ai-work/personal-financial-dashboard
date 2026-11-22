@@ -126,3 +126,11 @@ test('deleting the Drive copy moves it to the bin (restorable), by id', async ()
   await deleteVault('F9', { fetchImpl, requester })
   assert.equal(calls[0][0], 'PATCH'); assert.match(calls[0][1], /files\/F9$/); assert.equal(calls[0][2], '{"trashed":true}')
 })
+
+test('wiping the Drive copy deletes it for good (not just to the bin)', async () => {
+  const d = await import('../src/lib/drive.js')
+  d.setDriveClient('123456789012-abcdefghij1234.apps.googleusercontent.com'); d.forgetDriveToken()
+  const calls = []
+  await d.wipeVault('F7', { fetchImpl: async (url, init) => { calls.push([init.method, url]); return { ok: true, status: 204 } }, requester: async () => ({ token: 'T', expiresAt: Date.now() + 3600_000 }) })
+  assert.deepEqual([calls[0][0], /files\/F7$/.test(calls[0][1])], ['DELETE', true])
+})

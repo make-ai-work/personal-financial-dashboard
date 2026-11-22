@@ -14,7 +14,6 @@
     "test:e2e:property": "node test/e2e/property.e2e.mjs",
     "test:e2e:portfolio": "node test/e2e/portfolio.e2e.mjs",
     "test:e2e:retirement": "node test/e2e/retirement.e2e.mjs",
-    "test:e2e:auth": "node test/e2e/auth.e2e.mjs",
     "dev:demo": "vite --mode demo",
     "build:demo": "vite build --mode demo --outDir dist-demo",
     "test:e2e:demo": "node test/e2e/demo.e2e.mjs",
@@ -32,7 +31,7 @@
     "test:e2e:pwa": "node test/e2e/pwa.e2e.mjs",
     "test:e2e:drive": "node test/e2e/drive.e2e.mjs",
     "build:nodefault": "VITE_GOOGLE_CLIENT_ID= vite build --outDir dist-nodefault",
-    "test:e2e:default-client": "node test/e2e/default-client.e2e.mjs"
+    "test:e2e:flow": "node test/e2e/flow.e2e.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.2",

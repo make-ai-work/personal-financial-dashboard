@@ -1,0 +1,175 @@
+// End-to-end check of the screen flow that is the same on every version: Sign in -> Where to save -> (Unlock) -> Home, with Google stood in
+// for. Run:  npm run build && npm run build:nodefault && npm run test:e2e:flow
+import { createRequire } from 'node:module'
+import { spawn } from 'node:child_process'
+import assert from 'node:assert/strict'
+import { signInClick, solveCheck } from './signin.mjs'
+
+const require = createRequire(import.meta.url)
+const { chromium } = require('playwright')
+const PASS = 'correct horse battery staple'
+const BUILT_IN = '597536085921'
+const MINE = '123456789012-abcdefghij1234.apps.googleusercontent.com'
+const servers = [spawn('npx', ['vite', 'preview', '--port', '4180', '--strictPort'], { stdio: 'ignore' }), spawn('npx', ['vite', 'preview', '--outDir', 'dist-nodefault', '--port', '4181', '--strictPort'], { stdio: 'ignore' })]
+await new Promise((r) => setTimeout(r, 3000))
+const browser = await chromium.launch()
+const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true })
+await ctx.addInitScript(() => { delete window.showSaveFilePicker; delete window.showOpenFilePicker })
+await ctx.route(/accounts\.google\.com\/gsi\/client/, (r) => r.fulfill({ contentType: 'text/javascript', body: `window.__gsiMode='ok';window.__gsiSession=localStorage.getItem('test.gsi')==='on';window.google={accounts:{oauth2:{initTokenClient:function(c){return{requestAccessToken:function(o){window.__gsiArgs={client:c.client_id,scope:c.scope,prompt:o&&o.prompt};if(o&&o.prompt==='none'){if(window.__gsiSession)setTimeout(function(){c.callback({access_token:'T'})},30);else c.callback({error:'interaction_required'});return}if(window.__gsiMode==='closed')c.error_callback({type:'popup_closed'});else setTimeout(function(){c.callback({access_token:'T'})},50)}}}}}}` }))
+await ctx.route(/googleapis\.com\/oauth2\/v3\/userinfo/, (r) => r.fulfill({ headers: { 'access-control-allow-origin': '*' }, json: { sub: '1001', email: 'sam@example.com', name: 'Sam Example', email_verified: true } }))
+await ctx.route(/open-meteo|fcsapi|frankfurter/, (r) => r.abort('failed'))
+const page = await ctx.newPage()
+const errors = []
+page.on('pageerror', (e) => errors.push(e.message))
+const step = (s) => console.log('•', s)
+const base = 'http://localhost:4180/'
+const welcome = () => page.getByRole('heading', { name: 'Welcome' }).waitFor()
+const where = () => page.getByRole('heading', { name: 'Where should your data live?' }).first().waitFor()
+const noOverflow = async () => assert.equal(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), 0)
+const createVault = async (label = 'Create encrypted file') => {
+  await page.getByRole('button', { name: /Create a new vault file/ }).click()
+  await page.getByLabel('Passphrase', { exact: true }).fill(PASS)
+  await page.getByLabel('Confirm passphrase').fill(PASS)
+  await page.getByRole('checkbox').check()
+  await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: label }).click()])
+}
+
+try {
+  await page.goto(base)
+  step('sign-in is the first screen: quick check, Google, and Continue without signing in; no tabs')
+  await welcome()
+  const gbtn = page.getByRole('button', { name: /Sign in with Google/ }), cont = page.getByRole('button', { name: 'Continue without signing in' })
+  assert.ok(await gbtn.isDisabled(), 'Google waits for the quick check'); assert.ok(await cont.isEnabled())
+  assert.equal(await page.getByRole('tab').count(), 0)
+  const ans = page.getByLabel('Your answer'), chk = page.getByRole('button', { name: 'Check', exact: true })
+  await ans.fill('9999'); await chk.click(); await page.getByText('Not quite. Try this one.').waitFor(); assert.ok(await gbtn.isDisabled())
+  await ans.fill('9999'); await chk.click(); await ans.fill('9999'); await chk.click()
+  await page.getByText(/Wait \d+ seconds, then try again/).waitFor(); assert.ok(await gbtn.isDisabled())
+  await page.reload(); await welcome()
+
+  step('Continue without signing in -> Where to save: Vault file and Google Drive are greyed out, only demo mode works')
+  await cont.click()
+  await where()
+  for (const name of [/Create a new vault file/, /Open an existing vault file/, /Create in Google Drive/]) assert.ok(await page.getByRole('button', { name }).isDisabled(), String(name))
+  await page.getByText('Sign in with Google to use this.').first().waitFor()
+  assert.equal(await page.getByRole('tab').count(), 0)
+  const demoBtn = page.getByRole('button', { name: /Demo mode – nothing will be saved/ })
+  assert.ok(await demoBtn.isEnabled())
+  await noOverflow()
+
+  step('demo mode: lands on Home as Demo User, with the banner, sample data and the Assets tab (no Finance Dashboard)')
+  await demoBtn.click()
+  await page.getByRole('tab', { name: 'Home', selected: true }).waitFor()
+  await page.getByRole('status').filter({ hasText: 'DEMO MODE' }).waitFor()
+  await page.getByText(/Change anything you like: it stays in this session and is gone when you reload\. Nothing is saved or sent\./).waitFor()
+  await page.locator('.who').getByText('Demo User').waitFor()
+  await page.getByRole('tab', { name: /💲 Assets/ }).waitFor()
+  assert.equal(await page.getByRole('tab', { name: 'Finance Dashboard' }).count(), 0)
+  const nw0 = await page.getByTestId('networth').innerText(); assert.match(nw0, /\d{2,}/)
+  await page.getByRole('tab', { name: /Assets/ }).click(); await page.getByText('Update date', { exact: true }).waitFor()
+  assert.equal(await page.getByRole('button', { name: /Create a new vault file/ }).count(), 0, 'no save options on the Assets tab')
+  await page.getByRole('tab', { name: 'Home' }).click()
+
+  step('Settings in demo mode: sign in with Google is offered, no two-step option, the Google connection hides its ID, a Danger zone')
+  await page.getByRole('tab', { name: 'Settings' }).click()
+  await page.getByTestId('who-note').getByText(/demo mode/).waitFor()
+  await page.getByRole('button', { name: 'Sign in with Google' }).waitFor()
+  assert.equal(await page.getByText(/two-step/i).count(), 0)
+  const text = await page.locator('body').innerText()
+  assert.ok(!text.includes(BUILT_IN), 'the client ID is never shown'); assert.ok(!/Use the built-in one|Turn off Google/.test(text))
+  await page.getByText('Danger zone').first().waitFor(); await page.getByText(/nothing to wipe/).waitFor()
+  await page.getByRole('button', { name: 'Use my own…' }).waitFor()
+
+  step('Use my own…: a secret is refused; a valid ID is used, and you can go back to the app’s own')
+  await page.getByRole('button', { name: 'Use my own…' }).click()
+  const box = page.getByLabel('OAuth client ID'), save = page.getByRole('button', { name: 'Save', exact: true })
+  assert.equal(await box.inputValue(), '', 'the current ID is not pre-filled')
+  await box.fill('GOCSPX-abc'); await page.getByText(/looks like a client secret/).waitFor(); assert.ok(await save.isDisabled())
+  await box.fill(MINE); await save.click()
+  await page.getByText('Your own Google client').waitFor()
+  assert.equal(await page.evaluate(() => localStorage.getItem('google.clientId')), MINE)
+  await page.getByRole('button', { name: 'Use my own…' }).click()
+  await page.getByRole('button', { name: /Go back to the app’s own/ }).click()
+  await page.getByText('The app’s own Google sign-in').waitFor()
+  assert.equal(await page.evaluate(() => localStorage.getItem('google.clientId')), null)
+
+  step('sign in from demo mode: choose where to keep the data, and the demo changes go into the vault')
+  await page.getByRole('button', { name: 'Sign in with Google' }).click()
+  const carry = page.getByTestId('carry-panel')
+  await carry.getByText('Where should your data live?').waitFor()
+  assert.ok(await carry.getByRole('button', { name: /Create a new vault file/ }).isEnabled()); assert.ok(await carry.getByRole('button', { name: /Create in Google Drive/ }).isEnabled())
+  assert.equal(await carry.getByText(/Demo mode – nothing will be saved/).count(), 0)
+  await page.getByRole('status').filter({ hasText: 'DEMO MODE' }).waitFor() // nothing is saved until you choose
+  await carry.getByRole('button', { name: /Create a new vault file/ }).click()
+  await carry.getByLabel('Passphrase', { exact: true }).fill(PASS); await carry.getByLabel('Confirm passphrase').fill(PASS); await carry.getByRole('checkbox').check()
+  await Promise.all([page.waitForEvent('download'), carry.getByRole('button', { name: 'Create encrypted file' }).click()])
+  await page.getByRole('status').filter({ hasText: 'DEMO MODE' }).waitFor({ state: 'detached' })
+  await page.getByTestId('who-note').getByText(/Signed in as/).waitFor(); await page.getByText(/sam@example\.com/).first().waitFor()
+  await page.getByTestId('storage-row').waitFor()
+  await page.getByRole('tab', { name: 'Home' }).click()
+  assert.equal(await page.getByTestId('networth').innerText(), nw0, 'the sample data went into the vault')
+
+  step('Danger zone: Wipe data asks you to type WIPE, resets the vault and returns to Where to save')
+  await page.getByRole('tab', { name: 'Settings' }).click()
+  await page.locator('#set-danger').getByRole('button', { name: 'Wipe data…' }).click()
+  const wipeBtn = page.getByRole('dialog').getByRole('button', { name: 'Wipe data' })
+  assert.ok(await wipeBtn.isDisabled())
+  await page.getByLabel('Type WIPE to confirm').fill('wipe'); assert.ok(await wipeBtn.isDisabled())
+  await page.getByLabel('Type WIPE to confirm').fill('WIPE'); await wipeBtn.click()
+  await where()
+  assert.ok(await page.getByRole('button', { name: /Create a new vault file/ }).isEnabled(), 'signed in: the real choices are open')
+  assert.ok(await page.getByRole('button', { name: /Demo mode – nothing will be saved/ }).isDisabled(), 'and demo mode is greyed out')
+
+  step('back to sign-in, then real Google sign-in: closing the window is explained; nothing opens the app')
+  await page.getByRole('button', { name: /Back to sign-in/ }).click(); await welcome()
+  await page.evaluate(() => { window.__gsiMode = 'closed' })
+  await signInClick(page)
+  await page.getByRole('alert').getByText(/window was closed before it finished/).waitFor()
+  assert.equal(await page.getByRole('tab').count(), 0)
+  await page.evaluate(() => { window.__gsiMode = 'ok' })
+  await signInClick(page)
+  await where()
+  const g = await page.evaluate(() => window.__gsiArgs)
+  assert.deepEqual([g.scope, g.prompt], ['openid email profile', 'select_account'])
+  const dump = await page.evaluate(() => JSON.stringify([Object.entries(localStorage), Object.entries(sessionStorage)]))
+  for (const secret of ['sam@example.com', 'Sam Example', 'access_token', '1001']) assert.ok(!dump.includes(secret), `nothing about the user is stored: found ${secret}`)
+
+  step('creating a vault lands on Home; a reload signs out because nothing about the user is stored')
+  await createVault()
+  await page.getByRole('tab', { name: 'Home', selected: true }).waitFor()
+  await page.locator('.who').getByText('Sam Example').waitFor()
+  await page.reload(); await welcome()
+
+  step('quiet sign-in: with a Google session the app skips the button; otherwise the normal button')
+  await page.evaluate(() => localStorage.setItem('test.gsi', 'on'))
+  await page.reload()
+  await where() // signed in without clicking
+  assert.equal(await page.evaluate(() => window.__gsiArgs.prompt), 'none')
+  await page.evaluate(() => localStorage.setItem('test.gsi', 'off'))
+  await page.reload(); await welcome()
+
+  step('phone width: sign-in, Where to save and Settings fit without sideways scrolling')
+  await page.setViewportSize({ width: 390, height: 844 })
+  await noOverflow()
+  await solveCheck(page); await page.getByRole('button', { name: /Sign in with Google/ }).click()
+  await where(); await noOverflow()
+  await createVault(); await page.getByRole('tab', { name: 'Settings' }).click(); await noOverflow()
+  await page.setViewportSize({ width: 1280, height: 900 })
+
+  step('a copy built without a Google client ID: the Google button is off and says why; demo mode still works')
+  await page.goto('http://localhost:4181/')
+  await welcome()
+  const off = page.getByRole('button', { name: /Sign in with Google/ })
+  assert.ok(await off.isDisabled()); assert.match((await off.getAttribute('title')) || '', /not set up/)
+  await page.getByRole('button', { name: 'Continue without signing in' }).click()
+  await page.getByRole('button', { name: /Demo mode – nothing will be saved/ }).click()
+  await page.getByRole('status').filter({ hasText: 'DEMO MODE' }).waitFor()
+} catch (e) {
+  await page.screenshot({ path: '/tmp/flow-failure.png', fullPage: true })
+  console.error('FAILED:', e.message)
+  process.exitCode = 1
+}
+await browser.close(); servers.forEach((s) => s.kill())
+console.log('page errors:', errors.length ? errors.join(' | ') : 'none')
+if (errors.length) process.exitCode = 1
+if (!process.exitCode) console.log('FLOW E2E PASSED')

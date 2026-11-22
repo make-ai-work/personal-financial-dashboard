@@ -21,7 +21,7 @@ await new Promise((r) => setTimeout(r, 2500))
 const browser = await chromium.launch()
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true })
 await ctx.route(/open-meteo\.com/, (r) => r.fulfill({ json: { current: { temperature_2m: 20, relative_humidity_2m: 50, weather_code: 1, wind_speed_10m: 5, us_aqi: 40 }, daily: { time: ['2026-11-16', '2026-11-17'], weather_code: [1, 1], temperature_2m_max: [22, 22], temperature_2m_min: [12, 12] } } })) // Home's weather: not under test here
-await ctx.addInitScript(() => { delete window.showSaveFilePicker; delete window.showOpenFilePicker; localStorage.setItem('google.setupSkipped', '1') }) // start signed in
+await ctx.addInitScript(() => { delete window.showSaveFilePicker; delete window.showOpenFilePicker }) // start signed in
 await ctx.route('**/api.frankfurter.dev/**', (r) => r.fulfill({ json: { base: 'USD', date: '2026-10-27', rates: { INR: 84 } } }))
 const page = await ctx.newPage()
 autoSignIn(page)
@@ -42,7 +42,6 @@ const addAccount = async (btn, f, owner) => {
 
 try {
   await page.goto(URL)
-  await page.getByRole('tab', { name: 'Finance Dashboard' }).click()
 
   step('create encrypted vault')
   await page.getByRole('button', { name: /Create a new vault file/ }).click()
@@ -51,6 +50,7 @@ try {
   await page.getByRole('checkbox').check()
   const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Create encrypted file' }).click()])
   await dl.saveAs(`${OUT}/WealthTracker.wvault`)
+  await page.getByRole('tab', { name: /Assets/ }).click()
   await page.getByText('Update date', { exact: true }).waitFor()
 
   step('add accounts and policy in USA')
@@ -102,7 +102,7 @@ try {
   await page.getByText('1 USD = ₹ 84').waitFor()
   await page.getByRole('tab', { name: 'Home' }).click()
   await page.getByTestId('networth').getByText(/\$\s?49,200/).waitFor() // Checking edited to 9,200 -> net 49,200
-  await page.getByRole('tab', { name: 'Finance Dashboard' }).click()
+  await page.getByRole('tab', { name: /Assets/ }).click()
 
   step('layout: accounts on the left, chart and Performance on the right; no Summary tab; sections fold and the choice is remembered')
   assert.equal(await page.locator('.subtabs button', { hasText: 'Summary' }).count(), 0)
@@ -116,7 +116,7 @@ try {
   await assets.click()
   assert.equal(await assets.getAttribute('aria-expanded'), 'false'); assert.equal(await page.locator('table.t-a').count(), 0)
   assert.ok(await page.getByRole('button', { name: '+ Add asset' }).isVisible(), 'the Add button stays')
-  await page.getByRole('tab', { name: 'Home' }).click(); await page.getByRole('tab', { name: 'Finance Dashboard' }).click()
+  await page.getByRole('tab', { name: 'Home' }).click(); await page.getByRole('tab', { name: /Assets/ }).click()
   assert.equal(await page.locator('.ctoggle', { hasText: 'Assets' }).getAttribute('aria-expanded'), 'false', 'remembered')
   assert.equal(JSON.parse(await page.evaluate(() => localStorage.getItem('ui.collapsed'))).assets, true)
   await page.locator('.ctoggle', { hasText: 'Insurance' }).click(); await page.locator('.ctoggle', { hasText: 'Insurance' }).click() // fold and unfold
@@ -145,11 +145,11 @@ await dl2?.saveAs(`${OUT}/WealthTracker.wvault`)
 const raw = readFileSync(`${OUT}/WealthTracker.wvault`).toString('latin1')
 for (const s of ['000123456821', 'Checking', 'Chase', 'POL-100234']) assert.ok(!raw.includes(s), `plaintext leaked: ${s}`)
 await page.reload()
-await page.getByRole('tab', { name: 'Finance Dashboard' }).click()
 const [fc] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', { name: /Open an existing vault file/ }).click()])
 await fc.setFiles(`${OUT}/WealthTracker.wvault`)
 await page.getByPlaceholder('Passphrase').fill(PASS)
 await page.getByRole('button', { name: 'Unlock' }).click()
+await page.getByRole('tab', { name: /Assets/ }).click() // every unlock lands on Home
 await page.getByText('Update date', { exact: true }).waitFor()
 await page.getByRole('button', { name: /USA/ }).first().click()
 assert.ok(await page.getByText('Brokerage').isVisible())
@@ -167,7 +167,6 @@ assert.ok(JSON.stringify(wb.getWorksheet('Items').getSheetValues()).includes('00
 await page.screenshot({ path: `${OUT}/settings.png`, fullPage: true })
 
 await page.getByRole('button', { name: 'Change file' }).click()
-await page.getByRole('tab', { name: 'Finance Dashboard' }).click() // the file picker screen lives on the Finance tab
 const [xc] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', { name: /Import from an Excel file/ }).click()])
 await xc.setFiles(`${OUT}/export.xlsx`)
 await page.getByText(/Imported 4 items, 1 policies and 8 balances/).waitFor()

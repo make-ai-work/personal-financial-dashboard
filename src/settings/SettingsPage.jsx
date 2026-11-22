@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../auth/AuthContext.jsx'
 import { ClientIdForm } from '../auth/Setup.jsx'
+import { SavePanel } from '../finance/Gate.jsx'
+import { ConfirmWipe } from '../finance/AppDialogs.jsx'
 import { useVault } from '../finance/VaultContext.jsx'
 import FinanceSettings from '../finance/Settings.jsx'
 import PropertySettings from '../property/PropertySettings.jsx'
@@ -8,45 +10,67 @@ import PortfolioSettings from '../portfolio/PortfolioSettings.jsx'
 import HomeSettings from '../home/HomeSettings.jsx'
 import { useNav } from '../nav.jsx'
 import { homePrefs } from '../lib/homeprefs.js'
-import { shortId } from '../lib/google.js'
 import { appModeAvailable, canPrompt, isStandalone, promptInstall, subscribe } from '../lib/pwa.js'
 
-// Who is signed in, the Google connection, the two-step preview, and sign-out (which also locks the data file).
+// Who is signed in (or that this is demo mode), signing in, where your data lives right after signing in from demo mode, and the Google
+// connection. Nothing about who you are is stored.
 function AccountSettings() {
   const auth = useAuth()
   const vault = useVault()
   const [editId, setEditId] = useState(false)
   const signOut = async () => {
-    if (vault.phase === 'unlocked') await vault.lock()
+    if (vault.phase === 'unlocked' && !vault.demo) await vault.lock()
     auth.signOut()
   }
+  const carrying = auth.real && vault.demo // signed in from demo mode: choose where to keep your data (the demo changes go into it)
   return (
     <div className="panel" id="set-account">
-      <div className="p-head"><div className="title">Account &amp; sign-in</div>{!auth.native || auth.real ? <button className="btn primary" onClick={signOut}>Sign out</button> : null}</div>
+      <div className="p-head"><div className="title">Account &amp; sign-in</div><button className="btn primary" onClick={signOut}>Sign out</button></div>
       <div className="pad">
         <p className="note" data-testid="who-note">{auth.real
           ? <>Signed in as <b>{auth.user.name}</b> ({auth.user.email}). Your name and email are not stored: closing the app ends the session.</>
-          : <>You are <b>not signed in</b>, which is fine: signing in is optional and only shows who you are. Your data is protected by its own passphrase either way.</>}</p>
-        {!auth.real && auth.googleReady && !auth.demo && (
+          : <>You are in <b>demo mode</b> (Demo User) with sample data. Sign in with Google to keep your own data.</>}</p>
+        {!auth.real && !auth.demoSite && auth.googleReady && (
           <div className="acctrow">
-            <div><b>Sign in with Google</b><div className="hint">Optional. Only your name and email are read.</div></div>
+            <div><b>Sign in with Google</b><div className="hint">Then choose where to keep your data. Only your name and email are read.</div></div>
             <button className="btn sm primary" disabled={auth.busy} onClick={auth.signIn}>{auth.busy ? 'Opening Google…' : 'Sign in with Google'}</button>
           </div>
         )}
+        {!auth.real && auth.demoSite && <p className="note">Google sign-in is not available in the demo.</p>}
         {auth.error && <p className="err" role="alert">{auth.error}</p>}
-        <div className="acctrow">
-          <div><b>Google connection</b><div className="hint">{auth.demo ? 'Not available in the demo' : auth.usingDefault ? <>Built-in Google client <code>{shortId(auth.clientId)}</code></> : auth.clientId ? <>Your own client ID <code>{shortId(auth.clientId)}</code></> : 'Not set up'}</div></div>
-          <span className="row-actions">
-            <button className="btn sm" disabled={auth.demo} title={auth.demo ? 'Not available in the demo' : undefined} onClick={() => setEditId(!editId)}>{editId ? 'Cancel' : auth.usingDefault ? 'Use my own…' : auth.clientId ? 'Change' : 'Set up'}</button>
-            {auth.hasBuiltIn && !auth.usingDefault && <button className="btn sm" onClick={auth.useBuiltIn}>Use the built-in one</button>}
-            {auth.clientId && <button className="btn sm" onClick={auth.turnOffGoogle} title="Stop using Google sign-in and Drive on this device">Turn off Google</button>}
-          </span>
-        </div>
-        {editId && <ClientIdForm initial={auth.clientId} submitLabel="Save" onSave={(id) => { if (auth.saveClientId(id)) { auth.endReview(); setEditId(false) } }} />}
-        <label className="check">
-          <input type="checkbox" disabled={auth.demo} checked={auth.mfaRequired} onChange={(e) => auth.setMfaRequired(e.target.checked)} /> Preview the two-step verification screen at sign-in
-        </label>
-        <p className="note">Two-step verification is built into the sign-in flow but is on hold: nothing is enforced, and any 6-digit code passes.</p>
+        {carrying && <div className="carry" data-testid="carry-panel"><SavePanel carry /></div>}
+        {!auth.demoSite && (
+          <>
+            <div className="acctrow">
+              <div><b>Google connection</b><div className="hint">{auth.usingDefault ? 'The app’s own Google sign-in' : 'Your own Google client'}</div></div>
+              <span className="row-actions">
+                <button className="btn sm" onClick={() => setEditId(!editId)}>{editId ? 'Cancel' : 'Use my own…'}</button>
+              </span>
+            </div>
+            {editId && <ClientIdForm onSave={(id) => { if (auth.saveClientId(id)) setEditId(false) }} onReset={auth.usingDefault ? undefined : () => { auth.saveClientId(''); setEditId(false) }} />}
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// Danger zone: reset the vault and erase the data in its current storage.
+function DangerZone() {
+  const vault = useVault()
+  const [dlg, setDlg] = useState(false)
+  const where = vault.storage === 'drive' ? 'your Google Drive' : vault.storage === 'app' ? 'this app' : 'the vault file'
+  return (
+    <div className="panel danger-zone" id="set-danger">
+      <div className="p-head"><div className="title">Danger zone</div></div>
+      <div className="pad">
+        {vault.demo ? <p className="note">Demo mode saves nothing, so there is nothing to wipe. Reload to start the sample data again.</p> : (
+          <div className="row">
+            <span>Wipe data<small>Resets the vault and erases all your data in {where}, then asks where to keep a new one. It cannot be undone, so export a backup first.</small></span>
+            <button className="btn danger-btn" onClick={() => setDlg(true)}>Wipe data…</button>
+          </div>
+        )}
+        {dlg && <ConfirmWipe where={where} onClose={() => setDlg(false)} onConfirm={async () => { await vault.wipe(); setDlg(false) }} />}
       </div>
     </div>
   )
@@ -74,6 +98,7 @@ const SECTIONS = [
   { id: 'set-home', label: 'Home', needsData: false },
   { id: 'set-property', label: 'Property', needsData: true },
   { id: 'set-portfolio', label: 'Portfolio', needsData: true },
+  { id: 'set-danger', label: 'Danger zone', needsData: false },
 ]
 
 // The one Settings tab (gear icon, far right), 70 : 30: every setting on the left, an index and this device's details on the right.
@@ -104,6 +129,7 @@ export default function SettingsPage() {
               <HomeSettings countries={countries} />
               <PropertySettings />
               <PortfolioSettings />
+              <DangerZone />
             </>
           ) : (
             <>
@@ -111,7 +137,7 @@ export default function SettingsPage() {
               <div className="panel" id="set-locked">
                 <div className="p-head"><div className="title">Data, countries, property and portfolio settings</div></div>
                 <div className="pad"><p className="note">These are kept inside your encrypted data file, so they need it unlocked.</p>
-                  <button className="btn primary" onClick={() => nav.go('finance')}>Unlock on the Finance tab</button></div>
+                </div>
               </div>
             </>
           )}
@@ -129,7 +155,7 @@ export default function SettingsPage() {
             <div className="p-head"><div className="title">This device</div></div>
             <div className="pad">
               <RunAsApp />
-              <div className="row"><span>Version<small>{auth.native ? 'Android app' : window.desktopApp ? 'Windows app' : auth.demo ? 'Demo site' : 'Web app'}</small></span><span>0.1.0</span></div>
+              <div className="row"><span>Version<small>{auth.native ? 'Android app' : window.desktopApp ? 'Windows app' : auth.demoSite ? 'Demo site' : 'Web app'}</small></span><span>0.1.0</span></div>
               <div className="row"><span>Your data<small>{vault.demo ? 'Sample data, nothing saved' : vault.storage === 'app' ? 'Vault file inside this app' : vault.storage === 'drive' ? 'Google Drive' : vault.fileName || 'Vault file you choose'}</small></span><span className="chip">{data ? 'Unlocked' : 'Locked'}</span></div>
             </div>
           </div>

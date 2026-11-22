@@ -16,7 +16,7 @@ await new Promise((r) => setTimeout(r, 2500))
 const browser = await chromium.launch()
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true })
 await ctx.route(/open-meteo\.com/, (r) => r.fulfill({ json: { current: { temperature_2m: 20, relative_humidity_2m: 50, weather_code: 1, wind_speed_10m: 5, us_aqi: 40 }, daily: { time: ['2026-11-16', '2026-11-17'], weather_code: [1, 1], temperature_2m_max: [22, 22], temperature_2m_min: [12, 12] } } })) // Home's weather: not under test here
-await ctx.addInitScript(() => { delete window.showSaveFilePicker; delete window.showOpenFilePicker; localStorage.setItem('google.setupSkipped', '1') }) // start signed in
+await ctx.addInitScript(() => { delete window.showSaveFilePicker; delete window.showOpenFilePicker }) // start signed in
 // Deterministic rates per USD: INR 84, GBP 0.8, AUD 1.5, CHF 0.9 (cross rates derived from the requested base)
 const PER_USD = { USD: 1, INR: 84, GBP: 0.8, AUD: 1.5, CHF: 0.9 }
 const fetched = []
@@ -45,24 +45,24 @@ const addAsset = async (name, balance) => {
 }
 // The combined total now lives on Home (the Finance Summary tab is gone): read the net worth card, then come back to Finance.
 const gear = () => page.getByRole('tab', { name: 'Settings' }).click() // the one Settings tab (gear icon, far right)
-const fin = () => page.getByRole('tab', { name: 'Finance Dashboard' }).click()
+const fin = () => page.getByRole('tab', { name: /Assets/ }).click()
 const summaryText = async () => {
   await page.getByRole('tab', { name: 'Home' }).click()
   await page.getByTestId('networth').waitFor()
   await page.waitForTimeout(400) // rates arrive
   const text = await page.locator('.nwc').innerText()
-  await page.getByRole('tab', { name: 'Finance Dashboard' }).click()
+  await page.getByRole('tab', { name: /Assets/ }).click()
   return text
 }
 
 try {
   await page.goto('http://localhost:4176/')
-  await page.getByRole('tab', { name: 'Finance Dashboard' }).click()
   await page.getByRole('button', { name: /Create a new vault file/ }).click()
   await page.getByLabel('Passphrase', { exact: true }).fill(PASS)
   await page.getByLabel('Confirm passphrase').fill(PASS)
   await page.getByRole('checkbox').check()
   await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Create encrypted file' }).click()])
+  await page.getByRole('tab', { name: /Assets/ }).click()
   await page.getByText('Update date', { exact: true }).waitFor()
 
   step('default is two countries (USA, India), as before')
