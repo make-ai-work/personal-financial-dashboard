@@ -1,12 +1,11 @@
 import { useState } from 'react'
-import { useAuth } from './AuthContext.jsx'
 import { validateClientId } from '../lib/google.js'
 import { usePhone } from '../lib/usePhone.js'
 
 const copy = async (text) => { try { await navigator.clipboard.writeText(text); return true } catch { return false } }
 
-// The box, its checks and the "how do I get one" help. Used on the first-run screen and in the Account dialog.
-export function ClientIdForm({ initial = '', onSave, onSkip, submitLabel = 'Save and continue' }) {
+// The box, its checks and the "how do I get one" help, shown by Settings → Account → Use my own….
+export function ClientIdForm({ initial = '', onSave, onReset, submitLabel = 'Save' }) {
   const phone = usePhone()
   const [value, setValue] = useState(initial)
   const [copied, setCopied] = useState(false)
@@ -39,38 +38,9 @@ export function ClientIdForm({ initial = '', onSave, onSkip, submitLabel = 'Save
       <div className="warn"><b>Never paste a client secret here.</b> This app does not need one. Only the client ID goes in the box.</div>
       <div className="kvs"><span>Permissions it will ask for</span><div>Signing in: your name and email only. Google Drive storage is optional: if you choose it, Google asks separately for access to the files this app creates in your Drive. It cannot see your other files.</div></div>
       <div className="rowend">
-        {onSkip ? <button type="button" className="link" onClick={onSkip}>Skip for now, use the demo sign-in</button> : <span />}
+        {onReset ? <button type="button" className="link" onClick={onReset}>Go back to the app’s own Google sign-in</button> : <span />}
         <button className="btn primary" disabled={!v.ok}>{submitLabel}</button>
       </div>
     </form>
-  )
-}
-
-// First-run screen shown before sign-in until a client ID is saved or setup is skipped.
-export function Setup() {
-  const auth = useAuth()
-  const [editing, setEditing] = useState(false)
-  if (auth.reviewing && !editing) return <SavedCard onContinue={auth.endReview} onChange={() => setEditing(true)} />
-  return (
-    <div className="panel center">
-      <div className="steps"><b>Setup</b> › Sign in › Open your data</div>
-      <h2>Connect your Google account</h2>
-      <p className="note">Sign in with Google and saving to Google Drive need a free “client ID” from Google. You only do this once; it is not a password and it is not secret.</p>
-      <ClientIdForm initial={editing ? auth.clientId : ''} onSave={(id) => { if (auth.saveClientId(id)) setEditing(false) }} onSkip={editing ? undefined : auth.skipSetup} />
-    </div>
-  )
-}
-
-export function SavedCard({ onContinue, onChange }) {
-  const auth = useAuth()
-  return (
-    <div className="panel center">
-      <div className="steps">Setup ✓ › <b>Sign in</b> › Open your data</div>
-      <h2>Google is set up</h2>
-      <div className="okbox">Client ID saved in this browser. <span className="pill p-ok">ready to sign in</span></div>
-      <div className="kvs"><span>Client ID</span><code>{auth.clientId}</code><span>This address</span><code>{window.location.origin}</code><span>Access asked for</span><div>Signing in: your name and email. Google Drive (optional): only files this app creates.</div></div>
-      <p className="note" style={{ textAlign: 'left' }}>The next screen opens a Google window to sign in. Only your name and email are read, to show who is signed in. Your data file keeps its own passphrase.</p>
-      <div className="rowend"><button className="link" onClick={onChange}>Change client ID</button><button className="btn primary" onClick={onContinue}>Continue to sign in</button></div>
-    </div>
   )
 }

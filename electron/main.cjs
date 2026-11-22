@@ -27,7 +27,7 @@ if (!app.requestSingleInstanceLock()) { app.quit() } else {
       app.quit(); return
     }
     const origin = info.origin
-    oauth = createOAuth({ origin, openExternal: (u) => (TEST_DIR ? Promise.resolve() : shell.openExternal(u)) })
+    oauth = createOAuth({ origin, openExternal: (u) => (TEST_DIR ? Promise.resolve(require('node:fs').writeFileSync(path.join(TEST_DIR, 'oauth-url.txt'), u)) : shell.openExternal(u)) })
 
     // Only our own page may use these.
     const fromApp = (e) => { const u = e.senderFrame?.url || ''; if (!u.startsWith(origin + '/')) throw new Error('Not allowed.') }

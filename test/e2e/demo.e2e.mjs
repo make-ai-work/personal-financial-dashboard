@@ -58,9 +58,9 @@ const step = (s) => console.log('•', s)
 const dialog = () => page.getByRole('dialog')
 const topTab = (name) => page.getByRole('tab', { name })
 const subtab = (name) => page.locator('.subtabs').getByRole('button', { name })
-const demoBtn = () => page.getByRole('button', { name: 'Demo Mode (skip sign in)' })
+const demoBtn = () => page.getByRole('button', { name: 'Continue without signing in' })
 const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
-const enter = async () => { await demoBtn().click(); await page.getByRole('status').filter({ hasText: 'DEMO' }).waitFor() }
+const enter = async () => { await demoBtn().click(); await page.getByRole('button', { name: /Demo mode – nothing will be saved/ }).click(); await page.getByRole('status').filter({ hasText: 'DEMO' }).waitFor() }
 
 try {
   await page.goto('http://localhost:4182/')
@@ -70,7 +70,6 @@ try {
   assert.ok(await google.isDisabled(), 'Google sign-in is inactive in the demo')
   assert.ok(await demoBtn().isEnabled())
   await page.getByText(/This is the demo/).waitFor()
-  assert.equal(await page.getByRole('heading', { name: 'Connect your Google account' }).count(), 0)
   assert.equal(await page.getByRole('tab').count(), 0)
   await google.click({ force: true, timeout: 1000 }).catch(() => {})
   assert.equal(await page.getByRole('tab').count(), 0, 'clicking the disabled button does nothing')
@@ -123,7 +122,7 @@ try {
 
   step('Finance Dashboard: whole-screen layout, Performance from the sample history, sections fold (and nothing is remembered in the demo)')
   await demoBtn().waitFor(); await enter()
-  await topTab('Finance Dashboard').click(); await page.getByText('Update date', { exact: true }).waitFor()
+  await topTab(/Assets/).click(); await page.getByText('Update date', { exact: true }).waitFor()
   const perf = page.locator('table.perf')
   assert.match(await perf.innerText(), /6 M\s+\+ \$[\s\d,]+\s+\+[\d.]+%/) // the sample history is about 10 months
   assert.match(await perf.innerText(), /1 Y\s+—\s+—\s+not enough history/)
@@ -159,13 +158,13 @@ try {
   await page.getByText('Sample data.', { exact: false }).first().waitFor()
   await page.getByRole('heading', { name: /^Markets · time · weather/ }).waitFor()
   assert.equal(await overflow(), 0, 'Home')
-  await topTab('Finance Dashboard').click(); await page.getByText('Update date', { exact: true }).waitFor()
+  await topTab(/Assets/).click(); await page.getByText('Update date', { exact: true }).waitFor()
   assert.equal(await overflow(), 0, 'Finance')
   await topTab(/Retirement/).click(); await page.waitForTimeout(600)
   assert.equal(await overflow(), 0, 'Retirement')
   await page.screenshot({ path: `${OUT}/phone.png`, fullPage: true })
   await page.setViewportSize({ width: 1280, height: 900 })
-  await topTab('Finance Dashboard').click(); await page.getByText('Update date', { exact: true }).waitFor()
+  await topTab(/Assets/).click(); await page.getByText('Update date', { exact: true }).waitFor()
   await page.screenshot({ path: `${OUT}/desktop.png`, fullPage: true })
 } catch (e) {
   await page.screenshot({ path: `${OUT}/failure.png`, fullPage: true })

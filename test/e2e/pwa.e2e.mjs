@@ -3,7 +3,7 @@
 import { createRequire } from 'node:module'
 import { spawn } from 'node:child_process'
 import assert from 'node:assert/strict'
-import { autoSignIn } from './signin.mjs'
+import { autoDemo } from './signin.mjs'
 
 const require = createRequire(import.meta.url)
 const { chromium } = require('playwright')
@@ -15,7 +15,7 @@ const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } })
 await ctx.addInitScript(() => { localStorage.setItem('google.setupSkipped', '1') })
 await ctx.route(/open-meteo|fcsapi|frankfurter/, (r) => r.abort('failed'))
 const page = await ctx.newPage()
-autoSignIn(page)
+autoDemo(page)
 const errors = []
 page.on('pageerror', (e) => errors.push(e.message))
 const step = (s) => console.log('•', s)

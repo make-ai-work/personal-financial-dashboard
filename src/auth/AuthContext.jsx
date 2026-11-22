@@ -1,9 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
-import { DEMO_USER, LOCAL_USER, PHASE, nextPhase } from '../lib/auth.js'
-import { DEFAULT_CLIENT_ID, isClientId, needsSetup, resolveClientId } from '../lib/google.js'
+import { DEMO_USER, PHASE, nextPhase } from '../lib/auth.js'
+import { DEFAULT_CLIENT_ID, isClientId, resolveClientId } from '../lib/google.js'
 import { IS_DEMO } from '../lib/demo.js'
 import { isNativeApp } from '../lib/appstorage.js'
-import { isClientId as validId } from '../lib/google.js'
 import { signInWithGoogle } from '../lib/googleauth.js'
 
 const Ctx = createContext(null)
@@ -12,65 +11,53 @@ export const useAuth = () => useContext(Ctx)
 const read = (k) => { try { return localStorage.getItem(k) } catch { return null } }
 const write = (k, v) => { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k) } catch { /* storage unavailable */ } }
 
-// With a Google client ID saved, "Sign in with Google" is real (name and email only; see lib/googleauth.js). NOTHING about who you
-// are is stored: the name and email live in memory for this session only, so closing or reloading the page signs you out. Only
-// your own settings (the public client ID, preferences) are kept. Without a client ID it stays the placeholder sign-in as a demo user.
-// MFA is still only a preview screen.
-const forgetOldIdentity = () => { write('auth.user', ''); write('auth.demo', '') } // earlier versions kept these in this browser
+// The sign-in screen is always the first screen, on every version. Two ways in:
+//   Sign in with Google  -> you are a real user: your data can be saved (vault file or Google Drive). Your name and email live in memory
+//                           for this session only; NOTHING about who you are is stored, so closing the app signs you out.
+//   Continue without signing in -> "Demo User": sample data in memory, nothing saved or sent, until you sign in from Settings.
+// The demo site is the same with Google greyed out. Only your own settings (the public client ID, preferences) are kept.
+const forgetOldIdentity = () => { write('auth.user', ''); write('auth.demo', ''); write('auth.mfaPreview', ''); write('google.setupSkipped', '') } // earlier versions kept these
 export function AuthProvider({ children }) {
-  const [mfaRequired, setMfaRequired] = useState(() => !IS_DEMO && read('auth.mfaPreview') === '1')
   const [savedId, setSavedId] = useState(() => read('google.clientId') || '')
-  const [skipped, setSkipped] = useState(() => read('google.setupSkipped') === '1')
-  const resolved = resolveClientId({ saved: savedId, skipped })
-  const clientId = IS_DEMO ? '' : resolved.clientId // the demo has no Google
+  const resolved = resolveClientId({ saved: savedId })
+  const clientId = IS_DEMO ? '' : resolved.clientId // the demo site has no Google
   const [realUser, setRealUser] = useState(null) // memory only
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [checking, setChecking] = useState(() => !IS_DEMO && !isNativeApp() && isClientId(resolveClientId({ saved: read('google.clientId') || '' }).clientId) && !window.desktopApp) // the quiet attempt at start
+  const [phase, setPhase] = useState(PHASE.signedOut)
+  const go = useCallback((event) => setPhase((p) => nextPhase(p, event)), [])
   useEffect(forgetOldIdentity, [])
-  // Quiet sign-in when the app opens: works only if Google already has you signed in and you approved this app before. Nothing is
-  // stored by the app; a failure just shows the normal sign-in page.
+  // Quiet sign-in when the app opens (web): works only if Google already has you signed in and you approved this app before.
   useEffect(() => {
     if (!checking) return undefined
     let live = true
     signInWithGoogle(clientId, { silent: true })
-      .then((u) => { if (live) { setRealUser(u); go('signIn', { mfaRequired }) } })
+      .then((u) => { if (live) { setRealUser(u); go('signIn') } })
       .catch(() => {})
       .finally(() => live && setChecking(false))
     return () => { live = false }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
-  const [busy, setBusy] = useState(false)
-  const [checking, setChecking] = useState(() => !IS_DEMO && !isNativeApp() && validId(resolveClientId({ saved: read('google.clientId') || '', skipped: read('google.setupSkipped') === '1' }).clientId) && !window.desktopApp) // the quiet attempt at start
-  const [error, setError] = useState('')
-  const [reviewing, setReviewing] = useState(false) // keeps the "Google is set up" card up until Continue
-  const [phase, setPhase] = useState(() => (isNativeApp() ? PHASE.ready : PHASE.signedOut)) // the phone app has nothing to sign in to; everything else starts at the sign-in page
-  const go = useCallback((event, opts) => {
-    setPhase((p) => nextPhase(p, event, opts))
-  }, [])
+  const googleReady = !IS_DEMO && isClientId(clientId)
   const value = {
-    clientId, setup: !IS_DEMO && !isNativeApp() && needsSetup({ clientId, skipped }), // the setup page is for the web and Windows versions; Android always has the built-in client
-    saveClientId: (v) => { const id = String(v).trim(); if (!isClientId(id)) return false; setSavedId(id); write('google.clientId', id); setSkipped(false); write('google.setupSkipped', ''); setReviewing(true); return true },
-    reviewing, endReview: () => setReviewing(false),
+    clientId, googleReady, demoSite: IS_DEMO, native: isNativeApp(),
     usingDefault: !IS_DEMO && resolved.usingDefault, hasBuiltIn: !IS_DEMO && !!DEFAULT_CLIENT_ID,
-    useBuiltIn: () => { setSavedId(''); write('google.clientId', ''); setSkipped(false); write('google.setupSkipped', '') },   // back to the built-in client
-    turnOffGoogle: () => { setSavedId(''); write('google.clientId', ''); setSkipped(true); write('google.setupSkipped', '1') }, // no Google: the placeholder sign-in
-    skipSetup: () => { setSkipped(true); write('google.setupSkipped', '1') },
-    demo: IS_DEMO, native: isNativeApp(),
-    phase, user: phase === PHASE.ready ? (realUser || (IS_DEMO ? DEMO_USER : LOCAL_USER)) : null, mfaRequired, real: !!realUser, busy: busy || checking, checking, error,
-    googleReady: !IS_DEMO && validId(clientId),
+    // "Use my own…": your own Google client ID, kept in this browser. Passing '' goes back to the app's own.
+    saveClientId: (v) => { const id = String(v).trim(); if (id && !isClientId(id)) return false; setSavedId(id); write('google.clientId', id); return true },
+    phase, user: phase === PHASE.ready ? (realUser || DEMO_USER) : null, real: !!realUser, busy: busy || checking, checking, error,
+    // Sign in with Google (also used from Settings while in demo mode, where it keeps the page you are on).
     signIn: async () => {
       setError('')
-      if (IS_DEMO || !validId(clientId)) return go('signIn', { mfaRequired }) // the demo and the placeholder
+      if (!googleReady) return
       setBusy(true)
       try {
         const u = await signInWithGoogle(clientId)
         setRealUser(u)
-        go('signIn', { mfaRequired })
+        go('signIn')
       } catch (e) { setError(e.message || 'Google sign-in did not finish.') } finally { setBusy(false) }
     },
-    mfaPassed: () => go('mfaPassed'),
-    mfaCancel: () => go('mfaCancel'),
-    // Signing in is optional: carry on without it (the passphrase still protects the data).
-    continueLocal: () => { setError(''); go('signIn', { mfaRequired: false }) },
-    signOut: () => { setRealUser(null); setError(''); if (!isNativeApp()) go('signOut') }, // the Android app has no sign-in page to return to
-    setMfaRequired: (on) => { setMfaRequired(on); write('auth.mfaPreview', on ? '1' : '') },
+    continueDemo: () => { setError(''); go('signIn') }, // no Google: Demo User with sample data
+    signOut: () => { setRealUser(null); setError(''); go('signOut') },
   }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

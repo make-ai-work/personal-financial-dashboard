@@ -1,14 +1,18 @@
 import { useState } from 'react'
 import { useVault } from './VaultContext.jsx'
+import { useAuth } from '../auth/AuthContext.jsx'
 import { PassphraseForm } from './ui.jsx'
 import { pickExcel, isAbort, hasFS } from '../lib/fileio.js'
 import { channelOf, storageChoices } from '../lib/channel.js'
-import { ConfirmDelete, ConfirmRestore } from './AppDialogs.jsx'
+import { ConfirmDelete, ConfirmRestore, ConfirmWipe } from './AppDialogs.jsx'
 
-export function FirstRun() {
+// "Where should your data live?": the screen after sign-in on every version, and the same choices inside Settings (carry = true) when you
+// sign in from demo mode: your demo changes then go into the vault you create. Signed out, only demo mode works.
+export function SavePanel({ carry = false }) {
   const v = useVault()
+  const auth = useAuth()
   const [step, setStep] = useState('choose')
-  const [where, setWhere] = useState('device') // 'device' | 'drive': Google Drive is an optional extra choice
+  const [where, setWhere] = useState('device') // 'device' | 'drive'
   const [initial, setInitial] = useState(null)
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
@@ -22,6 +26,7 @@ export function FirstRun() {
       const { data, warnings } = await importWorkbook(f.buffer)
       setInitial(data)
       setNotice(`Imported ${data.accounts.length} items, ${data.policies.length} policies and ${data.balances.length} balances from ${f.name}.${warnings.length ? ' ' + warnings.length + ' rows skipped.' : ''}`)
+      setWhere('device')
       setStep('pass')
     } catch (e) {
       if (!isAbort(e)) setErr(e.message)
@@ -32,8 +37,9 @@ export function FirstRun() {
     setBusy(true)
     setErr('')
     try {
-      if (where === 'drive') await v.createInDrive(pass, initial || undefined)
-      else await v.create(pass, initial || undefined)
+      const start = initial || (carry ? v.data : undefined) || undefined // demo changes are carried into the new vault
+      if (where === 'drive') await v.createInDrive(pass, start)
+      else await v.create(pass, start)
     } catch (e) {
       setErr(e.message)
     } finally {
@@ -43,10 +49,11 @@ export function FirstRun() {
 
   if (step === 'pass') {
     return (
-      <div className="panel center">
-        <div className="steps"><span>1 · Choose where</span> › <b>2 · Set passphrase</b></div>
+      <div className={carry ? '' : 'panel center'}>
+        {!carry && <div className="steps"><span>1 · Choose where</span> › <b>2 · Set passphrase</b></div>}
         <h2>Set a passphrase</h2>
         {notice && <p className="note">{notice}</p>}
+        {carry && !notice && <p className="note">Your demo changes will be saved into this vault.</p>}
         <p className="note">{where === 'drive'
           ? 'Your data is encrypted with this passphrase (AES-256) on this device. Only the encrypted file is uploaded to your Google Drive; Google may ask you to allow access first.'
           : v.isApp
@@ -57,39 +64,48 @@ export function FirstRun() {
       </div>
     )
   }
-  const channel = channelOf({ native: v.isApp, desktop: !!window.desktopApp })
-  const choices = storageChoices({ channel, clientReady: v.driveEnabled, canRemember: hasFS() || v.isApp })
-  const fileChoice = choices.find((c) => c.id === 'file')
-  const driveChoice = choices.find((c) => c.id === 'drive')
+  const channel = channelOf({ demo: auth.demoSite, native: v.isApp, desktop: !!window.desktopApp })
+  const choices = storageChoices({ channel, signedIn: auth.real, clientReady: v.driveEnabled, canRemember: hasFS() || v.isApp })
+  const [fileChoice, driveChoice, demoChoice] = choices
   const startNew = (w) => { setInitial(null); setNotice(''); setWhere(w); setStep('pass') }
   return (
-    <div className="panel center">
-      <div className="steps"><b>1 · Choose where</b> › 2 · Set passphrase</div>
+    <div className={carry ? '' : 'panel center'}>
+      {!carry && <div className="steps"><b>1 · Choose where</b> › 2 · Set passphrase</div>}
       <h2>Where should your data live?</h2>
-      <p className="note">Everything is encrypted with your passphrase before it is saved. Nothing is sent to a server, and neither choice needs you to sign in.</p>
+      <p className="note">{carry
+        ? 'You are signed in. Choose where to keep your data: your demo changes are saved into it. Until you choose, nothing is saved.'
+        : 'Everything is encrypted with your passphrase before it is saved. Nothing is sent to a server.'}</p>
       <div className="choice" data-testid="choice-file">
         <b className="choice-h">{fileChoice.title}</b>
         <span className="note">{fileChoice.hint}</span>
-        <button className="primary" onClick={() => startNew('device')}>
-          Create a new vault file<small>Starts empty. You set the passphrase next.</small>
+        <button className="primary" disabled={!fileChoice.available} onClick={() => startNew('device')}>
+          Create a new vault file<small>{carry ? 'Your demo data goes in. You set the passphrase next.' : 'Starts empty. You set the passphrase next.'}</small>
         </button>
-        <button onClick={v.openFile}>{v.isApp ? 'Restore from a backup file' : 'Open an existing vault file'}<small>{v.isApp ? 'A .wvault file you exported before. It is copied into this app.' : 'A .wvault file you made before.'}</small></button>
+        <button disabled={!fileChoice.available} onClick={v.openFile}>{v.isApp ? 'Restore from a backup file' : 'Open an existing vault file'}<small>{v.isApp ? 'A .wvault file you exported before. It is copied into this app.' : 'A .wvault file you made before.'}{carry ? ' Your demo changes are discarded.' : ''}</small></button>
       </div>
       <div className="choice" data-testid="choice-drive">
-        <b className="choice-h">{driveChoice.title} <span className="opt">optional</span></b>
+        <b className="choice-h">{driveChoice.title}</b>
         {driveChoice.available ? (
           <>
             <span className="note">{driveChoice.hint}</span>
             <button onClick={() => startNew('drive')}>Create in Google Drive<small>Saves the encrypted file in your own Drive. Google may ask you to allow access first.</small></button>
-            <button onClick={v.openFromDrive}>Open from Google Drive<small>The encrypted file this app saved to your Drive before.</small></button>
+            <button onClick={v.openFromDrive}>Open from Google Drive<small>The encrypted file this app saved to your Drive before.{carry ? ' Your demo changes are discarded.' : ''}</small></button>
           </>
         ) : <button disabled>Create in Google Drive<small>{driveChoice.hint}</small></button>}
       </div>
-      <div className="choice">
-        <button onClick={importExcel}>
-          Import from an Excel file<small>For a workbook exported from this app. The original is left untouched, so delete or secure it yourself afterwards.</small>
-        </button>
-      </div>
+      {!carry && (
+        <div className="choice" data-testid="choice-demo">
+          <button className={demoChoice.available ? 'primary' : ''} disabled={!demoChoice.available} onClick={v.startDemo}>{demoChoice.title}<small>{demoChoice.hint}</small></button>
+        </div>
+      )}
+      {fileChoice.available && (
+        <div className="choice">
+          <button onClick={importExcel}>
+            Import from an Excel file<small>For a workbook exported from this app. The original is left untouched, so delete or secure it yourself afterwards.</small>
+          </button>
+        </div>
+      )}
+      {!carry && <button className="link" onClick={auth.signOut}>← Back to sign-in</button>}
       {(v.error || err) && <div className="err">{v.error || err}</div>}
     </div>
   )
@@ -134,15 +150,17 @@ export function Unlock() {
           {dlg === 'delete' && <ConfirmDelete onClose={() => setDlg('')} onConfirm={async () => { await v.deleteAppVault(); setDlg('') }} />}
         </>
       ) : <button className="link" onClick={v.switchFile}>Use a different file</button>}
+      {!inApp && <button className="link danger" onClick={() => setDlg('wipe')}>Forgot the passphrase? Wipe data…</button>}
+      {dlg === 'wipe' && <ConfirmWipe where={v.storage === 'drive' ? 'your Google Drive' : 'the vault file'} onClose={() => setDlg('')} onConfirm={async () => { await v.wipe(); setDlg('') }} />}
     </div>
   )
 }
 
-// Shows the first-run or unlock screen until the vault is open, then renders the section.
-export function VaultGate({ children }) {
+// Between sign-in and the app: the Where-to-save screen, or the passphrase, until the vault (or demo mode) is open. Then Home.
+export function LandingGate({ children, header = null }) {
   const { phase } = useVault()
   if (phase === 'loading') return null
-  if (phase === 'start') return <FirstRun />
-  if (phase === 'locked') return <Unlock />
+  if (phase === 'start') return <>{header}<main className="page"><SavePanel /></main></>
+  if (phase === 'locked') return <>{header}<main className="page"><Unlock /></main></>
   return children
 }

@@ -1,24 +1,16 @@
-// Sign-in state for the app. This is a PLACEHOLDER: "Sign in with Google" is a dummy button and the two-step
-// (MFA) screen is built but not enforced. The state machine below is what the real flow will plug into:
-//   signedOut --signIn--> (mfa --mfaPassed-->) ready --signOut--> signedOut
-// Nothing here talks to Google, and no real identity or second factor is checked.
+// Sign-in state for the app. Sign in with Google (src/auth/AuthContext.jsx) or continue as Demo User; the state machine is just:
+//   signedOut --signIn--> ready --signOut--> signedOut
+// Nothing about who you are is stored. (The two-step verification preview that used to sit in between has been removed.)
 
-export const PHASE = { signedOut: 'signedOut', mfa: 'mfa', ready: 'ready' }
+export const PHASE = { signedOut: 'signedOut', ready: 'ready' }
 
-export function nextPhase(phase, event, { mfaRequired = false } = {}) {
+export function nextPhase(phase, event) {
   switch (event) {
-    case 'signIn': return phase === PHASE.signedOut ? (mfaRequired ? PHASE.mfa : PHASE.ready) : phase
-    case 'mfaPassed': return phase === PHASE.mfa ? PHASE.ready : phase
-    case 'mfaCancel': return phase === PHASE.mfa ? PHASE.signedOut : phase
+    case 'signIn': return phase === PHASE.signedOut ? PHASE.ready : phase
     case 'signOut': return PHASE.signedOut
     default: return phase
   }
 }
 
-export const DEMO_USER = { name: 'Demo user', email: 'demo@example.com', demo: true }
-// Signing in is optional on every real version: this is who you are when you did not (it only labels the screen; the passphrase protects the data).
-export const LOCAL_USER = { name: 'Not signed in', email: '', local: true }
-
-// Authentication is on hold: whatever is typed, a code is never treated as proof of anything.
-export const MFA_ENFORCED = false
-export const looksLikeCode = (s) => /^\d{6}$/.test(String(s).trim())
+// "Continue without signing in": sample data in memory, nothing saved or sent.
+export const DEMO_USER = { name: 'Demo User', email: 'demo@example.com', demo: true }

@@ -7,8 +7,8 @@ import Retirement from './retirement/Retirement.jsx'
 import { NavContext, useNav } from './nav.jsx'
 import Home from './home/Home.jsx'
 import { AuthProvider, useAuth } from './auth/AuthContext.jsx'
-import { MfaStep, SignIn } from './auth/SignIn.jsx'
-import { Setup } from './auth/Setup.jsx'
+import { SignIn } from './auth/SignIn.jsx'
+import { LandingGate } from './finance/Gate.jsx'
 import SettingsPage from './settings/SettingsPage.jsx'
 import { closeTopModal, hasOpenModal } from './finance/ui.jsx'
 import { backAction, exitApp, onAppActive, onBackButton, shouldLockOnResume } from './lib/nativeapp.js'
@@ -18,7 +18,7 @@ import { APP_URL } from './lib/demo.js'
 // Add future sections here: each entry becomes a top-level tab.
 const TABS = [
   { id: 'home', label: 'Home', wide: true, render: () => <Home /> },
-  { id: 'finance', label: 'Finance Dashboard', wide: true, render: () => <Finance /> },
+  { id: 'finance', label: '💲 Assets', name: 'Assets', wide: true, render: () => <Finance /> },
   { id: 'property', wide: true, label: '🏠 Property', render: () => <Property /> },
   { id: 'portfolio', wide: true, label: '📈 Portfolio', render: () => <Portfolio /> },
   { id: 'retirement', wide: true, label: '🏖️ Retirement', render: () => <Retirement /> },
@@ -70,23 +70,25 @@ function NativeBridge({ tab, setTab }) {
   return null
 }
 
-// Shown on every screen of the demo site.
+// Shown on every screen while in demo mode (Demo User, sample data).
 function DemoBar() {
   const vault = useVault()
+  const auth = useAuth()
+  if (!vault.demo) return null
   return (
     <div className="demobar" role="status">
-      <span className="pill">DEMO</span>
-      <span><b>Sample data.</b> <span className="hide-sm">Change anything you like: it stays in this browser tab and is gone when you reload. Nothing is saved or sent.</span></span>
+      <span className="pill">DEMO MODE</span>
+      <span><b>Sample data.</b> <span className="hide-sm">Change anything you like: it stays in this session and is gone when you reload. Nothing is saved or sent.</span></span>
       <span className="sp" />
       <button className="btn" onClick={() => vault.resetDemo()}>Reset sample data</button>
-      <a className="btn primary" href={APP_URL} target="_blank" rel="noreferrer">Get the app</a>
+      {auth.demoSite && <a className="btn primary" href={APP_URL} target="_blank" rel="noreferrer">Get the app</a>}
     </div>
   )
 }
 
 function Shell() {
   const auth = useAuth()
-  const [tab, setTab] = useState(() => read('tab', 'home'))
+  const [tab, setTab] = useState('home') // every sign-in lands on Home
   const [theme, setTheme] = useState(() => read('theme', ''))
   const [focus, setFocus] = useState(null)
   const nav = { focus, clearFocus: () => setFocus(null), go: (id, params) => { setTab(id); setFocus(params || null) } }
@@ -97,10 +99,10 @@ function Shell() {
     else delete document.documentElement.dataset.theme
     write('theme', theme)
   }, [theme])
-  useEffect(() => write('tab', tab), [tab])
 
   const dark = theme ? theme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches
   const ready = auth.phase === PHASE.ready
+  useEffect(() => { if (!ready) { setTab('home'); setFocus(null) } }, [ready]) // every sign-in lands on Home, whatever page you left from
 
   const header = (acct) => (
     <header className="topbar">
@@ -116,14 +118,15 @@ function Shell() {
     return (
       <>
         {header(null)}
-        <main className="page">{auth.setup || auth.reviewing ? <Setup /> : auth.phase === PHASE.mfa ? <MfaStep /> : <SignIn />}</main>
+        <main className="page"><SignIn /></main>
       </>
     )
   }
   return (
     <VaultProvider>
       <NavContext.Provider value={nav}>
-        {auth.demo && <DemoBar />}
+        <LandingGate header={header(null)}>
+        <DemoBar />
         {auth.native && <NativeBridge tab={tab} setTab={setTab} />}
         {header(auth.native ? null : <Account />)}
         <nav className="tabs" role="tablist">
@@ -136,6 +139,7 @@ function Shell() {
           ))}
         </nav>
         {current.wide ? <main className="wide-page">{current.render()}</main> : <main className="page">{current.render()}</main>}
+        </LandingGate>
       </NavContext.Provider>
     </VaultProvider>
   )
