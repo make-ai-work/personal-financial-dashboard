@@ -464,3 +464,16 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 .rg-main > .panel { margin-bottom: 0; }
 .rsub { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
 @media (max-width: 980px) { .rgrid { grid-template-columns: 1fr; grid-template-areas: 'plans' 'main' 'inputs'; } .rsub { grid-template-columns: 1fr; } }
+
+/* AI chat drawer */
+.aichat { position: fixed; top: 0; right: 0; bottom: 0; width: min(420px, 100vw); z-index: 9; background: var(--surface); color: var(--text); border-left: 1px solid var(--line); box-shadow: var(--shadow); display: flex; flex-direction: column; padding-top: env(safe-area-inset-top, 0px); }
+.aic-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); } .aic-head .sp { flex: 1; }
+.aic-msgs { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.aic-msg { max-width: 90%; padding: 8px 11px; border-radius: var(--r); font-size: .9rem; line-height: 1.45; overflow-wrap: anywhere; }
+.aic-msg.u { align-self: flex-end; background: var(--accent); color: var(--accent-text); white-space: pre-wrap; }
+.aic-msg.a { align-self: flex-start; background: var(--surface-2); } .aic-msg.a p { margin: 0 0 6px; } .aic-msg.a p:last-child { margin: 0; } .aic-msg.a ul, .aic-msg.a ol { margin: 4px 0 6px; padding-left: 1.2rem; }
+.aic-ideas { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; } .aic-ideas .chip { cursor: pointer; text-align: left; }
+.aic-note { font-size: .72rem; color: var(--muted); padding: 4px 12px 0; }
+.aic-compose { display: flex; gap: 8px; padding: 8px 12px calc(10px + env(safe-area-inset-bottom, 0px)); align-items: flex-end; }
+.aic-compose textarea { flex: 1; resize: none; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 7px 9px; font: inherit; font-size: .9rem; margin: 0; }
+@media (max-width: 640px) { .aichat { width: 100vw; border-left: 0; } }

@@ -9,6 +9,7 @@ import Home from './home/Home.jsx'
 import { AuthProvider, useAuth } from './auth/AuthContext.jsx'
 import { SignIn } from './auth/SignIn.jsx'
 import { LandingGate } from './finance/Gate.jsx'
+import { AiHost, AskAiButton } from './ai/ChatDrawer.jsx'
 import SettingsPage from './settings/SettingsPage.jsx'
 import { closeTopModal, hasOpenModal } from './finance/ui.jsx'
 import { backAction, exitApp, onAppActive, onBackButton, shouldLockOnResume } from './lib/nativeapp.js'
@@ -128,7 +129,8 @@ function Shell() {
         <LandingGate header={header(null)}>
         <DemoBar />
         {auth.native && <NativeBridge tab={tab} setTab={setTab} />}
-        {header(auth.native ? null : <Account />)}
+        {header(<>{!auth.demoSite && <AskAiButton />}{auth.native ? null : <Account />}</>)}
+        {!auth.demoSite && <AiHost />}
         <nav className="tabs" role="tablist">
           {TABS.filter((t) => !t.gear).map((t) => (
             <button key={t.id} role="tab" aria-selected={t.id === current.id} className={t.id === current.id ? 'on' : ''} onClick={() => setTab(t.id)}>{t.label}</button>

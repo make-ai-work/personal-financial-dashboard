@@ -3,6 +3,7 @@ import { useAuth } from '../auth/AuthContext.jsx'
 import { ClientIdForm } from '../auth/Setup.jsx'
 import { SavePanel } from '../finance/Gate.jsx'
 import { ConfirmWipe } from '../finance/AppDialogs.jsx'
+import AiSettings from '../ai/AiSettings.jsx'
 import { useVault } from '../finance/VaultContext.jsx'
 import FinanceSettings from '../finance/Settings.jsx'
 import PropertySettings from '../property/PropertySettings.jsx'
@@ -93,6 +94,7 @@ function RunAsApp() {
 
 const SECTIONS = [
   { id: 'set-account', label: 'Account & sign-in', needsData: false },
+  { id: 'set-ai', label: 'AI assistant', needsData: false },
   { id: 'set-countries', label: 'Countries & display', needsData: true },
   { id: 'set-data', label: 'Data & security', needsData: true },
   { id: 'set-home', label: 'Home', needsData: false },
@@ -117,12 +119,13 @@ export default function SettingsPage() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const countries = data?.settings?.countries?.length ? data.settings.countries : homePrefs.countries()
-  const list = SECTIONS
+  const list = SECTIONS.filter((x) => x.id !== 'set-ai' || !auth.demoSite)
   return (
     <div className="wide-pad">
       <div className="split7030 settings">
         <div className="sp-l">
           <AccountSettings />
+          {!auth.demoSite && <AiSettings />}
           {data ? (
             <>
               <FinanceSettings />
