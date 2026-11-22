@@ -31,7 +31,8 @@
     "test:e2e:pwa": "node test/e2e/pwa.e2e.mjs",
     "test:e2e:drive": "node test/e2e/drive.e2e.mjs",
     "build:nodefault": "VITE_GOOGLE_CLIENT_ID= vite build --outDir dist-nodefault",
-    "test:e2e:flow": "node test/e2e/flow.e2e.mjs"
+    "test:e2e:flow": "node test/e2e/flow.e2e.mjs",
+    "test:e2e:ai": "node test/e2e/ai.e2e.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.2",
