@@ -127,10 +127,10 @@ try {
   step('overview: totals in both currencies through the live rate, reminders')
   await subtab('Overview').click()
   const sum = await page.locator('.tblw').first().innerText()
-  assert.match(sum, /Total in USD[\s\S]*\$ 481,429[\s\S]*\$ 241,257[\s\S]*\$ 240,171/) // 410000 + 6000000/84 ...
-  assert.ok(!/Total in INR/.test(sum), 'totals are in the first currency only')
+  assert.match(sum, /Total in 🇺🇸[\s\S]*\$ 481,429[\s\S]*\$ 241,257[\s\S]*\$ 240,171/) // 410000 + 6000000/84 ...
+  assert.ok(!/Total in 🇮🇳/.test(sum), 'totals are in the first currency only')
   await split(page, '.sp-l', '.sp-r')
-  assert.match(await page.locator('.fx').innerText(), /1 USD = ₹ 84/)
+  assert.match(await page.locator('.fx').innerText(), /🇺🇸 1 = ₹ 84/)
   const coming = await page.locator('.panel', { hasText: 'Coming up' }).innerText()
   assert.match(coming, /Maple Street home · Mortgage payment[\s\S]*due in 5 days/)
   assert.match(coming, /Property tax[\s\S]*due 15 Dec 2026/)
