@@ -145,15 +145,20 @@ A picture version of this, which also ships with the site, is in
   left (choose All, Mine, Joint, Spouse or Parent; everything converted into your first country's currency; unlock your data to see it),
   and on the right one compact block per country you selected in Finance → Settings: the **city of its main stock exchange**, the **time**
   (AM/PM with a day or night icon), **market open/closed** (or when it opens) and the **weather**. See "Home settings" below.
-- **Retirement** – *Plan*: your situation, savings picked from Finance asset accounts (converted to the plan
-  currency, equity share taken from the Portfolio mix), income sources with start and end ages, market conditions with a
-  staleness warning, nest-egg needed, shortfall and extra saving, and a yield sensitivity table. *Monte Carlo*: 1,000 to 10,000
-  random futures in today's money (lognormal real returns per asset class, correlated, rebalanced yearly): chance
-  your savings last, spread of outcomes (**Projected Net Worth**), chance by age, when money runs out, the spending
-  that still meets a target chance, an optional flexible-spending rule, and up to **3 saved versions** you can load,
-  overwrite, rename, delete and compare. The starting return, volatility and correlation figures are **placeholders,
-  not forecasts**; edit them. A version stores its inputs and seed, and results are recalculated on load.
-  Engine: `src/lib/montecarlo.js`; plan and versions: `src/lib/retirement.js`. Not included in the Excel export.
+- **Retirement** – one page. Across the top are your **saved plans** (up to three; the highlighted one is the plan you are on, with Open, Save
+  changes, Rename and Delete, and "+ New plan" for an empty slot). Below are three columns: **inputs** on the left (your situation including
+  contribution growth, *Savings used* picked from Finance asset accounts, *Inheritance*, *Income in retirement* with the **insurance survivor benefit**
+  tick-box, and market conditions with a staleness warning; the savings and inheritance sections fold to a one-line summary), **results** in the middle
+  (the **chance of success** with On track / Off track at your target, 85% by default; then nest egg needed, projected balance, surplus or shortfall and
+  the extra saving needed; then **monthly income, planned vs projected**) and **charts** on the right (**Projected Net Worth**, **Chance your savings
+  last**, and folded: when it runs out, the 10-year-yield sensitivity table and a comparison of the saved plans). *Advanced* (volatility, correlations,
+  the spending rule, target chance, number of runs and the seed) is under the columns. On a phone the order is plans, results, charts, inputs.
+  The simulation is 1,000 to 10,000 random futures in today's money (lognormal real returns per asset class, correlated, rebalanced yearly). The
+  starting return, volatility and correlation figures are **placeholders, not forecasts**; edit them. **Inheritance** is a flat amount added to your
+  savings in the calendar year you enter, exactly as typed (not inflation-adjusted); past years and years after the plan-to age are ignored. The
+  **insurance survivor benefit** adds the death benefit of your Finance insurance policies to the nest egg at retirement. A saved plan stores its
+  inputs and seed, and results are recalculated when you open it. Engine: `src/lib/montecarlo.js`; plan and saved plans: `src/lib/retirement.js`;
+  screens: `src/retirement/`. Not included in the Excel export.
 - **Property** – properties by country with a value history you enter (USA has an "Open on Zillow" link for
   looking up the Zestimate yourself), manually recorded mortgages (balance, principal, interest, escrow),
   equity and loan-to-value, reminders for mortgage payments and property tax, and monthly charts.
@@ -305,7 +310,7 @@ Windows has no flag emoji of its own (it shows letters such as "US"), so the app
 ## Phone
 
 On a phone-sized screen the app shows a simpler layout: tighter spacing, tables keep only name, owner, amount and actions,
-Retirement shows the key results and two charts with the detailed assumptions folded away.
+Retirement stacks as plans, results, charts, then inputs, with the detailed assumptions folded away.
 
 ## How your data is stored (Finance, Property, Portfolio and Retirement)
 
@@ -328,7 +333,7 @@ Retirement shows the key results and two charts with the detailed assumptions fo
 - [x] Step 2: Finance Dashboard (encrypted file, accounts, insurance, summary, charts)
 - [x] Step 3: generic country lists (1-5 per section) and the Property tab
 - [x] Step 4: Portfolio tab (holdings, allocation, rebalancing), linked to Finance accounts
-- [x] Step 5: Retirement tab (Plan + Monte Carlo with 3 saved versions), placeholder Google sign-in, phone layout
+- [x] Step 5: Retirement tab (one page with 3 saved plans, inheritance, insurance benefit and monthly income), placeholder Google sign-in, phone layout
 - [x] Step 6: demo mode (sample data, sign-in page with Demo Mode) published from the `demo` branch
 - [x] Step 7: run on your own computer with `npm start`
 - [x] Step 8: Home rebuild: clocks for each country, weather, markets open/closed, FCS market ticker

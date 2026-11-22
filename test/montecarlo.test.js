@@ -125,3 +125,29 @@ test('retiring now (no accumulation) and income that has an end age both work', 
   const richer = analyse(mc({ n: 500 }), plan({ retAge: 35, income: [] }))
   assert.ok(A.succ >= richer.succ)
 })
+
+test('a lump sum (inheritance) is added in its year, in today’s money = amount / (1 + inflation)^years', () => {
+  const a = flat(), base = plan({ lumps: [] })
+  const g = generate(a, base)
+  const none = simulate(a, base, g.G, g.T, 80000, true)
+  const l = { t: 10, amt: 100000 }
+  const withLump = simulate(a, { ...base, lumps: [l] }, g.G, g.T, 80000, true)
+  const n = a.n
+  // before the lump arrives the balances match; one year after, they differ by amt / (1+inf)^t grown by that year's return
+  assert.equal(withLump.B[10 * n], none.B[10 * n])
+  const real = l.amt / Math.pow(1 + base.inf, 10)
+  const diff = withLump.B[11 * n] - none.B[11 * n]
+  assert.ok(Math.abs(diff - real * g.G[10]) < 1, `${diff} vs ${real * g.G[10]}`)
+  assert.ok(withLump.ok >= none.ok)
+})
+
+test('a lump that arrives in the retirement year is in the pot before the first withdrawal', () => {
+  const a = flat(), base = plan({ lumps: [] })
+  const g = generate(a, base)
+  const N = base.retAge - base.age
+  const none = simulate(a, base, g.G, g.T, 80000, true)
+  const withLump = simulate(a, { ...base, lumps: [{ t: N, amt: 500000 }] }, g.G, g.T, 80000, true)
+  const real = 500000 / Math.pow(1 + base.inf, N)
+  const n = a.n
+  assert.ok(Math.abs(withLump.B[(N + 1) * n] - none.B[(N + 1) * n] - real * g.G[N]) < 1)
+})
