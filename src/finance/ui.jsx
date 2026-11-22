@@ -12,6 +12,14 @@ export function closeTopModal() {
   return true
 }
 export const hasOpenModal = () => openModals.length > 0
+// For overlays that are not a <Modal> (the AI chat drawer): Escape and the Android Back button close them like a dialog. Returns a function that unregisters.
+export function registerModal(close) {
+  const me = { close }
+  openModals.push(me)
+  const onKey = (e) => e.key === 'Escape' && openModals[openModals.length - 1] === me && close()
+  window.addEventListener('keydown', onKey)
+  return () => { window.removeEventListener('keydown', onKey); const i = openModals.indexOf(me); if (i >= 0) openModals.splice(i, 1) }
+}
 
 export function Modal({ title, onClose, children, footer, wide }) {
   const close = useRef(onClose)

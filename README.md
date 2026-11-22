@@ -303,6 +303,25 @@ for it in Google Cloud, so shipping it is safe. It never needs a client *secret*
 - **While your Google project is in "Testing"** only the test users you listed can sign in; publish the consent screen to open it to anyone (no review
   is needed for the scopes used here).
 
+## AI chat (optional, your own Claude key)
+
+**Ask AI** in the top bar opens a chat drawer (full screen on a phone), set up like the home inventory app's Claude option: **bring your own Anthropic key**,
+saved on this device only, calls go **straight from the app to api.anthropic.com** (no server of ours), and you confirm before anything is sent. The home
+inventory app has no chat (its AI reads one photo or receipt), so the chat itself is new here.
+
+- **Settings → AI assistant:** paste your key (checked for shape only) and pick a model (`claude-haiku-5-5` by default, `claude-sonnet-5-5` is smarter and costs
+  more; any model name works). **Test the key** sends one tiny message; **Remove key** deletes it. The key is **write-only**: once saved it is never shown again.
+  It is kept in this browser's IndexedDB on this device, **not** in your vault, a backup or the Excel export, and not in localStorage.
+- **What is sent:** only the messages you type, to Anthropic, with your key. **Nothing from your vault** (no accounts, balances, plans or policies) is ever included,
+  and the assistant is told it cannot see them. The first message of each session asks you to confirm. The last 20 messages are sent for context, and an
+  answer is capped at 1,024 tokens. Anthropic bills your key by use.
+- **The conversation** lives in memory only: it is cleared by **New chat**, by locking, by signing out and by reloading. Answers stream in; **Stop** cancels one.
+  Escape (and the Android Back button) close the drawer.
+- **Errors in plain words,** as in home inventory: cannot reach Anthropic, key rejected, unknown model, rate or spending limit.
+- **Not on the demo site** (no button, no settings). It works in the web, Windows and Android versions the same way (a direct call from the app's window).
+- **Code:** `src/lib/aichat.js` (request, streaming, errors), `src/lib/aikey.js` (where the key lives), `src/lib/aistore.js` (the conversation),
+  `src/ai/` (drawer, settings). Tests: `test/aichat.test.js` and `npm run test:e2e:ai` (Anthropic stood in for; **not run against the real API**).
+
 ## Country flags
 
 Windows has no flag emoji of its own (it shows letters such as "US"), so the app bundles a small font that only covers the flag characters

@@ -82,7 +82,7 @@ try {
 
   step('Use my own…: a secret is refused; a valid ID is used, and you can go back to the app’s own')
   await page.getByRole('button', { name: 'Use my own…' }).click()
-  const box = page.getByLabel('OAuth client ID'), save = page.getByRole('button', { name: 'Save', exact: true })
+  const box = page.getByLabel('OAuth client ID'), save = page.locator('#set-account').getByRole('button', { name: 'Save', exact: true })
   assert.equal(await box.inputValue(), '', 'the current ID is not pre-filled')
   await box.fill('GOCSPX-abc'); await page.getByText(/looks like a client secret/).waitFor(); assert.ok(await save.isDisabled())
   await box.fill(MINE); await save.click()
