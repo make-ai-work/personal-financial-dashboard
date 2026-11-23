@@ -591,3 +591,11 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 @media (max-width: 640px) { .appbar { display: contents } .tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 8 } }
 .side { top: calc(var(--appbar-h, 0px) + 12px) } .fin-right { top: calc(var(--appbar-h, 0px) + 8px) } .settings .sp-r { top: calc(var(--appbar-h, 0px) + 8px) } .tr-graph { top: calc(var(--appbar-h, 0px) + 8px) }
 .calc.standalone .kpis3 { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+/* Retirement: the chance of success, the big number on the left (with the status under it) and the figures on the right */
+.rchance { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 20px 28px; align-items: center; padding: 16px 18px }
+.rbigcol { display: flex; flex-direction: column; align-items: flex-start; gap: 8px }
+.rbigcol b { font-size: clamp(3.4rem, 7vw, 5rem); line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -.02em }
+.rstatus .pill { font-size: 1.15rem; font-weight: 700; padding: 6px 20px }
+.rkpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; min-width: 0 }
+.rkpis .kpi { min-width: 0 } .rkpis .kpi b { overflow-wrap: anywhere }
+@media (max-width: 700px) { .rchance { grid-template-columns: minmax(0, 1fr); padding: 14px } .rkpis { gap: 10px } }
