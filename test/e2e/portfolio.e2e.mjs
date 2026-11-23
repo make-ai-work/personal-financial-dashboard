@@ -261,9 +261,11 @@ try {
   await page.screenshot({ path: `${OUT}/usa.png`, fullPage: true })
 
   step('lock / unlock keeps the link, holdings and targets')
+  await page.getByRole('tab', { name: 'Settings' }).click()
   await page.getByRole('button', { name: 'Lock now' }).click()
   await page.getByPlaceholder('Passphrase').fill(PASS)
   await page.getByRole('button', { name: 'Unlock' }).click()
+  await topTab(/Portfolio/).click()
   await page.getByText('Portfolio summary').waitFor() // locking resets you to the Overview
   await subtab(/USA/).click()
   await page.getByText('linked to Assets: Brokerage · Schwab').waitFor()

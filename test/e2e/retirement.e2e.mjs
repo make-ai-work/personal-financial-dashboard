@@ -250,6 +250,7 @@ try {
 
   step('lock, unlock: plans, inheritance, assumptions and the highlighted plan come back from the encrypted file')
   await page.getByLabel('Random seed').fill('4242'); await settle()
+  await page.getByRole('tab', { name: 'Settings' }).click()
   await page.getByRole('button', { name: 'Lock now' }).click()
   await page.getByPlaceholder('Passphrase').fill(PASS)
   await page.getByRole('button', { name: 'Unlock' }).click()
