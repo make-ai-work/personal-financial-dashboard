@@ -1,8 +1,23 @@
 {
-  "name": "personal-dashboard",
+  "name": "personal-financial-dashboard",
   "private": true,
   "version": "0.1.0",
+  "description": "Personal finance dashboard: accounts, property, portfolio and retirement planning, with an encrypted vault (file or Google Drive). Runs as a web app, a Windows app and an Android app.",
+  "author": "saurskr",
+  "license": "MIT",
+  "homepage": "https://github.com/saurskr/personal-financial-dashboard#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/saurskr/personal-financial-dashboard.git"
+  },
+  "bugs": {
+    "url": "https://github.com/saurskr/personal-financial-dashboard/issues"
+  },
   "type": "module",
+  "main": "electron/main.cjs",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "start": "vite build && vite preview --port 4173 --strictPort",
     "dev": "vite",
@@ -53,12 +68,6 @@
     "electron-builder": "^26.18.0",
     "vite": "^7.3.7"
   },
-  "engines": {
-    "node": ">=18"
-  },
-  "main": "electron/main.cjs",
-  "description": "Personal finance dashboard",
-  "author": "Finance Dashboard",
   "build": {
     "appId": "io.github.saurskr.dashboard",
     "productName": "Finance Dashboard",

@@ -27,7 +27,7 @@ export function PropertyModal({ initial, countries, parentLabel, onSave, onClose
     const nums = { purchasePrice: num(f.purchasePrice), bedrooms: num(f.bedrooms), bathrooms: num(f.bathrooms), sizeSqft: num(f.sizeSqft), taxYear: num(f.taxYear), insuranceYear: num(f.insuranceYear), hoaMonth: num(f.hoaMonth), currentValue: num(f.currentValue) }
     if (Object.values(nums).some((n) => bad(n))) return setErr('Amounts and sizes must be numbers (0 or more).')
     if (f.purchaseDate && f.purchaseDate > todayISO()) return setErr('Purchase date cannot be in the future.')
-    const { currentValue, ...rest } = f
+    const { currentValue: _currentValue, ...rest } = f
     onSave({ ...rest, name: f.name.trim(), address: f.address.trim(), notes: f.notes.trim(), ...Object.fromEntries(Object.entries(nums).filter(([k]) => k !== 'currentValue')) }, nums.currentValue)
   }
 

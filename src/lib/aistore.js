@@ -11,7 +11,6 @@ const subs = new Set()
 const set = (patch) => { state = { ...state, ...patch }; subs.forEach((f) => f()) }
 const subscribe = (f) => { subs.add(f); return () => subs.delete(f) }
 export const useAiChat = () => useSyncExternalStore(subscribe, () => state)
-export const aiState = () => state
 
 export const openChat = () => set({ open: true })
 export const closeChat = () => set({ open: false })

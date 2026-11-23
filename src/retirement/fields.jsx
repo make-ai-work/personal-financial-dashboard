@@ -1,5 +1,4 @@
 // Small form pieces shared by the Retirement pages.
-export const toNum = (v) => (v === '' ? '' : Number(v))
 
 // Label + number input on one row. `value` may be '' while typing.
 export function NumRow({ label, hint, value, onChange, step, width = 110, placeholder, suffix, min, id }) {

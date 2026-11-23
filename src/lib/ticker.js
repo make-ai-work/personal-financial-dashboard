@@ -22,7 +22,6 @@ const FIXED_ITEMS = [
   { id: 'gold', label: 'Gold', sub: 'XAU/USD', group: 'forex', symbol: 'FX:XAUUSD' },
   { id: 'btc', label: 'Bitcoin', sub: 'BTC/USD', group: 'crypto', symbol: 'COINBASE:BTCUSD' },
 ]
-export const ALL_COUNTRY_ITEMS = COUNTRY_ITEMS
 
 // Everything the ticker shows for a list of country codes, in display order.
 export function tickerItems(countries) {

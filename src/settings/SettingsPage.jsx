@@ -158,7 +158,7 @@ export default function SettingsPage() {
             <div className="p-head"><div className="title">This device</div></div>
             <div className="pad">
               <RunAsApp />
-              <div className="row"><span>Version<small>{auth.native ? 'Android app' : window.desktopApp ? 'Windows app' : auth.demoSite ? 'Demo site' : 'Web app'}</small></span><span>0.1.0</span></div>
+              <div className="row"><span>Version<small>{auth.native ? 'Android app' : window.desktopApp ? 'Windows app' : auth.demoSite ? 'Demo site' : 'Web app'}</small></span><span data-testid="app-version">{__APP_VERSION__}</span></div>
               <div className="row"><span>Your data<small>{vault.demo ? 'Sample data, nothing saved' : vault.storage === 'app' ? 'Vault file inside this app' : vault.storage === 'drive' ? 'Google Drive' : vault.fileName || 'Vault file you choose'}</small></span><span className="chip">{data ? 'Unlocked' : 'Locked'}</span></div>
             </div>
           </div>

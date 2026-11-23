@@ -1,8 +1,6 @@
 // Pure helpers for the "Countries shown" lists (Finance and Property each keep their own).
 import { COUNTRY_CODES } from './format.js'
 
-export const MAX_COUNTRIES = COUNTRY_CODES.length
-
 // Keep only valid, unique codes in order; never return an empty list.
 export function sanitizeCountries(list, fallback = ['us']) {
   const out = []

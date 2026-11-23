@@ -31,10 +31,6 @@ const errors = []
 page.on('pageerror', (e) => errors.push(e.message))
 page.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
 const step = (s) => console.log('•', s)
-const split = async (page, l, r) => { // the two columns are 70 : 30 of the width they share
-  const a = await page.locator(l).first().boundingBox(), b = await page.locator(r).first().boundingBox()
-  assert.ok(Math.abs(a.width / (a.width + b.width + 16) - 0.7) < 0.02 && b.x > a.x + a.width - 2, `70 : 30, got ${JSON.stringify([a.width, b.width])}`)
-}
 
 const dialog = () => page.getByRole('dialog')
 const subtab = (name) => page.locator('.subtabs').getByRole('button', { name })
