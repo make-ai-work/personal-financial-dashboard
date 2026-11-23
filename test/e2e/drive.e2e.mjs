@@ -82,7 +82,7 @@ try {
   step('Where to save: Drive sits next to the vault file options (both need the Google sign-in; demo mode is greyed out)')
   for (const n of [/Create a new vault file/, /Open an existing vault file/, /Import from an Excel file/, /Create in Google Drive/, /Open from Google Drive/]) assert.ok(await page.getByRole('button', { name: n }).isEnabled(), String(n))
 
-  step('create the vault in Drive: the passphrase never leaves the device; only a WVLT1 ciphertext file is uploaded')
+  step('create the vault in Drive: the passphrase never leaves the device; only a WVLT2 ciphertext file is uploaded')
   await page.getByRole('button', { name: /Create in Google Drive/ }).click()
   await page.getByText(/Only the encrypted file is uploaded to your Google Drive/).waitFor()
   await page.getByLabel('Passphrase', { exact: true }).fill(PASS)
@@ -95,7 +95,7 @@ try {
   await page.getByText(/WealthTracker\.wvault · Google Drive · encrypted · saved/).waitFor()
   assert.equal(drive.files.size, 1)
   const first = [...drive.files.values()][0]
-  assert.equal(first.bytes.subarray(0, 5).toString(), 'WVLT1'); assert.ok(first.bytes.length > 200)
+  assert.equal(first.bytes.subarray(0, 5).toString(), 'WVLT2'); assert.ok(first.bytes.length > 200)
   assert.ok((await page.evaluate(() => window.__scopes)).some((s) => s.startsWith('https://www.googleapis.com/auth/drive.file|')), 'only the drive.file scope was asked for')
   assert.ok(!(await page.evaluate(() => window.__scopes)).some((s) => /drive(?!\.file)/.test(s.replace('drive.file', ''))), 'never the broad Drive scope')
   const stored = await page.evaluate(() => JSON.stringify(Object.entries(localStorage)))
@@ -191,7 +191,7 @@ try {
   drive.files.clear()
   await move.getByRole('button', { name: 'Move to Google Drive…' }).click()
   await page.getByText(/Moved to your Google Drive/).waitFor()
-  assert.equal(drive.files.size, 1); assert.equal([...drive.files.values()][0].bytes.subarray(0, 5).toString(), 'WVLT1')
+  assert.equal(drive.files.size, 1); assert.equal([...drive.files.values()][0].bytes.subarray(0, 5).toString(), 'WVLT2')
   await row.getByText('Google Drive · WealthTracker.wvault').waitFor()
 
   step('Danger zone: Wipe data deletes the Drive file for good and returns to Where to save')
@@ -241,7 +241,7 @@ try {
     await move.getByRole('button', { name: 'Move to Google Drive…' }).click()
     await page.getByText(/Moved to your Google Drive/).waitFor()
     assert.deepEqual(await page.evaluate(() => window.__logins.at(-1)), ['https://www.googleapis.com/auth/drive.file'])
-    assert.equal(drive.files.size, 1); assert.equal([...drive.files.values()][0].bytes.subarray(0, 5).toString(), 'WVLT1')
+    assert.equal(drive.files.size, 1); assert.equal([...drive.files.values()][0].bytes.subarray(0, 5).toString(), 'WVLT2')
     await row.getByText('Google Drive · WealthTracker.wvault').waitFor()
 
     step('the old copy is NOT deleted; a message says so; deleting asks you to confirm')

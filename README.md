@@ -74,7 +74,7 @@ Demo site, web, installed web app, Windows app and Android app all open the same
 ## Tabs
 
 - **Home** – the landing page. A rolling **market ticker** (always visible; dashes until prices load), a **Total net worth** card on the
-  left (choose All, Mine, Joint, Spouse or Parent; everything converted into your first country's currency; needs your vault unlocked),
+  left (choose All, Mine, Me + Others, Spouse or Parent; everything converted into your first country's currency; needs your vault unlocked),
   and on the right one compact block per country you selected in Settings → Countries: the **city of its main stock exchange**, the **time**
   (AM/PM with a day or night icon), **market open/closed** (or when it opens) and the **weather**. See "Home settings" below.
 - **Retirement** – one page. The left column starts with your **saved plans** (up to three small square-ish tiles side by side within the column's width; click a tile to choose
@@ -93,22 +93,37 @@ Demo site, web, installed web app, Windows app and Android app all open the same
   inputs and seed, and results are recalculated when you open it. Engine: `src/lib/montecarlo.js`; plan and saved plans: `src/lib/retirement.js`;
   screens: `src/retirement/`. Not included in the Excel export.
 - **Property** – properties by country with a value history you enter (USA has an "Open on Zillow" link for
-  looking up the Zestimate yourself), manually recorded mortgages (balance, principal, interest, escrow),
-  equity and loan-to-value, reminders for mortgage payments and property tax, and monthly charts.
+  looking up the Zestimate yourself), manually recorded mortgages (balance, principal, interest, escrow) with the **time remaining** on each,
+  equity and loan-to-value, reminders for mortgage payments, property tax and **home insurance renewal**, and monthly charts.
+  Under each loan, a **payoff calculator** (amortization schedule) starts from the recorded loan and lets you try a different rate or payment and **extra payments**
+  (monthly, once a year, or one-time lumps): it shows the payoff date, the time and interest saved, a balance chart and the full schedule. Scenarios are not saved.
+  Each property can also hold its **home insurance**: insurer, policy number, premium, deductible, renewal date, and **coverage limits** (dwelling, other structures,
+  personal property, loss of use, liability, medical payments, plus your own lines), with a warning if the dwelling limit is below the rebuild cost you entered.
   Not counted in the Assets totals. Zillow has no public API and forbids scraping, so values are typed in.
 - **Portfolio** – holdings per portfolio (stocks, ETFs, funds, bonds, cash) with prices you type in, linked to
-  one of your Finance asset accounts: that account's balance and asset-mix bar are then calculated from the
-  holdings. Allocation by asset class, sector, geography and portfolio, a single-stock concentration warning,
+  one of your Assets accounts: that account's balance is then calculated from the holdings, and Retirement uses their mix.
+  **Add holding** starts with the ticker or symbol; "Look up" fills the name, type and currency from Alpha Vantage (free key under Settings → Home; the free
+  tier allows 25 requests a day, and the dialog shows how many you have used and says so plainly when the limit is reached).
+  **Upload holdings…** reads a CSV or Excel (.xlsx) file: it guesses the columns (you can change them), makes **one portfolio per country** (each with its own Assets account), asks whether
+  this is **Update and overwrite** or a **New addition**, shows exactly what will change, and applies it only when you confirm. Allocation by asset class, sector, geography and portfolio, a single-stock concentration warning,
   stale-price flags, a bulk "Update prices" screen, and class-level rebalancing with a buy-only plan for new money.
   When you link an account, a difference between its typed balance and your holdings is added as an
   "unallocated" holding by default (or you accept the new total).
-- **💲 Assets** (the Finance part of the app) – assets, liabilities and insurance for two countries (USA, India, UK,
-  Australia or Switzerland; choose one to five in Settings; Assets and Property each keep their own list), with an owner filter (Mine / Joint / Parent), a month-by-month chart and a Performance panel per country. The combined total across countries is on Home.
+- **💲 Assets** (the Finance part of the app) – assets, liabilities and insurance by country (USA, India, UK, Ireland,
+  Australia or Switzerland; **one list** in Settings is used by every tab), with an owner filter (Mine / Me + Others / Spouse / Parent), a month-by-month chart and a Performance panel per country.
+  **Upload accounts…** reads a CSV or Excel file the same way (columns guessed, Update and overwrite or New addition, preview, confirm). There is no asset-mix field any more.
+  The combined total across countries is on Home.
 - **⚙ Settings** (the gear, far right) – one page for everything: *Account & sign-in* (sign in, your own Google client, sign out), *AI assistant*, countries and display,
-  *Your data & security* (where the vault lives, move it, passphrase, auto-lock, Excel export and import), *Home* (weather and prices), *Property*, *Portfolio*,
+  *Your data & security* (where the vault lives, move it, passphrase, **recovery key**, auto-lock, Excel export and import), *Home* (weather and prices), *Property*, *Portfolio*,
   and a **Danger zone** (Wipe data). *This device* shows the version, the install button and where your data is.
 
 ## How your data is stored (Finance, Property, Portfolio and Retirement)
+
+**Forgot the passphrase?** In Settings → Your data & security, press *Make a recovery key*. It is shown once (26 letters and digits). Keep it somewhere other than the vault.
+On the lock screen, *Forgot the passphrase? Use your recovery key…* opens the vault with it and sets a new passphrase. Without a recovery key a forgotten passphrase cannot be reset.
+Files use format `WVLT2` (a random data key, stored once under the passphrase and once under the recovery key); older `WVLT1` files still open and are upgraded on the next save.
+
+**Number fields** show thousands separators as you type (1,250,000); the stored value is always the plain number.
 
 - Everything lives in one encrypted file (`*.wvault`), created and opened from the app. Nothing is
   sent to a server. Full account and policy numbers are stored in it.
