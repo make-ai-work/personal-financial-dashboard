@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { emptyData } from '../src/lib/model.js'
 import { exportWorkbook, importWorkbook } from '../src/lib/excel.js'
 import { addProperty, addValuation, addLoan, addLoanUpdate } from '../src/lib/property.js'
-import { addAccount } from '../src/lib/model.js'
+import { addAccount, addPolicy } from '../src/lib/model.js'
 import { addPortfolio, addHolding, finishLinking, updatePortfolio } from '../src/lib/portfolio.js'
 
 // Round trip: everything exported must come back identical (the Excel file is the backup format).
@@ -62,4 +62,12 @@ test('a portfolio pointing at a missing or already-linked account is skipped wit
   const { data: back, warnings } = await importWorkbook((await exportWorkbook(d)).buffer)
   assert.deepEqual(back.portfolios.map((p) => p.name), ['A'])
   assert.equal(warnings.length, 2)
+})
+
+test('insurance premium paid survives an Excel round trip (and may be empty)', async () => {
+  let d = emptyData()
+  d = addPolicy(d, { id: 'p1', country: 'us', name: 'Term', number: '1', company: 'AIG', owner: 'mine', deathBenefit: 500000, maturityDate: '', maturityValue: null, premiumPaid: 12400.5 })
+  d = addPolicy(d, { id: 'p2', country: 'us', name: 'Whole', number: '2', company: 'AIG', owner: 'mine', deathBenefit: 100000, maturityDate: '', maturityValue: null })
+  const { data: back } = await importWorkbook((await exportWorkbook(d)).buffer)
+  assert.deepEqual(back.policies.map((p) => p.premiumPaid ?? null), [12400.5, null])
 })

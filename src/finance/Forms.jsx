@@ -72,12 +72,13 @@ export function PolicyModal({ country, initial, parentLabel, onSave, onClose }) 
   const [f, setF] = useState({
     name: initial?.name || '', number: initial?.number || '', company: initial?.company || '',
     deathBenefit: str(initial?.deathBenefit), owner: initial?.owner || 'mine',
-    maturityDate: initial?.maturityDate || '', maturityValue: str(initial?.maturityValue),
+    maturityDate: initial?.maturityDate || '', maturityValue: str(initial?.maturityValue), premiumPaid: str(initial?.premiumPaid),
   })
   const [err, setErr] = useState('')
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value })
   const submit = (e) => {
     e.preventDefault()
+    const pp = parseAmount(f.premiumPaid)
     const db = parseAmount(f.deathBenefit)
     const mv = parseAmount(f.maturityValue)
     if (!f.name.trim()) return setErr('Policy name is required.')
@@ -86,6 +87,7 @@ export function PolicyModal({ country, initial, parentLabel, onSave, onClose }) 
       country, name: f.name.trim(), number: f.number.trim(), company: f.company.trim(), owner: f.owner,
       deathBenefit: db, maturityDate: f.maturityDate,
       maturityValue: f.maturityValue !== '' && !Number.isNaN(mv) ? mv : null,
+      premiumPaid: f.premiumPaid !== '' && !Number.isNaN(pp) ? pp : null,
     })
   }
   return (
@@ -106,6 +108,9 @@ export function PolicyModal({ country, initial, parentLabel, onSave, onClose }) 
         <div className="two">
           <label className="field">Maturity date (optional)<input type="date" value={f.maturityDate} onChange={set('maturityDate')} /></label>
           <label className="field">Value on maturity (optional, {sym})<NumInput placeholder="none for term policies" value={f.maturityValue} onChange={set('maturityValue')} /></label>
+        </div>
+        <div className="two">
+          <label className="field">Premium paid so far (optional, {sym})<NumInput placeholder="total paid to date" value={f.premiumPaid} onChange={set('premiumPaid')} /></label>
         </div>
         <div className="field">Whose policy?<OwnerPicker value={f.owner} onChange={(owner) => setF({ ...f, owner })} parentLabel={parentLabel} /></div>
         {err && <div className="err">{err}</div>}

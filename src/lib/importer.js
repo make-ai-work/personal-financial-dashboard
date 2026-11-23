@@ -90,6 +90,7 @@ export function toNumber(v) {
 // ---------- guessing the columns ----------
 const norm = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
 export const HOLDING_FIELDS = [
+  { key: 'account', label: 'Account name (groups the portfolios)', aliases: ['account name', 'account', 'portfolio', 'portfolio name', 'account nickname', 'brokerage account'] },
   { key: 'ticker', label: 'Ticker / symbol', aliases: ['ticker', 'symbol', 'ticker symbol', 'instrument', 'security', 'code'] },
   { key: 'name', label: 'Name', aliases: ['name', 'description', 'security name', 'holding', 'holding name', 'investment', 'fund name', 'asset'] },
   { key: 'units', label: 'Units / shares', aliases: ['quantity', 'shares', 'units', 'qty', 'no of shares', 'number of shares', 'share count'] },
@@ -181,16 +182,24 @@ export function planHoldingsImport(d, table0, mapping0, mode, { today, defaultCo
     const byUnits = units != null && price != null
     const date = String(get(row, mapping, 'date') ?? '').match(/^\d{4}-\d{2}-\d{2}/)?.[0] || today
     const h = { name, ticker, type, cls, mix: null, sector: String(get(row, mapping, 'sector') ?? '').trim(), geo: COUNTRIES[country].name, trackBy: byUnits ? 'units' : 'value', units: byUnits ? units : null, price: byUnits ? price : null, value: byUnits ? null : value, priceDate: date, notes: '' }
-    if (!groups.has(country)) groups.set(country, [])
-    groups.get(country).push(h)
+    const account = String(get(row, mapping, 'account') ?? '').trim()
+    const gk = `${country}|${account.toLowerCase()}`
+    if (!groups.has(gk)) groups.set(gk, { country, account, rows: [] })
+    groups.get(gk).rows.push(h)
   })
   const steps = []
   const lines = []
-  for (const [country, rows] of groups) {
+  for (const { country, account, rows } of groups.values()) {
     const cname = COUNTRIES[country].name
-    const pname = `${cname} portfolio`
-    const existing = d.portfolios.find((p) => d.accounts.find((a) => a.id === p.accountId)?.country === country && p.name === pname)
-      || d.portfolios.find((p) => d.accounts.find((a) => a.id === p.accountId)?.country === country)
+    const pname = account || `${cname} portfolio` // the ACCOUNT NAME in the file names the portfolio and its Assets account; without one it is one portfolio per country
+    const inCountry = (p) => d.accounts.find((a) => a.id === p.accountId)?.country === country
+    const nameOf = (p) => String(d.accounts.find((a) => a.id === p.accountId)?.name || p.name).toLowerCase()
+    const existing = account
+      ? d.portfolios.find((p) => inCountry(p) && (nameOf(p) === account.toLowerCase() || p.name.toLowerCase() === account.toLowerCase()))
+      : d.portfolios.find((p) => inCountry(p) && p.name === pname) || d.portfolios.find((p) => inCountry(p))
+    // an Assets account of that name that no portfolio uses yet is linked instead of making a second one
+    const linkedIds = new Set(d.portfolios.map((p) => p.accountId))
+    const adopt = !existing && account ? d.accounts.find((a) => a.type === 'asset' && a.country === country && a.name.toLowerCase() === account.toLowerCase() && !linkedIds.has(a.id)) : null
     const key = (h) => (h.ticker || h.name).toLowerCase()
     let toAdd = rows
     if (existing && mode === 'add') {
@@ -200,9 +209,11 @@ export function planHoldingsImport(d, table0, mapping0, mode, { today, defaultCo
       if (dup) { skipped += dup; warnings.push(`${cname}: ${dup} holding${dup === 1 ? '' : 's'} already in "${existing.name}" were skipped.`) }
     }
     const total = toAdd.reduce((s, h) => s + (h.trackBy === 'units' ? h.units * h.price : h.value), 0)
-    if (existing) lines.push(`${COUNTRIES[country].flag} ${cname}: ${mode === 'update' ? `replace the ${holdingsOf(d, existing.id).length} holdings in "${existing.name}" with ${toAdd.length}` : `add ${toAdd.length} holding${toAdd.length === 1 ? '' : 's'} to "${existing.name}"`}`)
-    else lines.push(`${COUNTRIES[country].flag} ${cname}: create the portfolio "${pname}" (with its own Assets account) with ${toAdd.length} holding${toAdd.length === 1 ? '' : 's'}`)
-    steps.push({ country, pname, existing, toAdd, total })
+    const n = `${toAdd.length} holding${toAdd.length === 1 ? '' : 's'}`
+    if (existing) lines.push(`${COUNTRIES[country].flag} ${cname}: ${mode === 'update' ? `replace the ${holdingsOf(d, existing.id).length} holdings in "${existing.name}" with ${toAdd.length}` : `add ${n} to "${existing.name}"`}`)
+    else if (adopt) lines.push(`${COUNTRIES[country].flag} ${cname}: create the portfolio "${pname}" with ${n}, linked to your existing Assets account "${adopt.name}" (its balance becomes the holdings total)`)
+    else lines.push(`${COUNTRIES[country].flag} ${cname}: create the portfolio "${pname}" (with its own Assets account of the same name) with ${n}`)
+    steps.push({ country, pname, existing, adopt, toAdd, total })
   }
   const counts = { portfolios: steps.length, holdings: steps.reduce((s, x) => s + x.toAdd.length, 0), skipped }
   function apply(data) {
@@ -210,9 +221,9 @@ export function planHoldingsImport(d, table0, mapping0, mode, { today, defaultCo
     for (const st of steps) {
       let pid = st.existing?.id
       if (!pid) {
-        const accId = uid()
+        const accId = st.adopt ? st.adopt.id : uid()
         pid = uid()
-        next = addAccount(next, { id: accId, country: st.country, type: 'asset', name: st.pname, number: '', institution: '', owner: 'mine', balance: 0, mix: null, maturityDate: '', maturityValue: null })
+        if (!st.adopt) next = addAccount(next, { id: accId, country: st.country, type: 'asset', name: st.pname, number: '', institution: '', owner: 'mine', balance: 0, mix: null, maturityDate: '', maturityValue: null })
         next = addPortfolio(next, { id: pid, name: st.pname, accountId: accId })
       } else if (mode === 'update') {
         next = { ...next, holdings: next.holdings.filter((h) => h.portfolioId !== pid) } // overwrite: the old holdings go
