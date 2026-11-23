@@ -317,6 +317,15 @@ try {
   await page.getByTestId('import-preview').getByText(/Uploaded checking/).waitFor()
   await page.getByRole('button', { name: 'Apply changes' }).click()
   await page.getByText('Uploaded checking').first().waitFor()
+
+  step('upload: a default value fills a field the file does not have (here the bank)')
+  await page.getByTestId('upload-accounts').click()
+  await page.getByLabel('File to upload').setInputFiles({ name: 'a2.csv', mimeType: 'text/csv', buffer: Buffer.from('Account Name,Balance\nDefaulted savings,500\n') })
+  await page.getByLabel('Update and overwrite').check()
+  await page.getByLabel('Default for Bank / holding company').fill('Test Bank')
+  await page.getByRole('button', { name: 'Apply changes' }).click()
+  await page.getByText('Defaulted savings').first().waitFor()
+  await page.getByText('Test Bank').first().waitFor()
 } catch (e) {
   await page.screenshot({ path: `${OUT}/failure.png`, fullPage: true })
   console.error('FAILED:', e.message)

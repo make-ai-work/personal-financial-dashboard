@@ -111,7 +111,7 @@ Demo site, web, installed web app, Windows app and Android app all open the same
   "unallocated" holding by default (or you accept the new total).
 - **💲 Assets** (the Finance part of the app) – assets, liabilities and insurance by country (USA, India, UK, Ireland,
   Australia or Switzerland; **one list** in Settings is used by every tab), with an owner filter (Mine / Me + Others / Spouse / Parent), a month-by-month chart and a Performance panel per country.
-  **Upload accounts…** reads a CSV or Excel file the same way (columns guessed, Update and overwrite or New addition, preview, confirm). There is no asset-mix field any more.
+  **Upload accounts…** reads a CSV or Excel file the same way (columns guessed, a default value per field, Update and overwrite or New addition, preview, confirm). There is no asset-mix field any more.
   The combined total across countries is on Home.
 - **⚙ Settings** (the gear, far right) – one page for everything: *Account & sign-in* (sign in, your own Google client, sign out), *AI assistant*, countries and display,
   *Your data & security* (where the vault lives, move it, passphrase, **recovery key**, auto-lock, Excel export and import), *Home* (weather and prices), *Property*, *Portfolio*,

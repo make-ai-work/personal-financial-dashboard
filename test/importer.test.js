@@ -94,3 +94,19 @@ test('accounts: update matches by number or name and overwrites; add skips exact
   const dup = planAccountsImport(d, tableFromRows(parseCsv('Account Name,Account Number,Balance\nChecking,123456,1')), detectColumns(['Account Name', 'Account Number', 'Balance'], ACCOUNT_FIELDS), 'add')
   assert.deepEqual([dup.counts.created, dup.counts.skipped], [0, 1])
 })
+
+test('defaults fill a missing column and blank cells, for holdings and accounts', () => {
+  // holdings with no country or currency column: every row goes to the chosen country
+  const t = tableFromRows(parseCsv('Symbol,Quantity,Price\nAAA,10,5\nBBB,2,100'))
+  const map = detectColumns(t.headers, HOLDING_FIELDS)
+  const plan = planHoldingsImport(emptyData(), t, map, 'update', { today: TODAY, defaults: { country: 'ie' } })
+  assert.deepEqual(plan.counts, { portfolios: 1, holdings: 2, skipped: 0 }); assert.match(plan.lines[0], /Ireland/)
+  // a default value does not override a cell that is filled
+  const t2 = tableFromRows(parseCsv('Account Name,Balance,Owner\nA,100,Spouse\nB,200,'))
+  const a = planAccountsImport(emptyData(), t2, detectColumns(t2.headers, ACCOUNT_FIELDS), 'add', { defaults: { owner: 'joint', institution: 'Chase', country: 'uk' } }).apply(emptyData())
+  assert.deepEqual(a.accounts.map((x) => [x.owner, x.institution, x.country]), [['spouse', 'Chase', 'uk'], ['joint', 'Chase', 'uk']])
+  // a default can satisfy a needed field (here the balance column is missing)
+  const t3 = tableFromRows(parseCsv('Account Name,Notes\nZero,x\nOther,y'))
+  const z = planAccountsImport(emptyData(), t3, detectColumns(t3.headers, ACCOUNT_FIELDS), 'add', { defaults: { balance: '0' } })
+  assert.equal(z.counts.created, 2)
+})

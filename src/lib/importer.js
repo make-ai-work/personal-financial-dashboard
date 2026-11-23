@@ -118,12 +118,28 @@ export function resolveCountry(country, currency) {
 const HOLDING_TYPE = { stock: 'stock', equity: 'stock', share: 'stock', shares: 'stock', etf: 'etf', fund: 'fund', 'mutual fund': 'fund', bond: 'bond', cash: 'cash', other: 'other' }
 const CLASS_WORDS = [[/cash|money market/, 'cash'], [/bond|fixed income|treasury|debt/, 'bonds'], [/gold|silver|metal|commodit/, 'metals'], [/equit|stock|share|etf|fund/, 'equities']]
 const classOf = (v) => { const s = String(v || '').toLowerCase(); return s ? (CLASS_WORDS.find(([re]) => re.test(s))?.[1] || '') : '' }
+// A DEFAULT VALUE per field, chosen in the upload dialog: it is used for every row when the file has no such column, and for rows where the cell is blank.
+// Done by adding a hidden column, so the planners below need no special cases.
+export function applyDefaults(table, mapping, defaults = {}) {
+  const keys = Object.keys(defaults).filter((k) => String(defaults[k] ?? '').trim() !== '')
+  if (!keys.length) return { table, mapping }
+  const map = { ...mapping }
+  const cols = Object.fromEntries(keys.map((k) => [k, `__default_${k}`]))
+  const rows = table.rows.map((row) => {
+    const r = { ...row }
+    for (const k of keys) { const cell = mapping[k] ? row[mapping[k]] : ''; r[cols[k]] = String(cell ?? '').trim() === '' ? defaults[k] : cell }
+    return r
+  })
+  for (const k of keys) map[k] = cols[k]
+  return { table: { ...table, rows }, mapping: map }
+}
 const get = (row, mapping, key) => (mapping[key] ? row[mapping[key]] : '')
 
 // ---------- holdings -> portfolios (one per country) ----------
 // mode: 'update' (overwrite the holdings of the portfolios it touches) | 'add' (keep what is there, add the new rows, skip ones already held)
 // -> { lines: [string], warnings: [string], counts: { portfolios, holdings, skipped }, apply(d) }
-export function planHoldingsImport(d, table, mapping, mode, { today, defaultCountry } = {}) {
+export function planHoldingsImport(d, table0, mapping0, mode, { today, defaultCountry, defaults } = {}) {
+  const { table, mapping } = applyDefaults(table0, mapping0, defaults)
   const warnings = []
   const fallback = defaultCountry || d.settings.countries[0] || 'us'
   const groups = new Map()
@@ -189,7 +205,8 @@ export function planHoldingsImport(d, table, mapping, mode, { today, defaultCoun
 // ---------- accounts ----------
 // mode 'update': a file row that matches an existing account (same number, else same name in the same country) overwrites its fields and balance;
 // rows that match nothing are added. mode 'add': every row is added, except exact duplicates (same name, number and country), which are skipped.
-export function planAccountsImport(d, table, mapping, mode, { defaultCountry } = {}) {
+export function planAccountsImport(d, table0, mapping0, mode, { defaultCountry, defaults } = {}) {
+  const { table, mapping } = applyDefaults(table0, mapping0, defaults)
   const warnings = []
   const fallback = defaultCountry || d.settings.countries[0] || 'us'
   const items = []
