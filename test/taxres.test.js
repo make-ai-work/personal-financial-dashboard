@@ -43,7 +43,7 @@ test('add, edit and remove; Excel round trip keeps the ranges', async () => {
   d = addRange(d, 'in', { status: 'rnor', from: '2023-04-01', to: '' })
   const id = d.taxResidency.us[0].id
   d = updateRange(d, 'us', id, { to: '2023-12-31' }); assert.equal(d.taxResidency.us[0].to, '2023-12-31')
-  d = { ...d, taxResidency: { ...d.taxResidency, inputs: { startYear: 2016, citizen: true, travel: { usArrival: '2018-08-15', usDeparture: '', trips: [{ id: 't1', exit: '2024-06-01', entry: '2024-06-21', india: true }, { id: 't2', exit: '2025-01-01', entry: '', india: false }] }, us: { 2025: { days: 120, greenCard: false, exempt: 5, closer: true } }, in: { 2025: { days: 70, left: true, income15: true, liableElsewhere: false } } } } }
+  d = { ...d, taxResidency: { ...d.taxResidency, inputs: { startYear: 2016, citizen: true, plan: { departure: '2028-06-30', usVisitDays: 30, indiaVisitDays: 20, givesUpGreenCard: false, include: true }, travel: { usArrival: '2018-08-15', usDeparture: '', trips: [{ id: 't1', exit: '2024-06-01', entry: '2024-06-21', india: true }, { id: 't2', exit: '2025-01-01', entry: '', india: false }] }, us: { 2025: { days: 120, greenCard: false, exempt: 5, closer: true } }, in: { 2025: { days: 70, left: true, income15: true, liableElsewhere: false } } } } }
   const { data: back, warnings } = await importWorkbook((await exportWorkbook(d)).buffer)
   assert.deepEqual(warnings, [])
   const noIds = (i) => ({ ...i, travel: { ...i.travel, trips: i.travel.trips.map(({ id, ...x }) => x) } })

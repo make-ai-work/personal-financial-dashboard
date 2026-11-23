@@ -78,6 +78,10 @@ export async function exportWorkbook(data) {
   ])
   sheet(wb, 'Settings', ['Key', 'Value'], [
     ['taxCitizenOfIndia', ti?.citizen ? 'yes' : 'no'],
+    ['taxPlanDeparture', ti?.plan?.departure || ''],
+    ['taxPlanUsVisitDays', ti?.plan?.usVisitDays ?? ''],
+    ['taxPlanIndiaVisitDays', ti?.plan?.indiaVisitDays ?? ''],
+    ['taxPlanGivesUpGreenCard', ti?.plan?.givesUpGreenCard === false ? 'no' : 'yes'],
     ['taxStartYear', ti?.startYear ?? ''],
     ['countries', data.settings.countries.join(',')],
     ['concentrationLimit', data.settings.concentrationLimit],
@@ -239,7 +243,7 @@ export async function importWorkbook(buffer) {
     if (!st || !validISO(from) || (to && (!validISO(to) || to < from))) { warnings.push(`Skipped tax residency row "${r.Country} ${r.Status} ${r.From}": needs US or India, a valid status, a start date and an end date after it.`); continue }
     tr[c].push({ status: st.key, from, to })
   }
-  const inputs = { startYear: null, citizen: false, us: {}, in: {}, travel: null }
+  const inputs = { startYear: null, citizen: false, us: {}, in: {}, travel: null, plan: null }
   const yes = (v) => /^(yes|y|true|1)$/i.test(String(v ?? '').trim())
   for (const r of readRows(wb.getWorksheet('TaxResidencyDays'))) {
     const y = String(Number(r.Year)), c = /^us/i.test(String(r.Country)) ? 'us' : /^in/i.test(String(r.Country)) ? 'in' : ''
@@ -260,6 +264,10 @@ export async function importWorkbook(buffer) {
   for (const r of readRows(wb.getWorksheet('Settings'))) {
     if (r.Key === 'taxCitizenOfIndia') inputs.citizen = yes(r.Value)
     if (r.Key === 'taxStartYear' && num(r.Value) > 1950) inputs.startYear = num(r.Value)
+    if (r.Key === 'taxPlanDeparture') inputs.plan = { ...(inputs.plan || {}), departure: String(r.Value ?? '').slice(0, 10) }
+    if (r.Key === 'taxPlanUsVisitDays') inputs.plan = { ...(inputs.plan || {}), usVisitDays: num(r.Value) ?? '' }
+    if (r.Key === 'taxPlanIndiaVisitDays') inputs.plan = { ...(inputs.plan || {}), indiaVisitDays: num(r.Value) ?? '' }
+    if (r.Key === 'taxPlanGivesUpGreenCard') inputs.plan = { ...(inputs.plan || {}), givesUpGreenCard: yes(r.Value) }
   }
   data.taxResidency = normalizeTaxResidency({ ...tr, inputs })
   const legacyCountries = []

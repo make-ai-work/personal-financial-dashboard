@@ -24,27 +24,30 @@ function Page() {
   const [modal, setModal] = useState(null) // { country, item? }
   const [wizard, setWizard] = useState(false)
   const save = (country, item, v) => { update((d) => (item ? updateRange(d, country, item.id, v) : addRange(d, country, v))); setModal(null) }
+  const onEdit = (country) => (item) => setModal({ country, item })
+  const onDelete = (c) => (item) => window.confirm(`Delete this period (${statusOf(c, item.status).label}, ${fmtDate(item.from)} to ${item.to ? fmtDate(item.to) : 'now'})?`) && update((d) => removeRange(d, c, item.id))
   return (
     <div className="wide-pad tr-page" data-testid="tax-residency">
-      <div className="panel"><div className="pad"><div className="wiz-cta"><span><b>Not sure of your status?</b> Answer a few questions about the days you spent in each country and get your US and India tax residency worked out year by year, with the rule and the official source for each result.</span><button className="btn primary" onClick={() => setWizard(true)} data-testid="open-wizard">Start the guided check</button></div></div></div>
-      <div className="panel"><div className="pad sub">Record the date ranges of your tax residency to see when your status changes. Add the first period for each country, then each change. Leave the end date empty for the period you are in now. Rules for becoming resident are not calculated here; you enter the status you were or will be.</div></div>
-      <div className="tr-legend" aria-label="Legend">
-        {['us', 'in'].flatMap((c) => STATUSES[c].map((s) => <span key={`${c}${s.key}`}><i className={`tr-sw tone-${s.tone}`} />{c === 'us' ? 'US' : 'India'} {s.label}</span>))}
+      <div className="panel"><div className="pad"><div className="wiz-cta"><span><b>Not sure of your status?</b> Answer a few questions about the days you spent in each country and get your US and India tax residency worked out year by year, with the rule and the official source for each result. You can also model leaving the US on a future date.</span><button className="btn primary" onClick={() => setWizard(true)} data-testid="open-wizard">Start the guided check</button></div></div></div>
+      <div className="tr-grid">
+        <div className="tr-dates">
+          {['us', 'in'].map((c) => <Dates key={c} country={c} ranges={tr[c]} today={today} onAdd={() => setModal({ country: c })} onEdit={onEdit(c)} onDelete={onDelete(c)} />)}
+        </div>
+        <div className="tr-graph">
+          <Timeline tr={tr} ax={ax} today={today} onEdit={(c, item) => setModal({ country: c, item })} />
+        </div>
       </div>
-      {['us', 'in'].map((c) => <CountryBar key={c} country={c} ranges={tr[c]} ax={ax} today={today} onAdd={() => setModal({ country: c })} onEdit={(item) => setModal({ country: c, item })} onDelete={(item) => window.confirm(`Delete this period (${statusOf(c, item.status).label}, ${fmtDate(item.from)} to ${item.to ? fmtDate(item.to) : 'now'})?`) && update((d) => removeRange(d, c, item.id))} />)}
       {wizard && <Wizard onClose={() => setWizard(false)} />}
       {modal && <RangeModal country={modal.country} item={modal.item} others={tr[modal.country].filter((r) => r.id !== modal.item?.id)} onSave={(v) => save(modal.country, modal.item, v)} onClose={() => setModal(null)} />}
     </div>
   )
 }
 
-function CountryBar({ country, ranges, ax, today, onAdd, onEdit, onDelete }) {
-  const c = COUNTRIES[country === 'us' ? 'us' : 'in']
+// LEFT: the dates, per country: today's status, the periods, and where the status changes.
+function Dates({ country, ranges, today, onAdd, onEdit, onDelete }) {
+  const c = COUNTRIES[country]
   const now = statusOn(ranges, today)
-  const seg = ax ? segments(ranges, ax, today) : []
-  const ticks = ax ? taxYearTicks(country, ax.start, ax.end) : []
   const ch = changes(ranges)
-  const todayX = ax && today >= ax.start && today <= ax.end ? pos(ax, today) : null
   return (
     <div className="panel" data-testid={`tr-${country}`}>
       <div className="p-head">
@@ -55,18 +58,22 @@ function CountryBar({ country, ranges, ax, today, onAdd, onEdit, onDelete }) {
         </span>
       </div>
       <div className="pad">
-        {!ax || !ranges.length ? <div className="sub">No periods yet. Add one to see the bar.</div> : (
+        {!ranges.length && <div className="sub">No periods yet. Add one, or use the guided check.</div>}
+        {ranges.length > 0 && (
           <>
-            <div className="tr-axis" aria-hidden="true">
-              {ticks.map((t) => <span key={t.date} className="tr-tick" style={{ left: `${pos(ax, t.date)}%` }}><i />{t.label}</span>)}
-            </div>
-            <div className="tr-bar" role="img" aria-label={`${c.name} tax residency over time`} data-testid={`tr-bar-${country}`}>
-              {seg.map((s) => {
-                const st = statusOf(country, s.status)
-                return <button key={s.id} type="button" className={`tr-seg tone-${st.tone}`} style={{ left: `${s.left}%`, width: `${s.width}%` }} data-status={s.status} title={`${st.long || st.label}: ${fmtDate(s.from)} to ${s.to ? fmtDate(s.to) : 'now'}`} onClick={() => onEdit(ranges.find((r) => r.id === s.id))}><span>{st.label}</span></button>
-              })}
-              {ch.map((x) => <span key={x.date} className="tr-chg" style={{ left: `${pos(ax, x.date)}%` }} title={`${fmtDate(x.date)}: ${x.from ? statusOf(country, x.from).label + ' → ' : ''}${statusOf(country, x.to).label}`} />)}
-              {todayX !== null && <span className="tr-today" style={{ left: `${todayX}%` }} title={`Today, ${fmtDate(today)}`} />}
+            <div className="tblw">
+              <table className="t-left">
+                <thead><tr><th>Status</th><th>From</th><th>To</th><th /></tr></thead>
+                <tbody>
+                  {ranges.map((r) => (
+                    <tr key={r.id} className={r.from > today ? 'tr-planned' : ''}>
+                      <td><span className={`tr-sw tone-${statusOf(country, r.status).tone}`} /> <b>{statusOf(country, r.status).label}</b>{r.from > today && <span className="sub"> planned</span>}</td>
+                      <td>{fmtDate(r.from)}</td><td>{r.to ? fmtDate(r.to) : 'Now'}</td>
+                      <td className="act"><button className="link" onClick={() => onEdit(r)}>Edit</button><button className="link danger" onClick={() => onDelete(r)}>Delete</button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
             <div className="tr-changes" data-testid={`tr-changes-${country}`}>
               <b>Status changes</b>
@@ -78,22 +85,49 @@ function CountryBar({ country, ranges, ax, today, onAdd, onEdit, onDelete }) {
             </div>
           </>
         )}
-        {ranges.length > 0 && (
-          <div className="tblw">
-            <table className="t-left">
-              <thead><tr><th>Status</th><th>From</th><th>To</th><th /></tr></thead>
-              <tbody>
-                {ranges.map((r) => (
-                  <tr key={r.id}>
-                    <td><span className={`tr-sw tone-${statusOf(country, r.status).tone}`} /> <b>{statusOf(country, r.status).label}</b> <span className="sub">{statusOf(country, r.status).long || ''}</span></td>
-                    <td>{fmtDate(r.from)}</td><td>{r.to ? fmtDate(r.to) : 'Now (ongoing)'}</td>
-                    <td className="act"><button className="link" onClick={() => onEdit(r)}>Edit</button><button className="link danger" onClick={() => onDelete(r)}>Delete</button></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      </div>
+    </div>
+  )
+}
+
+// RIGHT: the picture. Two bars on one time axis, coloured by status, with a mark at each change, today as a dashed line and the future hatched.
+// No words inside the bars: the colours are explained by the key above, and the dates are listed on the left.
+function Timeline({ tr, ax, today, onEdit }) {
+  if (!ax) return <div className="panel"><div className="pad sub">No periods yet. Add one to see the timeline.</div></div>
+  const years = []
+  for (let y = Number(ax.start.slice(0, 4)); y <= Number(ax.end.slice(0, 4)); y++) years.push(y)
+  const step = years.length > 14 ? 2 : 1
+  const todayX = today >= ax.start && today <= ax.end ? pos(ax, today) : null
+  return (
+    <div className="panel tr-timeline" data-testid="tr-timeline">
+      <div className="pad">
+        <div className="tr-legend" aria-label="Key">
+          {['us', 'in'].flatMap((c) => STATUSES[c].map((s) => <span key={`${c}${s.key}`}><i className={`tr-sw tone-${s.tone}`} />{c === 'us' ? 'US' : 'India'} {s.label}</span>))}
+        </div>
+        <div className="tr-rows">
+          {['us', 'in'].map((c) => {
+            const seg = segments(tr[c], ax, today)
+            const ch = changes(tr[c])
+            return (
+              <div className="tr-row" key={c}>
+                <span className="tr-flag" title={COUNTRIES[c].name}>{COUNTRIES[c].flag}</span>
+                <div className="tr-bar" role="img" aria-label={`${COUNTRIES[c].name} tax residency over time`} data-testid={`tr-bar-${c}`}>
+                  {years.map((y) => <i key={y} className="tr-grid-line" style={{ left: `${pos(ax, `${y}-01-01`)}%` }} />)}
+                  {seg.map((s) => {
+                    const st = statusOf(c, s.status)
+                    return <button key={s.id} type="button" className={`tr-seg tone-${st.tone}`} style={{ left: `${s.left}%`, width: `${s.width}%` }} data-status={s.status} title={`${st.long || st.label}: ${fmtDate(s.from)} to ${s.to ? fmtDate(s.to) : 'now'}`} aria-label={`${COUNTRIES[c].name} ${st.label}, ${fmtDate(s.from)} to ${s.to ? fmtDate(s.to) : 'now'}`} onClick={() => onEdit(c, tr[c].find((r) => r.id === s.id))} />
+                  })}
+                  {todayX !== null && <span className="tr-future" style={{ left: `${todayX}%` }} />}
+                  {ch.map((x) => <span key={x.date} className="tr-chg" style={{ left: `${pos(ax, x.date)}%` }} title={`${fmtDate(x.date)}: ${x.from ? statusOf(c, x.from).label + ' → ' : ''}${statusOf(c, x.to).label}`} />)}
+                  {todayX !== null && <span className="tr-today" style={{ left: `${todayX}%` }} title={`Today, ${fmtDate(today)}`} />}
+                </div>
+              </div>
+            )
+          })}
+          <div className="tr-years" aria-hidden="true">
+            {years.filter((_, i) => i % step === 0).map((y) => <span key={y} style={{ left: `${pos(ax, `${y}-01-01`)}%` }}>{y}</span>)}
           </div>
-        )}
+        </div>
       </div>
     </div>
   )

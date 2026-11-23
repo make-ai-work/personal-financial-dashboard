@@ -20,7 +20,8 @@ const fromDay = (n) => new Date(n * 86400000).toISOString().slice(0, 10)
 const next = (iso) => fromDay(dayNum(iso) + 1)
 
 // The answers given in the guided check (days per year and a few yes/no questions); kept so you can come back and change one.
-export const emptyInputs = () => ({ startYear: null, citizen: false, us: {}, in: {}, travel: emptyTravel() })
+export const emptyPlan = () => ({ departure: '', usVisitDays: '', indiaVisitDays: '', givesUpGreenCard: true, include: true })
+export const emptyInputs = () => ({ startYear: null, citizen: false, us: {}, in: {}, travel: emptyTravel(), plan: emptyPlan() })
 export const emptyTaxResidency = () => ({ us: [], in: [], inputs: emptyInputs() })
 const cleanRow = (r, keys) => Object.fromEntries(keys.map(([k, kind]) => [k, kind === 'bool' ? !!r?.[k] : r?.[k] === '' || r?.[k] == null || !Number.isFinite(Number(r[k])) ? '' : Math.max(0, Number(r[k]))]))
 export function normalizeInputs(i) {
@@ -28,6 +29,8 @@ export function normalizeInputs(i) {
   out.startYear = Number.isInteger(i?.startYear) && i.startYear > 1950 && i.startYear < 2200 ? i.startYear : null
   out.citizen = !!i?.citizen
   out.travel = normalizeTravel(i?.travel)
+  const num = (v) => (v === '' || v == null || !Number.isFinite(Number(v)) ? '' : Math.min(365, Math.max(0, Number(v))))
+  out.plan = { departure: validISO(i?.plan?.departure) ? i.plan.departure : '', usVisitDays: num(i?.plan?.usVisitDays), indiaVisitDays: num(i?.plan?.indiaVisitDays), givesUpGreenCard: i?.plan?.givesUpGreenCard !== false, include: i?.plan?.include !== false }
   for (const [y, r] of Object.entries(i?.us || {})) if (/^\d{4}$/.test(y)) out.us[y] = cleanRow(r, [['days', 'num'], ['greenCard', 'bool'], ['exempt', 'num'], ['closer', 'bool']])
   for (const [y, r] of Object.entries(i?.in || {})) if (/^\d{4}$/.test(y)) out.in[y] = cleanRow(r, [['days', 'num'], ['left', 'bool'], ['income15', 'bool'], ['liableElsewhere', 'bool']])
   return out

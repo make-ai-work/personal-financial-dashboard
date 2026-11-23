@@ -70,6 +70,8 @@ export function indiaResidency(inn, fy, opts = {}, memo = {}) {
 }
 
 // ---------------- turning yearly results into date ranges ----------------
+const dayNum = (isoDate) => Math.floor(Date.parse(`${isoDate}T00:00:00Z`) / 86400000)
+const isoOf = (n) => new Date(n * 86400000).toISOString().slice(0, 10)
 const iso = (y, m, d) => `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
 // Yearly results [{ year, status }] (consecutive years) -> date ranges, merging neighbours with the same status. The year in progress (`currentYear`) has no end date.
 export function yearsToRanges(country, years, currentYear) {
@@ -77,7 +79,8 @@ export function yearsToRanges(country, years, currentYear) {
   let lastYear = null
   for (const { year, status } of years) {
     const from = country === 'in' ? iso(year, 4, 1) : iso(year, 1, 1)
-    const to = year >= currentYear && country !== 'in' ? '' : country === 'in' && year >= currentYear ? '' : country === 'in' ? iso(year + 1, 3, 31) : iso(year, 12, 31)
+    const isLast = year === years[years.length - 1].year
+    const to = year === currentYear && isLast ? '' : country === 'in' ? iso(year + 1, 3, 31) : iso(year, 12, 31) // only the year in progress, when it is the last one, has no end date
     const last = out[out.length - 1]
     if (last && last.status === status && last.to !== '' && lastYear === year - 1) last.to = to // a skipped year starts a new range
     else out.push({ status, from, to })
@@ -87,3 +90,44 @@ export function yearsToRanges(country, years, currentYear) {
 }
 // The financial year (starting year) a date is in, and the current ones.
 export const indiaFYOf = (isoDate) => { const y = Number(isoDate.slice(0, 4)); return Number(isoDate.slice(5, 7)) >= 4 ? y : y - 1 }
+
+// ---------------- modelling a planned US departure ----------------
+// plan: { departure: 'YYYY-MM-DD' (in the future), usVisitDays: days a year you expect to visit the US after leaving, indiaVisitDays: days a year you expect to spend in
+// India before you leave, givesUpGreenCard: bool }. From the days you entered so far it builds the days for the coming years (until 4 years after leaving) and runs the same
+// rules on them. Assumptions: the Indian-side answers (left for employment, income over the limit, taxed elsewhere) stay as in your latest entered year; a green card is
+// kept until the year you leave and then given up unless you say otherwise; in the year you leave a green card holder is treated as resident for the whole year.
+export function projectDeparture(inputs, plan, todayISO, opts = {}) {
+  const dep = plan?.departure
+  if (!dep || !/^\d{4}-\d{2}-\d{2}$/.test(dep) || dep <= todayISO) return null
+  const usV = Math.min(365, Math.max(0, Number(plan.usVisitDays) || 0)), inV = Math.min(365, Math.max(0, Number(plan.indiaVisitDays) || 0))
+  const curYear = Number(todayISO.slice(0, 4)), curFY = Number(todayISO.slice(5, 7)) >= 4 ? curYear : curYear - 1
+  const depYear = Number(dep.slice(0, 4)), last = depYear + 4
+  const t = dayNum(todayISO), d0 = dayNum(dep)
+  // days in a date range, split at the departure day: -> { before: days on or before it, after: days after it }
+  const split = (a, b) => { let before = 0, after = 0; for (let d = a; d <= b; d++) (d <= d0 ? before++ : after++); return { before, after } }
+  const planUs = (a, b) => { if (b < a) return 0; const { before, after } = split(a, b); return Math.round(before * (1 - inV / 365) + after * (usV / 365)) }
+  const planIn = (a, b) => { if (b < a) return 0; let before = 0, onOrAfter = 0; for (let d = a; d <= b; d++) (d < d0 ? before++ : onOrAfter++); return Math.round(before * (inV / 365) + onOrAfter * (1 - usV / 365)) }
+  const us = JSON.parse(JSON.stringify(inputs.us || {})), inn = JSON.parse(JSON.stringify(inputs.in || {}))
+  const lastIn = Object.keys(inputs.in || {}).filter((y) => inputs.in[y]?.days !== '' && inputs.in[y]?.days != null).sort().pop()
+  const lastUs = Object.keys(inputs.us || {}).filter((y) => inputs.us[y]?.days !== '' && inputs.us[y]?.days != null).sort().pop()
+  const carryIn = lastIn ? inputs.in[lastIn] : {}, carryUs = lastUs ? inputs.us[lastUs] : {}
+  for (let y = curYear; y <= last; y++) {
+    const a = Math.max(dayNum(`${y}-01-01`), t + 1), b = dayNum(`${y}-12-31`)
+    const base = y === curYear ? Number(inputs.us?.[y]?.days) || 0 : 0
+    const gc = y < depYear ? !!carryUs.greenCard : y === depYear ? !!carryUs.greenCard : !!carryUs.greenCard && plan.givesUpGreenCard === false
+    us[y] = { ...(y === curYear && inputs.us?.[y] ? inputs.us[y] : {}), days: base + planUs(a, b), greenCard: gc, exempt: y === curYear ? inputs.us?.[y]?.exempt ?? '' : '', closer: !!carryUs.closer }
+  }
+  for (let y = curFY; y <= last; y++) {
+    const a = Math.max(dayNum(`${y}-04-01`), t + 1), b = dayNum(`${y + 1}-03-31`)
+    const base = y === curFY ? Number(inputs.in?.[y]?.days) || 0 : 0
+    inn[y] = { ...(y === curFY && inputs.in?.[y] ? inputs.in[y] : {}), days: base + planIn(a, b), left: !!carryIn.left, income15: !!carryIn.income15, liableElsewhere: !!carryIn.liableElsewhere }
+  }
+  const memo = {}
+  const years = []
+  for (let y = Math.min(curYear, curFY); y <= last; y++) {
+    const u = y >= curYear ? usResidency(us, y) : null
+    const i = y >= curFY ? indiaResidency(inn, y, opts, memo) : null
+    years.push({ year: y, us: u, in: i, usDays: us[y]?.days ?? null, inDays: inn[y]?.days ?? null })
+  }
+  return { years, departure: dep, usYears: years.filter((x) => x.us).map((x) => ({ year: x.year, status: x.us.status })), inYears: years.filter((x) => x.in).map((x) => ({ year: x.year, status: x.in.status })) }
+}

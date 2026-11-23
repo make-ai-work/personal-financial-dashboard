@@ -528,3 +528,18 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 .wiz-year ul { margin: 6px 0 2px; padding-left: 1.1rem; font-size: .86rem }
 .pill.tone-orange, .pill.tone-green, .pill.tone-lgreen { border-color: transparent }
 [data-testid="residency-wizard"] a, .tr-page a { color: var(--accent) }
+
+/* Tax residency: dates on the left, picture on the right */
+.tr-grid { display: grid; grid-template-columns: minmax(0, 42fr) minmax(0, 58fr); gap: 14px; align-items: start }
+.tr-graph { position: sticky; top: 8px }
+@media (max-width: 800px) { .tr-grid { grid-template-columns: minmax(0, 1fr) } .tr-graph { position: static; order: -1 } }
+.tr-timeline .tr-legend { margin: 0 0 12px }
+.tr-rows { position: relative; padding-bottom: 22px }
+.tr-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px }
+.tr-flag { font-size: 1.25rem; width: 2rem; text-align: center }
+.tr-row .tr-bar { flex: 1; height: 56px }
+.tr-grid-line { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(127,127,127,.28); pointer-events: none }
+.tr-future { position: absolute; top: 0; bottom: 0; right: 0; background: repeating-linear-gradient(135deg, rgba(255,255,255,.38) 0 5px, transparent 5px 10px); pointer-events: none }
+.tr-years { position: absolute; left: calc(2rem + 8px); right: 0; bottom: 0; height: 18px; font-size: .72rem; color: var(--muted) }
+.tr-years span { position: absolute; transform: translateX(-50%); white-space: nowrap }
+.tr-planned td { opacity: .85 }
