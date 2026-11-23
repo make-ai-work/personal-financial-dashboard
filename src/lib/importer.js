@@ -53,6 +53,28 @@ export async function readTable({ name, text, buffer }) {
   return tableFromRows(parseCsv(text))
 }
 
+// A date from a cell: an Excel date, 2027-02-01, 02/01/2027 (month first, as in the USA; day first when the first number is over 12), 1 Feb 2027. '' when unreadable.
+export function toISODate(v) {
+  if (v instanceof Date && !Number.isNaN(v.getTime())) return v.toISOString().slice(0, 10)
+  const t = String(v ?? '').trim()
+  if (!t) return ''
+  let m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(t)
+  let y, mo, da
+  if (m) [y, mo, da] = [m[1], m[2], m[3]]
+  else if ((m = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})$/.exec(t))) {
+    const a = Number(m[1]), b = Number(m[2])
+    ;[mo, da] = a > 12 ? [b, a] : [a, b]
+    y = m[3].length === 2 ? 2000 + Number(m[3]) : m[3]
+  } else {
+    const d = new Date(`${t} UTC`)
+    if (Number.isNaN(d.getTime())) return ''
+    return d.toISOString().slice(0, 10)
+  }
+  const iso = `${y}-${String(mo).padStart(2, '0')}-${String(da).padStart(2, '0')}`
+  const d = new Date(`${iso}T00:00:00Z`)
+  return Number.isNaN(d.getTime()) || d.getUTCMonth() + 1 !== Number(mo) ? '' : iso
+}
+
 export function toNumber(v) {
   if (v == null || v === '') return null
   if (typeof v === 'number') return Number.isFinite(v) ? v : null
@@ -88,6 +110,8 @@ export const ACCOUNT_FIELDS = [
   { key: 'country', label: 'Country', aliases: ['country', 'market', 'region'] },
   { key: 'currency', label: 'Currency', aliases: ['currency', 'ccy', 'curr'] },
   { key: 'type', label: 'Asset or liability', aliases: ['type', 'kind', 'asset or liability', 'class'] },
+  { key: 'maturityDate', label: 'Maturity date', aliases: ['maturity date', 'maturity', 'matures', 'matures on', 'maturity dt', 'end date'] },
+  { key: 'maturityValue', label: 'Value at maturity', aliases: ['maturity value', 'value at maturity', 'maturity amount', 'maturity proceeds', 'amount at maturity'] },
   { key: 'balance', label: 'Current balance', aliases: ['current balance', 'balance', 'amount', 'value', 'market value', 'total'] },
 ]
 // -> { fieldKey: header | '' }. Exact matches win, then headers that contain an alias; each header is used once.
@@ -221,7 +245,7 @@ export function planAccountsImport(d, table0, mapping0, mode, { defaultCountry, 
     const o = String(get(row, mapping, 'owner') ?? '').trim().toLowerCase()
     const owner = OWNERS.find((x) => x === o) || (/joint|both|me \+ others|family/.test(o) ? 'joint' : /spouse|wife|husband|partner/.test(o) ? 'spouse' : /parent|mom|dad|mother|father/.test(o) ? 'parent' : 'mine')
     const country = resolveCountry(get(row, mapping, 'country'), get(row, mapping, 'currency')) || fallback
-    items.push({ name, number: String(get(row, mapping, 'number') ?? '').trim(), institution: String(get(row, mapping, 'institution') ?? '').trim(), owner, country, type, balance: Math.abs(balance) })
+    items.push({ name, number: String(get(row, mapping, 'number') ?? '').trim(), institution: String(get(row, mapping, 'institution') ?? '').trim(), owner, country, type, balance: Math.abs(balance), maturityDate: type === 'asset' ? toISODate(get(row, mapping, 'maturityDate')) : '', maturityValue: type === 'asset' ? toNumber(get(row, mapping, 'maturityValue')) : null })
   })
   const same = (a, it) => (it.number && a.number ? a.number === it.number : a.name.toLowerCase() === it.name.toLowerCase() && a.country === it.country)
   const lines = []
@@ -237,8 +261,8 @@ export function planAccountsImport(d, table0, mapping0, mode, { defaultCountry, 
   const counts = { updated: updates.length, created: creates.length, skipped }
   function apply(data) {
     let next = data
-    for (const { hit, it } of updates) next = { ...next, accounts: next.accounts.map((a) => (a.id === hit.id ? { ...a, name: it.name, number: it.number || a.number, institution: it.institution || a.institution, owner: it.owner, country: it.country, balance: it.balance } : a)) }
-    for (const it of creates) next = addAccount(next, { country: it.country, type: it.type, name: it.name, number: it.number, institution: it.institution, owner: it.owner, balance: it.balance, mix: null, maturityDate: '', maturityValue: null })
+    for (const { hit, it } of updates) next = { ...next, accounts: next.accounts.map((a) => (a.id === hit.id ? { ...a, name: it.name, number: it.number || a.number, institution: it.institution || a.institution, owner: it.owner, country: it.country, balance: it.balance, maturityDate: it.maturityDate || a.maturityDate || '', maturityValue: it.maturityValue ?? a.maturityValue ?? null } : a)) }
+    for (const it of creates) next = addAccount(next, { country: it.country, type: it.type, name: it.name, number: it.number, institution: it.institution, owner: it.owner, balance: it.balance, mix: null, maturityDate: it.maturityDate, maturityValue: it.maturityValue })
     return next
   }
   return { lines, warnings, counts, apply }

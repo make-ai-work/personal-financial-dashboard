@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { emptyData } from '../src/lib/model.js'
-import { ACCOUNT_FIELDS, HOLDING_FIELDS, detectColumns, parseCsv, planAccountsImport, planHoldingsImport, resolveCountry, tableFromRows, toNumber } from '../src/lib/importer.js'
+import { ACCOUNT_FIELDS, HOLDING_FIELDS, toISODate, detectColumns, parseCsv, planAccountsImport, planHoldingsImport, resolveCountry, tableFromRows, toNumber } from '../src/lib/importer.js'
 import { holdingsOf, portfolioFor } from '../src/lib/portfolio.js'
 
 const TODAY = '2026-11-23'
@@ -109,4 +109,16 @@ test('defaults fill a missing column and blank cells, for holdings and accounts'
   const t3 = tableFromRows(parseCsv('Account Name,Notes\nZero,x\nOther,y'))
   const z = planAccountsImport(emptyData(), t3, detectColumns(t3.headers, ACCOUNT_FIELDS), 'add', { defaults: { balance: '0' } })
   assert.equal(z.counts.created, 2)
+})
+
+test('accounts: maturity date and value are read (several date styles) and kept when a later file leaves them out', () => {
+  const t = tableFromRows(parseCsv('Account Name,Balance,Maturity Date,Value at Maturity\nCD one,22000,2027-02-01,"23,100"\nCD two,5000,12/31/2028,5400\nCD three,100,31/12/2029,\nLoan,-900,2030-01-01,1'))
+  const map = detectColumns(t.headers, ACCOUNT_FIELDS)
+  assert.deepEqual([map.maturityDate, map.maturityValue], ['Maturity Date', 'Value at Maturity'])
+  const d = planAccountsImport(emptyData(), t, map, 'add', {}).apply(emptyData())
+  assert.deepEqual(d.accounts.map((a) => [a.name, a.maturityDate, a.maturityValue]), [['CD one', '2027-02-01', 23100], ['CD two', '2028-12-31', 5400], ['CD three', '2029-12-31', null], ['Loan', '', null]])
+  const t2 = tableFromRows(parseCsv('Account Name,Balance\nCD one,22500'))
+  const after = planAccountsImport(d, t2, detectColumns(t2.headers, ACCOUNT_FIELDS), 'update', {}).apply(d)
+  assert.deepEqual(after.accounts.find((a) => a.name === 'CD one') && [after.accounts[0].balance, after.accounts[0].maturityDate, after.accounts[0].maturityValue], [22500, '2027-02-01', 23100])
+  assert.equal(toISODate('2027-02-30'), ''); assert.equal(toISODate('Feb 1, 2027'), '2027-02-01')
 })
