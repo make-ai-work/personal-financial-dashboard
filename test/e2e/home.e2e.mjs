@@ -75,9 +75,7 @@ const errors = []
 page.on('pageerror', (e) => errors.push(e.message))
 page.on('console', (m) => m.type() === 'error' && !(meteo.block && /ERR_FAILED|Failed to load resource/.test(m.text())) && errors.push(m.text())) // the blocked-service step expects one failed request
 const step = (s) => console.log('•', s)
-const dialog = () => page.getByRole('dialog')
 const topTab = (name) => page.getByRole('tab', { name })
-const subtab = (name) => page.locator('.subtabs').getByRole('button', { name })
 const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
 const ticker = () => page.getByRole('marquee', { name: 'Market ticker' })
 const openSettings = async () => { await page.getByRole('button', { name: '⚙ Home settings' }).click(); await page.getByLabel('Temperature unit').waitFor() } // the Home part of the Settings tab

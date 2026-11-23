@@ -96,22 +96,6 @@ export function Histogram({ failed, retAge, life, n }) {
 }
 
 // Plan page: single projected path in nominal money.
-export function PathChart({ path, retAge, currency, w: W = 640 }) {
-  const H = W < 500 ? 220 : 230, T = 14, B = 28
-  const lo = path[0].age, hi = path[path.length - 1].age
-  const ticks = yTicks(Math.max(...path.map((d) => d.bal), 1))
-  const mx = ticks[ticks.length - 1]
-  const x = (a) => L + ((a - lo) / (hi - lo || 1)) * (W - L - R)
-  const y = (v) => T + (1 - v / mx) * (H - T - B)
-  return (
-    <Frame W={W} H={H} T={T} B={B} ticks={ticks} y={y} fmt={(v) => compact(currency, v)} xs={xTicks(lo, hi, 10)} x={x} label="Projected portfolio by age">
-      {retAge >= lo && retAge <= hi && <line x1={x(retAge)} x2={x(retAge)} y1={T} y2={H - B} stroke="var(--grey)" strokeDasharray="4 4" />}
-      <polyline fill="none" stroke="var(--accent)" strokeWidth="2.5" points={path.map((d) => `${x(d.age)},${y(d.bal)}`).join(' ')} />
-    </Frame>
-  )
-}
-
-// Median path of each saved version plus the current inputs.
 export function CompareChart({ rows, currency, w: W = 640 }) {
   const H = 200, T = 10, B = 26
   const all = rows.flatMap((r) => r.med50)

@@ -37,7 +37,7 @@ export default function Overview({ owner, fx, onOpen }) {
             </tr>
           ))}
         </tbody></table></div>
-        {multi ? <FxBar fx={fx} note="Property is not counted in the Finance Dashboard totals." /> : <div className="fx"><span>Property is not counted in the Finance Dashboard totals.</span></div>}
+        {multi ? <FxBar fx={fx} note="Property is not counted in the Assets totals." /> : <div className="fx"><span>Property is not counted in the Assets totals.</span></div>}
       </div>
 
       <div className="panel">

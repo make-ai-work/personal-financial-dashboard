@@ -3,7 +3,7 @@
 // and mocks the FX API so the exchange rate is deterministic.
 import { createRequire } from 'node:module'
 import { spawn } from 'node:child_process'
-import { readFileSync, mkdirSync, writeFileSync } from 'node:fs'
+import { readFileSync, mkdirSync } from 'node:fs'
 import assert from 'node:assert/strict'
 import { autoSignIn } from './signin.mjs'
 

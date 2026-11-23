@@ -1,4 +1,4 @@
-import { moneyCurrency, todayISO } from '../lib/format.js'
+import { moneyCurrency } from '../lib/format.js'
 import { summarise } from '../lib/montecarlo.js'
 import { runPlan } from '../lib/retirement.js'
 import { useVault } from '../finance/VaultContext.jsx'
