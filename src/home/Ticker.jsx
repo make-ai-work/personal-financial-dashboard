@@ -5,6 +5,7 @@ import { AV_PROXIES, fetchAvQuotes } from '../lib/alphavantage.js'
 import { noteRequests } from '../lib/symbols.js'
 import { homePrefs } from '../lib/homeprefs.js'
 import { IS_DEMO } from '../lib/demo.js'
+import { fxChips } from '../lib/fxchips.js'
 
 const when = (ms) => {
   const d = new Date(ms)
@@ -14,7 +15,7 @@ const when = (ms) => {
 
 // The rolling ticker. Normal builds ask FCS API with the key from Home settings (cached, refreshed on a gentle schedule);
 // the demo uses only the public key (from the build) to get a short-lived token, so no secret is ever in the page.
-function FcsTicker({ countries, version, onSettings }) {
+function FcsTicker({ countries, version, onSettings, rates }) {
   const items = useMemo(() => tickerItems(countries), [countries.join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
   // the demo: index prices come from the Alpha Vantage snapshot (ETF stand-ins); FCS serves gold and Bitcoin only
   const fcsItems = useMemo(() => (IS_DEMO ? items.filter((i) => i.group !== 'index') : items), [items])
@@ -92,7 +93,7 @@ function FcsTicker({ countries, version, onSettings }) {
   if (!key) reason = IS_DEMO ? <><b>Prices are off.</b> The demo has no market-data key set up.</> : <><b>Prices are off.</b> Add your FCS API key in <button className="link" onClick={onSettings}>Home settings</button> to turn them on.</>
   else if (!shown.length) reason = busy || (!problemText && !cache) ? 'Loading prices…' : <><b>Prices unavailable.</b> {problemText || 'The market service sent no prices.'} <button className="link" onClick={() => run('force')}>Try again</button></>
   return (
-    <TickerView
+    <TickerView rates={rates}
       items={items} shown={shown} reason={reason} problemText={problemText} busy={busy} onRefresh={() => run('force')}
       stateText={`Prices as of ${newest ? when(newest) : '…'} · refreshed every ${interval} minutes · indices show the last close when the market is shut`}
       source={`FCS API${IS_DEMO && av.quotes.length ? ' · Alpha Vantage (index ETFs)' : ''}`}
@@ -103,7 +104,7 @@ function FcsTicker({ countries, version, onSettings }) {
 // Alpha Vantage as the provider (the user's own key, chosen in Home settings). Free keys allow 25 requests a day, so only the index
 // ETF stand-ins are fetched (at most 5 requests per refresh), on a slow schedule: every 6 hours by default, never faster.
 export const AV_MIN_REFRESH_MIN = 360
-function AvTicker({ countries, version, onSettings }) {
+function AvTicker({ countries, version, onSettings, rates }) {
   const items = useMemo(() => tickerItems(countries).filter((i) => AV_PROXIES[i.id]), [countries.join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
   const key = homePrefs.avKey()
   const [cache, setCache] = useState(() => homePrefs.avQuotes())
@@ -148,7 +149,7 @@ function AvTicker({ countries, version, onSettings }) {
   if (!key) reason = <><b>Prices are off.</b> Add your Alpha Vantage key in <button className="link" onClick={onSettings}>Home settings</button> to turn them on.</>
   else if (!shown.length) reason = busy || (!problem && !cache) ? 'Loading prices…' : <><b>Prices unavailable.</b> {problem || 'Alpha Vantage sent no prices.'} <button className="link" onClick={() => run('force')}>Try again</button></>
   return (
-    <TickerView
+    <TickerView rates={rates}
       items={items} shown={shown} reason={reason} problemText={problem} busy={busy} onRefresh={() => run('force')}
       stateText={`Prices as of ${cache?.fetchedAt ? when(cache.fetchedAt) : '…'} · refreshed every ${Math.round(interval / 60)} hours (the free key allows 25 requests a day) · index ETFs, last close`}
       source="Alpha Vantage (index ETFs)"
@@ -156,14 +157,20 @@ function AvTicker({ countries, version, onSettings }) {
   )
 }
 
-export default function Ticker(props) {
-  return !IS_DEMO && homePrefs.provider() === 'av' ? <AvTicker {...props} /> : <FcsTicker {...props} />
+export default function Ticker({ fx, ...props }) {
+  const rates = fxChips(fx)
+  return !IS_DEMO && homePrefs.provider() === 'av' ? <AvTicker {...props} rates={rates} /> : <FcsTicker {...props} rates={rates} />
 }
 
 // The strip is always there. Without prices it shows the names with a dash, and one line says why.
-function TickerView({ items, shown, reason, problemText, busy, onRefresh, stateText, source }) {
+// The exchange rates between your countries' currencies, as chips at the end of the strip: "$1 = ₹ 84.20".
+function RateChips({ rates }) {
+  return (rates || []).map((r) => <span className="tk fxchip" key={r.id} data-testid="ticker-rate"><b>{r.from}1</b> <span className="px">= {r.to} {r.value}</span></span>)
+}
+
+function TickerView({ items, shown, reason, problemText, busy, onRefresh, stateText, source, rates }) {
   if (reason) {
-    const nameRow = items.map((it) => <span className="tk" key={it.id}><b>{it.label}</b> <small>{it.sub}</small> <span className="px">—</span></span>)
+    const nameRow = [...items.map((it) => <span className="tk" key={it.id}><b>{it.label}</b> <small>{it.sub}</small> <span className="px">—</span></span>), <RateChips key="fx" rates={rates} />]
     const names = Array.from({ length: Math.max(1, Math.ceil(10 / nameRow.length)) }, (_, n) => <span className="rep" key={n}>{nameRow}</span>)
     return (
       <>
@@ -181,6 +188,7 @@ function TickerView({ items, shown, reason, problemText, busy, onRefresh, stateT
       </span>
     )
   })
+  row.push(<RateChips key="fx" rates={rates} />)
   const reps = Math.max(1, Math.ceil(10 / row.length)) // enough copies that each half is wider than a big screen
   const half = Array.from({ length: reps }, (_, n) => <span className="rep" key={n}>{row}</span>)
   return (

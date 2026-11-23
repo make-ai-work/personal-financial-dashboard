@@ -3,6 +3,7 @@ import { useVault } from '../finance/VaultContext.jsx'
 import { COUNTRIES, fmtDate, money, todayISO } from '../lib/format.js'
 import { finishLinking, holdingValue, holdingsOf, linkStatus, priceAge, removeHolding, removePortfolio, typeLabel } from '../lib/portfolio.js'
 import { useNav } from '../nav.jsx'
+import { Collapsible } from '../finance/ui.jsx'
 
 function ReconcileBanner({ portfolio, country, hasHoldings }) {
   const { data, update } = useVault()
@@ -55,16 +56,16 @@ export default function PortfolioPanel({ portfolio, country, account, staleDays,
   }
 
   return (
-    <div className="panel">
-      <div className="p-head">
-        <div className="title">{portfolio.name} <span className="chiplink">📈 {portfolio.reconciled ? 'linked to' : 'linking to'} Assets: {label}</span></div>
+    <Collapsible id={`pf-${portfolio.id}`} defaultOpen={false}
+      title={<>{portfolio.name} <span className="chiplink">📈 {portfolio.reconciled ? 'linked to' : 'linking to'} Assets: {label}</span></>} sub={fmt(total)}
+      action={(
         <div className="row-actions">
           <button className="btn" onClick={() => go('finance', { country })}>Open in Assets</button>
           <button className="btn" onClick={() => onTargets(portfolio)}>{portfolio.targets ? 'Edit targets' : 'Set targets'}</button>
           <button className="btn danger-btn" onClick={del}>Delete portfolio</button>
           <button className="btn primary" onClick={() => onAddHolding(portfolio)}>+ Add holding</button>
         </div>
-      </div>
+      )}>
       {!portfolio.reconciled && <ReconcileBanner portfolio={portfolio} country={country} hasHoldings={hs.length > 0} />}
       <div className="tblw"><table className="t-left t-h"><thead><tr><th>Ticker / description</th><th>Class</th><th>Sector</th><th>Geography</th><th className="r">Units</th><th className="r">Price · date</th><th className="r">Value</th><th className="r">% of portfolio</th><th /></tr></thead><tbody>
         {hs.length === 0 && <tr><td colSpan="9" className="none">No holdings yet. Add one to start.</td></tr>}
@@ -90,6 +91,6 @@ export default function PortfolioPanel({ portfolio, country, account, staleDays,
         })}
         {hs.length > 0 && <tr className="total"><td>Total{portfolio.reconciled ? ` → Assets “${label}”` : ''}</td><td colSpan="5" /><td className="r">{fmt(total)}</td><td className="r">100%</td><td /></tr>}
       </tbody></table></div>
-    </div>
+    </Collapsible>
   )
 }

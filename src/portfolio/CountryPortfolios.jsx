@@ -44,7 +44,7 @@ export default function CountryPortfolios({ code, onAddPortfolio, onAddHolding, 
       </div>
       <aside className="sp-r">
       {holdings.length > 0 && (
-        <Allocation holdings={holdings} names={names} format={fmt} views={VIEWS} title="Allocation" sub={`all ${c.flag} ${c.name} portfolios`}>
+        <Allocation id={`pf-alloc-${code}`} holdings={holdings} names={names} format={fmt} views={VIEWS} title="Allocation" sub={`all ${c.flag} ${c.name} portfolios`}>
           {conc.length > 0
             ? <div className="warnrow">⚠ Above your {limit}% single-stock limit: {conc.map((x) => `${x.holding.name} is ${x.share.toFixed(1)}% of ${x.portfolio.name}`).join(' · ')}</div>
             : <div className="okrow">No single stock is above your {limit}% limit.</div>}
