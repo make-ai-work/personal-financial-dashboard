@@ -17,7 +17,7 @@ test('export then import restores property and settings', async () => {
   d = addLoanUpdate(d, { loanId: 'l1', date: '2026-09-01', balance: 218930, principal: null, interest: null, escrow: null, notes: '' })
 
   const { data: back, warnings } = await importWorkbook((await exportWorkbook(d)).buffer)
-  assert.deepEqual(back.settings.countries, ['uk', 'us', 'ch'])
+  assert.deepEqual(warnings, [])
   assert.deepEqual(back.settings.countries, ['uk', 'us', 'ch', 'au', 'in'])
   assert.deepEqual(back.properties, d.properties)
   assert.deepEqual(back.propertyValues, d.propertyValues)
