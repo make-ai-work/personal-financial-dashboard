@@ -36,7 +36,7 @@ Stop it with `Ctrl+C`. If port 4173 is busy use `npm start -- --port 5000` (the 
 
 ## Sign-in and storage: the same screen flow on every version
 
-The top bar has **Save** (writes the encrypted vault now; in a browser that cannot write the file in place it downloads the encrypted file) and **Logout** (saves, then locks and signs out; if the save fails it tells you why and lets you stay or log out anyway). The old "file · encrypted · saved" strip is gone; a message only appears when something needs action (reconnect Google Drive, a conflict, a failed save).
+The title bar and the tabs stay at the top while you scroll (on a phone only the tabs). The top bar has **Save** (writes the encrypted vault now; in a browser that cannot write the file in place it downloads the encrypted file) and **Logout** (saves, then locks and signs out; if the save fails it tells you why and lets you stay or log out anyway). The old "file · encrypted · saved" strip is gone; a message only appears when something needs action (reconnect Google Drive, a conflict, a failed save).
 
 Demo site, web, installed web app, Windows app and Android app all open the same way:
 
@@ -100,8 +100,7 @@ Demo site, web, installed web app, Windows app and Android app all open the same
 - **Property** – properties by country with a value history you enter (USA has an "Open on Zillow" link for
   looking up the Zestimate yourself), manually recorded mortgages (balance, principal, interest, escrow) with the **time remaining** on each,
   equity and loan-to-value, reminders for mortgage payments, property tax and **home insurance renewal**, and monthly charts.
-  Under each loan, a **payoff calculator** (amortization schedule) starts from the recorded loan and lets you try a different rate or payment and **extra payments**
-  (monthly, once a year, or one-time lumps): it shows the payoff date, the time and interest saved, a balance chart and the full schedule. Scenarios are not saved.
+  The **payoff calculator** (amortization schedule with **extra payments**: monthly, once a year, or one-time lumps; payoff date, time and interest saved, a balance chart and the full schedule) is on the Calculators tab. Scenarios are not saved.
   Each property can also hold its **home insurance**: insurer, policy number, premium, deductible, renewal date, and **coverage limits** (dwelling, other structures,
   personal property, loss of use, liability, medical payments, plus your own lines), with a warning if the dwelling limit is below the rebuild cost you entered.
   Not counted in the Assets totals. Zillow has no public API and forbids scraping, so values are typed in.
@@ -118,7 +117,7 @@ Demo site, web, installed web app, Windows app and Android app all open the same
   Australia or Switzerland; **one list** in Settings is used by every tab), with an owner filter (Mine / Me + Others / Spouse / Parent), a month-by-month chart and a Performance panel per country.
   **Upload accounts…** reads a CSV or Excel file the same way (columns guessed, a default value per field, Update and overwrite or New addition, preview, confirm). There is no asset-mix field any more.
   The combined total across countries is on Home.
-- **🧾 Tax residency** (shown only when both USA and India are in your countries list) – enter your tax residency as **date ranges**: US *Resident* or *Nonresident*
+- **🧾 Tax Residency** (shown only when both USA and India are in your countries list) – enter your tax residency as **date ranges**: US *Resident* or *Nonresident*
   (tax year 1 January to 31 December) and India *NRI*, *RNOR* or *ROR* (tax year 1 April to 31 March). The **dates are on the left** (per country: today's status, the periods, and a list of the dates the status changes) and the **graph is on the right**: two bars on one time axis with only the picture and a colour key (no words in the bars), a mark at each status change, today as a dashed line and the future hatched. Colours: Resident and ROR orange, Nonresident and RNOR green, NRI light green.
   The ranges are included in the Excel export and import. The **guided check** ("Start the guided check") asks a few questions in order (are you an Indian citizen or person of
   Indian origin, the first year to include, an **optional travel-dates step** (when you arrived in and left the US, and each trip out of it with a tick for "to India": the days in each country are worked out for every year, with the counting rules stated, and can be filled into the tables), days in the US and in India for each year, green card, days not counted, closer connection, income over ₹15 lakh, taxed elsewhere),
@@ -127,6 +126,9 @@ Demo site, web, installed web app, Windows app and Android app all open the same
   an optional **plan-ahead step** models leaving the US for good on a future date (with expected visit days in each direction and whether you give up a green card) and shows the coming years in both countries and when each status changes; **"Save these Dates"** (next to Close) turns the results, and the planned years if you keep them ticked, into the date ranges (periods they overlap are replaced). Your answers, including the travel dates, are kept in the vault and in the Excel export. It follows the green card and
   substantial presence tests (USA) and the 182-day, 60 plus 365-day, citizen/PIO, deemed-resident and RNOR rules (India), but not treaty tie-breakers, the first-year choice or
   dual-status years. It is guidance, not tax advice. Rules: `src/lib/residency.js`; travel-day counting: `src/lib/travel.js`; screen: `src/taxres/Wizard.jsx`.
+- **🧮 Calculators** – the screen is split 40 : 60: a picker on the left, the chosen calculator on the right. **Mortgage payoff** (moved here from the Property page) starts from one of
+  your recorded mortgages or from numbers you type, and shows what extra payments save; **Loan payment (EMI)** gives the monthly payment, total paid and total interest for a loan;
+  **Savings growth** shows what a starting amount and a monthly saving grow to. Nothing in the calculators is saved.
 - **⚙ Settings** (the gear, far right) – one page for everything: *Account & sign-in* (sign in, your own Google client, sign out), *AI assistant*, countries and display,
   *Your data & security* (where the vault lives, move it, passphrase, **recovery key**, auto-lock, Excel export and import), *Home* (weather and prices), *Property*, *Portfolio*,
   and a **Danger zone** (Wipe data). *This device* shows the version, the install button and where your data is.

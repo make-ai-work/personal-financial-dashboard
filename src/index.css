@@ -575,6 +575,22 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 .home-grid .sumt { table-layout: auto; font-size: .76rem } .home-grid .sumt th, .home-grid .sumt td { padding: 6px 4px } .home-grid .sumt .cur { display: none } .home-grid .sumt th { font-size: .66rem }
 .home-grid .tblw { overflow-x: auto }
 
+/* Calculators: 40 : 60, the picker on the left and the calculator on the right */
+.calc-split { display: grid; grid-template-columns: minmax(0, 40fr) minmax(0, 60fr); gap: 16px; align-items: start }
+@media (max-width: 800px) { .calc-split { grid-template-columns: minmax(0, 1fr) } }
+.calc-picker { position: sticky; top: calc(var(--appbar-h, 0px) + 8px) } @media (max-width: 800px) { .calc-picker { position: static } }
+.calc-list { display: flex; flex-direction: column; gap: 8px; padding: 12px }
+.calc-item { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; text-align: left; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 11px 13px; color: var(--text); font: inherit }
+.calc-item b { font-size: .98rem } .calc-item .sub { font-size: .8rem }
+.calc-item.on { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); background: var(--surface) }
+.calc-source { display: flex; flex-direction: column; gap: 8px }
+.calc.standalone { border: 0 }
+
+/* The title bar and the tabs stay at the top while scrolling. On a phone only the tabs do (the bar would take too much of a small screen). */
+.appbar { position: sticky; top: 0; z-index: 8 }
+@media (max-width: 640px) { .appbar { display: contents } .tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 8 } }
+.side { top: calc(var(--appbar-h, 0px) + 12px) } .fin-right { top: calc(var(--appbar-h, 0px) + 8px) } .settings .sp-r { top: calc(var(--appbar-h, 0px) + 8px) } .tr-graph { top: calc(var(--appbar-h, 0px) + 8px) }
+.calc.standalone .kpis3 { grid-template-columns: repeat(2, minmax(0, 1fr)) }
 /* Retirement: the chance of success, the big number on the left (with the status under it) and the figures on the right */
 .rchance { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 20px 28px; align-items: center; padding: 16px 18px }
 .rbigcol { display: flex; flex-direction: column; align-items: flex-start; gap: 8px }
