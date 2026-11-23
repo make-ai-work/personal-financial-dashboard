@@ -55,9 +55,7 @@ const errors = []
 page.on('pageerror', (e) => errors.push(e.message))
 page.on('console', (m) => m.type() === 'error' && !(av.mode === 'missing' && /404/.test(m.text())) && errors.push(m.text())) // the missing-snapshot step expects one
 const step = (s) => console.log('•', s)
-const dialog = () => page.getByRole('dialog')
 const topTab = (name) => page.getByRole('tab', { name })
-const subtab = (name) => page.locator('.subtabs').getByRole('button', { name })
 const demoBtn = () => page.getByRole('button', { name: 'Continue without signing in' })
 const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
 const enter = async () => { await demoBtn().click(); await page.getByRole('button', { name: /Demo mode – nothing will be saved/ }).click(); await page.getByRole('status').filter({ hasText: 'DEMO' }).waitFor() }

@@ -32,7 +32,6 @@ export const VALUE_SOURCES = [
 export const sourceLabel = (k) => VALUE_SOURCES.find((s) => s.key === k)?.label || 'Other'
 
 const byDateDesc = (a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0)
-const byDateAsc = (a, b) => -byDateDesc(a, b)
 export const ordinal = (n) => {
   const v = n % 100
   return `${n}${v >= 11 && v <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th'}`

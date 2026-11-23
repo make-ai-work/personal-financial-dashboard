@@ -8,7 +8,6 @@ import { createServer } from 'node:net'
 import { browserArgs, findBrowser, parseArgs, probe, profileDir, run } from '../scripts/run-as-app.mjs'
 
 const freePort = () => new Promise((resolve) => { const s = createServer().listen(0, '127.0.0.1', () => { const { port } = s.address(); s.close(() => resolve(port)) }) })
-const get = (port, p) => new Promise((resolve, reject) => http.get({ host: '127.0.0.1', port, path: p, headers: { Host: `localhost:${port}` } }, (r) => { let b = ''; r.on('data', (c) => { b += c }); r.on('end', () => resolve({ status: r.statusCode, body: b })) }).on('error', reject))
 const dist = () => { const d = mkdtempSync(path.join(tmpdir(), 'raa-')); writeFileSync(path.join(d, 'index.html'), '<h1>app</h1>'); return d }
 
 test('browser: an explicit path wins; otherwise Edge, then Chrome, then Chromium; none found is null', () => {

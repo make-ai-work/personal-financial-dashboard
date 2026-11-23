@@ -4,8 +4,6 @@
 //   Google Drive  The same everywhere. Only the encrypted file is uploaded.
 export const channelOf = ({ demo = false, native = false, desktop = false } = {}) => (demo ? 'demo' : native ? 'android' : desktop ? 'windows' : 'web')
 
-export const CHANNEL_NAME = { demo: 'Demo site', android: 'Android app', windows: 'Windows app', web: 'Web app' }
-
 // The "Where should your data live?" choices. Signed out, only demo mode works: the other two say so. Signed in, demo mode is greyed out.
 export function storageChoices({ channel, signedIn = true, clientReady = false, canRemember = true } = {}) {
   const needSignIn = 'Sign in with Google to use this.'

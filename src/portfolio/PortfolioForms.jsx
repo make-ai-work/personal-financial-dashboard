@@ -20,8 +20,6 @@ export function PortfolioModal({ countries, defaultCountry, accounts, linkedIds,
   const creating = accountId === 'new' || (free.length === 0)
   const cur = COUNTRIES[country].currency
 
-  const sym = curSym(cur)
-
   const submit = (e) => {
     e.preventDefault()
     if (creating && !newAcc.name.trim()) return setErr('Name the new Finance account.')
