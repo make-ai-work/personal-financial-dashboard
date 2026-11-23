@@ -36,6 +36,8 @@ Stop it with `Ctrl+C`. If port 4173 is busy use `npm start -- --port 5000` (the 
 
 ## Sign-in and storage: the same screen flow on every version
 
+The top bar has **Save** (writes the encrypted vault now; in a browser that cannot write the file in place it downloads the encrypted file) and **Logout** (saves, then locks and signs out; if the save fails it tells you why and lets you stay or log out anyway). The old "file · encrypted · saved" strip is gone; a message only appears when something needs action (reconnect Google Drive, a conflict, a failed save).
+
 Demo site, web, installed web app, Windows app and Android app all open the same way:
 
 **1. Sign in → 2. Where should your data live? → 3. Unlock (only if a vault already exists) → 4. Home.** Every sign-in lands on Home.
@@ -89,7 +91,7 @@ Demo site, web, installed web app, Windows app and Android app all open the same
   The simulation is 1,000 to 10,000 random futures in today's money (lognormal real returns per asset class, correlated, rebalanced yearly). The
   starting return, volatility and correlation figures are **placeholders, not forecasts**; edit them. **Inheritance** is a flat amount added to your
   savings in the calendar year you enter, exactly as typed (not inflation-adjusted); past years and years after the plan-to age are ignored. The
-  **insurance survivor benefit** adds the death benefit of your Finance insurance policies to the nest egg at retirement. A saved plan stores its
+  **insurance survivor benefit** adds the **value at maturity** of your Assets insurance policies (not their death benefit) to the nest egg at retirement. A saved plan stores its
   inputs and seed, and results are recalculated when you open it. Engine: `src/lib/montecarlo.js`; plan and saved plans: `src/lib/retirement.js`;
   screens: `src/retirement/`. Not included in the Excel export.
 - **Property** – properties by country with a value history you enter (USA has an "Open on Zillow" link for
@@ -113,6 +115,10 @@ Demo site, web, installed web app, Windows app and Android app all open the same
   Australia or Switzerland; **one list** in Settings is used by every tab), with an owner filter (Mine / Me + Others / Spouse / Parent), a month-by-month chart and a Performance panel per country.
   **Upload accounts…** reads a CSV or Excel file the same way (columns guessed, a default value per field, Update and overwrite or New addition, preview, confirm). There is no asset-mix field any more.
   The combined total across countries is on Home.
+- **🧾 Tax residency** (shown only when both USA and India are in your countries list) – enter your tax residency as **date ranges**: US *Resident* or *Nonresident*
+  (tax year 1 January to 31 December) and India *NRI*, *RNOR* or *ROR* (tax year 1 April to 31 March). One bar per country on a shared timeline, with each country's
+  tax-year ticks, a marker and a list at every date the status changes, and today's status. Colours: Resident and ROR orange, Nonresident and RNOR green, NRI light green.
+  The ranges are included in the Excel export and import. Statuses are what you enter; the residency tests themselves are not calculated.
 - **⚙ Settings** (the gear, far right) – one page for everything: *Account & sign-in* (sign in, your own Google client, sign out), *AI assistant*, countries and display,
   *Your data & security* (where the vault lives, move it, passphrase, **recovery key**, auto-lock, Excel export and import), *Home* (weather and prices), *Property*, *Portfolio*,
   and a **Danger zone** (Wipe data). *This device* shows the version, the install button and where your data is.

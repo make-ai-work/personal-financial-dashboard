@@ -79,8 +79,10 @@ export function VaultProvider({ children }) {
     setPhase('unlocked')
   }, [])
 
+  const lastSave = useRef({ ok: true }) // how the most recent save went, for Save and Logout
   const persist = useCallback(() => {
     chain.current = chain.current.then(async () => {
+      lastSave.current = { ok: true }
       if (demoRef.current || !session.current || !dataRef.current) return
       setSaveState('saving')
       try {
@@ -98,12 +100,23 @@ export function VaultProvider({ children }) {
         }
       } catch (e) {
         setError(e.message)
+        lastSave.current = { ok: false, message: e.message || String(e) }
         // Google Drive: the changes stay safe in memory (and in `pending`) until you reconnect or choose what to do about a conflict
         setSaveState(e instanceof drive.DriveAuthError ? 'reconnect' : e instanceof drive.DriveConflictError ? 'conflict' : 'error')
       }
     })
     return chain.current
   }, [])
+
+  // Save now (the Save and Logout buttons). -> { ok: true } or { ok: false, message }. A browser that cannot write the file in place gets the encrypted file as a download.
+  const saveNow = useCallback(async () => {
+    if (demoRef.current || !session.current || !dataRef.current) return { ok: true }
+    clearTimeout(timer.current)
+    await persist()
+    if (!lastSave.current.ok) return lastSave.current
+    if (!handle.current && bytes.current) { download(fileName || DEFAULT_NAME, bytes.current); needsDownload.current = false; setSaveState('saved') }
+    return { ok: true }
+  }, [persist, fileName]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const update = useCallback((fn) => {
     const next = fn(dataRef.current)
@@ -485,7 +498,7 @@ export function VaultProvider({ children }) {
     oldCopy, canDeleteOldCopy: canDeleteOld(oldCopy, { desktop: isDesktop() }), deleteOldCopy, keepOldCopy,
     demo, startDemo, resetDemo, wipe,
     phase, data, fileName, saveState, canWrite, error, setError,
-    update, create, openFile, unlock, lock, switchFile, changePassphrase, hasRecovery, createRecoveryKey, deleteRecoveryKey, unlockWithRecovery, downloadNow, exportBackup, deleteAppVault,
+    update, saveNow, create, openFile, unlock, lock, switchFile, changePassphrase, hasRecovery, createRecoveryKey, deleteRecoveryKey, unlockWithRecovery, downloadNow, exportBackup, deleteAppVault,
     isApp: isNativeApp(),
   }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

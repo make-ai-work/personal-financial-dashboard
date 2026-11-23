@@ -128,12 +128,14 @@ await page.screenshot({ path: `${OUT}/summary.png`, fullPage: true })
 if (process.exitCode) { await browser.close(); server.kill(); process.exit(1) }
 
 step('lock / wrong / right passphrase')
+await page.getByRole('tab', { name: 'Settings' }).click()
 await page.getByRole('button', { name: 'Lock now' }).click()
 await page.getByPlaceholder('Passphrase').fill('wrong passphrase here')
 await page.getByRole('button', { name: 'Unlock' }).click()
 await page.getByText('Wrong passphrase or damaged file.').waitFor()
 await page.getByPlaceholder('Passphrase').fill(PASS)
 await page.getByRole('button', { name: 'Unlock' }).click()
+await page.getByRole('tab', { name: /Assets/ }).click()
 await page.getByText('Update date', { exact: true }).waitFor()
 
 step('recovery key: made once, then a forgotten passphrase is reset with it')
@@ -156,8 +158,41 @@ await page.getByRole('button', { name: 'Set new passphrase and unlock' }).click(
 await page.getByRole('tab', { name: /Assets/ }).click()
 await page.getByText('Update date', { exact: true }).waitFor()
 
+step('tax residency tab: date ranges, one bar per country, status changes marked, colours')
+const taxTab = page.getByRole('tab', { name: /Tax residency/ })
+await taxTab.click()
+const addPeriod = async (country, status, from, to) => {
+  await page.getByTestId(`tr-${country}`).getByRole('button', { name: '+ Add period' }).click()
+  const m = page.getByRole('dialog')
+  await m.getByLabel('Status').selectOption(status); await m.getByLabel('From date').fill(from)
+  if (to) { await m.getByLabel('Still current').uncheck(); await m.getByLabel('To date').fill(to) }
+  await m.getByRole('button', { name: 'Save' }).click()
+}
+await addPeriod('us', 'nonresident', '2018-01-01', '2022-12-31'); await addPeriod('us', 'resident', '2023-01-01', '')
+await addPeriod('in', 'nri', '2018-04-01', '2023-03-31'); await addPeriod('in', 'rnor', '2023-04-01', '2025-03-31'); await addPeriod('in', 'ror', '2025-04-01', '')
+await page.screenshot({ path: `${OUT}/taxres.png`, fullPage: true })
+assert.equal(await page.getByTestId('tr-bar-us').locator('.tr-seg').count(), 2); assert.equal(await page.getByTestId('tr-bar-in').locator('.tr-seg').count(), 3)
+const color = (c, st) => page.getByTestId(`tr-bar-${c}`).locator(`[data-status="${st}"]`).evaluate((e) => getComputedStyle(e).backgroundColor)
+const rgb = (hex) => { const n = parseInt(hex.slice(1), 16); return `rgb(${n >> 16}, ${(n >> 8) & 255}, ${n & 255})` }
+const root = (v) => page.evaluate((x) => getComputedStyle(document.documentElement).getPropertyValue(x).trim(), v)
+assert.equal(await color('us', 'resident'), rgb(await root('--orange'))); assert.equal(await color('in', 'ror'), rgb(await root('--orange')))
+assert.equal(await color('us', 'nonresident'), rgb(await root('--green'))); assert.equal(await color('in', 'rnor'), rgb(await root('--green')))
+assert.equal(await color('in', 'nri'), rgb(await root('--lgreen')))
+assert.notEqual(await color('in', 'nri'), await color('in', 'rnor'), 'NRI is a lighter green than RNOR')
+assert.equal(await page.getByTestId('tr-bar-in').locator('.tr-chg').count(), 3, 'a marker at each status change')
+const inChanges = await page.getByTestId('tr-changes-in').innerText()
+assert.match(inChanges, /1 Apr 2023[\s\S]*NRI → RNOR/); assert.match(inChanges, /1 Apr 2025[\s\S]*RNOR → ROR/); assert.match(inChanges, /FY 2023-24/) // India's tax year runs April to March
+assert.match(await page.getByTestId('tr-changes-us').innerText(), /1 Jan 2023[\s\S]*Nonresident → Resident/)
+assert.match(await page.getByTestId('tr-now-us').innerText(), /Resident/); assert.match(await page.getByTestId('tr-now-in').innerText(), /ROR/)
+await page.getByTestId('tr-us').getByRole('button', { name: '+ Add period' }).click() // an overlapping period is refused
+await page.getByRole('dialog').getByLabel('From date').fill('2022-06-01'); await page.getByRole('dialog').getByLabel('Still current').uncheck(); await page.getByRole('dialog').getByLabel('To date').fill('2023-06-01')
+await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click()
+await page.getByRole('dialog').getByText(/overlaps another period/).waitFor()
+await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click()
+await page.getByRole('tab', { name: /Assets/ }).click()
+
 step('saved file holds no plaintext, then reopen it after a reload')
-const [dl2] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Download to save' }).click().catch(() => null)])
+const [dl2] = await Promise.all([page.waitForEvent('download'), page.getByTestId('save-btn').click()])
 await dl2?.saveAs(`${OUT}/WealthTracker.wvault`)
 const raw = readFileSync(`${OUT}/WealthTracker.wvault`).toString('latin1')
 for (const s of ['000123456821', 'Checking', 'Chase', 'POL-100234']) assert.ok(!raw.includes(s), `plaintext leaked: ${s}`)
@@ -179,7 +214,7 @@ await xl.saveAs(`${OUT}/export.xlsx`)
 const ExcelJS = require('exceljs')
 const wb = new ExcelJS.Workbook()
 await wb.xlsx.readFile(`${OUT}/export.xlsx`)
-assert.deepEqual(wb.worksheets.map((w) => w.name), ['Items', 'Insurance', 'Balances', 'Rates', 'Property', 'PropertyValues', 'Loans', 'LoanUpdates', 'Portfolios', 'Holdings', 'Settings'])
+assert.deepEqual(wb.worksheets.map((w) => w.name), ['Items', 'Insurance', 'Balances', 'Rates', 'Property', 'PropertyValues', 'Loans', 'LoanUpdates', 'Portfolios', 'Holdings', 'TaxResidency', 'Settings'])
 assert.ok(JSON.stringify(wb.getWorksheet('Items').getSheetValues()).includes('000123456821'))
 await page.screenshot({ path: `${OUT}/settings.png`, fullPage: true })
 
@@ -190,6 +225,16 @@ await page.getByText(/Imported 4 items, 1 policies and 8 balances/).waitFor()
 
 console.log(errors.length ? `page errors: ${errors.join(' | ')}` : 'no page errors')
 assert.equal(errors.length, 0)
+step('Logout: saves (the encrypted file is downloaded in this browser), locks and returns to sign-in')
+{
+  await page.getByLabel('Passphrase', { exact: true }).fill(PASS); await page.getByLabel('Confirm passphrase').fill(PASS); await page.getByRole('checkbox').check()
+  await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Create encrypted file' }).click()]) // the imported data is now a vault again
+  await page.getByTestId('logout-btn').waitFor()
+  const [dlOut] = await Promise.all([page.waitForEvent('download'), page.getByTestId('logout-btn').click()])
+  assert.match(dlOut.suggestedFilename(), /\.wvault$/)
+  await page.getByTestId('logout-btn').waitFor({ state: 'detached' })
+  assert.equal(await page.getByTestId('save-btn').count(), 0)
+}
 await browser.close()
 server.kill()
 console.log('E2E PASSED')

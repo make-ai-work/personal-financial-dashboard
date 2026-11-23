@@ -9,6 +9,7 @@
 
 import { sanitizeCountries } from './countries.js'
 import { defaultRetirement, normalizeRetirement } from './retirement.js'
+import { emptyTaxResidency, normalizeTaxResidency } from './taxres.js'
 
 export const uid = () => crypto.randomUUID()
 
@@ -26,6 +27,7 @@ export const emptyData = () => ({
   portfolios: [],
   holdings: [],
   retirement: defaultRetirement(),
+  taxResidency: emptyTaxResidency(), // { us: [{ id, status, from, to }], in: [...] }, see taxres.js
 })
 
 export function normalizeData(d) {
@@ -50,6 +52,7 @@ export function normalizeData(d) {
     portfolios: d?.portfolios || [],
     holdings: d?.holdings || [],
     retirement: normalizeRetirement(d?.retirement),
+    taxResidency: normalizeTaxResidency(d?.taxResidency),
   }
 }
 

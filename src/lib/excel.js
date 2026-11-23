@@ -3,6 +3,7 @@
 import { COUNTRIES, OWNERS, MIX } from './format.js'
 import { emptyData, uid } from './model.js'
 import { sanitizeCountries } from './countries.js'
+import { COUNTRY_KEYS, STATUSES, normalizeTaxResidency, statusOf, validISO } from './taxres.js'
 import { PROPERTY_TYPES, VALUE_SOURCES } from './property.js'
 import { CLASSES as PF_CLASSES } from './portfolio.js'
 
@@ -64,6 +65,7 @@ export async function exportWorkbook(data) {
     h.id, h.portfolioId, h.name, h.ticker || '', h.type, h.cls, ...(h.mix || [null, null, null, null]), h.sector || '', h.geo || '', h.trackBy,
     h.units ?? null, h.price ?? null, h.value ?? null, h.priceDate || '', h.notes || '',
   ]))
+  sheet(wb, 'TaxResidency', ['Country', 'Status', 'From', 'To'], COUNTRY_KEYS.flatMap((c) => (data.taxResidency?.[c] || []).map((r) => [c === 'us' ? 'US' : 'India', statusOf(c, r.status)?.label || r.status, r.from, r.to || ''])))
   sheet(wb, 'Settings', ['Key', 'Value'], [
     ['countries', data.settings.countries.join(',')],
     ['concentrationLimit', data.settings.concentrationLimit],
@@ -217,6 +219,15 @@ export async function importWorkbook(buffer) {
       priceDate: String(r['Price date'] ?? ''), notes: String(r.Notes ?? ''),
     })
   }
+  const tr = { us: [], in: [] } // tax residency date ranges; a bad row is skipped with a note
+  for (const r of readRows(wb.getWorksheet('TaxResidency'))) {
+    const c = /^(us|usa|united states)$/i.test(String(r.Country).trim()) ? 'us' : /^(in|india)$/i.test(String(r.Country).trim()) ? 'in' : ''
+    const st = c && STATUSES[c].find((x) => x.label.toLowerCase() === String(r.Status).trim().toLowerCase() || x.key === String(r.Status).trim().toLowerCase())
+    const from = String(r.From ?? '').slice(0, 10), to = String(r.To ?? '').slice(0, 10)
+    if (!st || !validISO(from) || (to && (!validISO(to) || to < from))) { warnings.push(`Skipped tax residency row "${r.Country} ${r.Status} ${r.From}": needs US or India, a valid status, a start date and an end date after it.`); continue }
+    tr[c].push({ status: st.key, from, to })
+  }
+  data.taxResidency = normalizeTaxResidency(tr)
   const legacyCountries = []
   for (const r of readRows(wb.getWorksheet('Settings'))) {
     if (r.Key === 'countries') data.settings.countries = sanitizeCountries(String(r.Value).split(',').map((x) => x.trim()), data.settings.countries)
