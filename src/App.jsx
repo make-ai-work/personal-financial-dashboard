@@ -5,6 +5,7 @@ import Property from './property/Property.jsx'
 import Portfolio from './portfolio/Portfolio.jsx'
 import Retirement from './retirement/Retirement.jsx'
 import TaxResidencyApp from './taxres/TaxResidencyApp.jsx'
+import CalculatorsApp from './calculators/CalculatorsApp.jsx'
 import { NavContext, useNav } from './nav.jsx'
 import Home from './home/Home.jsx'
 import { AuthProvider, useAuth } from './auth/AuthContext.jsx'
@@ -25,7 +26,8 @@ const TABS = [
   { id: 'property', wide: true, label: '🏠 Property', render: () => <Property /> },
   { id: 'portfolio', wide: true, label: '📈 Portfolio', render: () => <Portfolio /> },
   { id: 'retirement', wide: true, label: '🏖️ Retirement', render: () => <Retirement /> },
-  { id: 'taxres', wide: true, label: '🧾 Tax residency', name: 'Tax residency', needs: ['us', 'in'], render: () => <TaxResidencyApp /> }, // only when USA and India are both selected
+  { id: 'taxres', wide: true, label: '🧾 Tax Residency', name: 'Tax Residency', needs: ['us', 'in'], render: () => <TaxResidencyApp /> }, // only when USA and India are both selected
+  { id: 'calculators', wide: true, label: '🧮 Calculators', name: 'Calculators', render: () => <CalculatorsApp /> },
   { id: 'settings', gear: true, wide: true, label: '⚙', name: 'Settings', render: () => <SettingsPage /> }, // the one place for every setting, far right
 ]
 
@@ -158,7 +160,6 @@ function Shell() {
   const [focus, setFocus] = useState(null)
   const nav = { focus, clearFocus: () => setFocus(null), go: (id, params) => { setTab(id); setFocus(params || null) } }
   const current = TABS.find((t) => t.id === tab) || TABS[0]
-
   useEffect(() => {
     if (theme) document.documentElement.dataset.theme = theme
     else delete document.documentElement.dataset.theme
@@ -168,6 +169,24 @@ function Shell() {
   const dark = theme ? theme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches
   const ready = auth.phase === PHASE.ready
   useEffect(() => { if (!ready) { setTab('home'); setFocus(null) } }, [ready]) // every sign-in lands on Home, whatever page you left from
+
+  // The title bar and the tabs stay at the top while you scroll (on a phone only the tabs, so the screen is not eaten up). --appbar-h is how much
+  // room that takes, so the other sticky panels sit just below it.
+  const [el, setEl] = useState(null) // the bar, once it is on screen (after sign-in and unlock)
+  useEffect(() => {
+    if (!el) return undefined
+    const measure = () => {
+      const phone = window.matchMedia('(max-width: 640px)').matches
+      const target = phone ? el.querySelector('.tabs') : el
+      document.documentElement.style.setProperty('--appbar-h', `${target ? Math.round(target.getBoundingClientRect().height) : 0}px`)
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    window.addEventListener('resize', measure)
+    return () => { ro.disconnect(); window.removeEventListener('resize', measure); document.documentElement.style.removeProperty('--appbar-h') }
+  }, [el])
+
 
   const header = (acct) => (
     <header className="topbar">
@@ -193,9 +212,11 @@ function Shell() {
         <LandingGate header={header(null)}>
         <DemoBar />
         {auth.native && <NativeBridge tab={tab} setTab={setTab} />}
-        {header(<>{!auth.demoSite && <AskAiButton />}{auth.native ? null : <Account />}<SessionButtons /></>)}
+        <div className="appbar" ref={setEl}>
+          {header(<>{!auth.demoSite && <AskAiButton />}{auth.native ? null : <Account />}<SessionButtons /></>)}
+          <TabsBar current={current} setTab={setTab} />
+        </div>
         {!auth.demoSite && <AiHost />}
-        <TabsBar current={current} setTab={setTab} />
         {current.wide ? <main className="wide-page">{current.render()}</main> : <main className="page">{current.render()}</main>}
         </LandingGate>
       </NavContext.Provider>
