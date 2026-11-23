@@ -274,7 +274,7 @@ window, plus a small file bridge, so it saves straight into your encrypted data 
 the file for next time (you only type the passphrase). Everything is in `electron/`.
 
 - **Get the .exe:** on GitHub go to **Actions → Build Windows app → Run workflow**, then download `windows-app` from the finished run.
-  Pushing a tag such as `v0.1.0` also attaches the files to a release. Or build it yourself: `npm install`, then `npm run win:build`;
+  Pushing a tag such as `v1.0.1` also attaches the files to a release. Or build it yourself: `npm install`, then `npm run win:build`;
   the files appear in `release/` (`FinanceDashboard-<version>-portable.exe` and the installer).
 - **Try it without packaging:** `npm run win:dev` builds the web app and opens it in Electron.
 - **Windows warning:** the files are not code-signed, so SmartScreen says "Windows protected your PC" the first time: **More info →
@@ -393,7 +393,7 @@ npm run build:demo && npm run test:e2e:demo
 1. Make sure CI is green on `main` and run the browser tests above. Bump the version: `npm version minor` (or `patch`/`major`), which edits `package.json` and `package-lock.json`.
 2. Push the tag: `git push origin main --follow-tags`. The **Build Windows app** workflow builds the portable `.exe` and the installer and attaches them to a
    GitHub release for that tag (with generated notes). You can also run it by hand from the Actions tab.
-3. **Android:** `npm run android:sync`, then in Android Studio **Build → Generate Signed App Bundle** (keep the signing key safe and out of git). Raise `versionCode` and `versionName`
+3. **Android:** `npm run android:sync`, then in Android Studio **Build → Generate Signed App Bundle** (keep the signing key safe and out of git). Raise `versionCode` and `versionName` (now 2 and 1.0.1)
    in `android/app/build.gradle` for each Play upload, and add the release key's SHA-1 as another Android OAuth client (see [Google Drive](#google-drive-storage-optional)).
 4. **Demo site:** merge `main` into `demo` (one way); the Pages workflow republishes it.
 5. Before announcing: check the known limits in the status note above, and that `.env` holds only the public Google client ID (no secrets are in this repository).

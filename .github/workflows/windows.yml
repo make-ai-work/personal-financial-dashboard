@@ -1,5 +1,5 @@
 # Builds the Windows app (Electron): a portable .exe (no install) and an installer. Run it from the Actions tab
-# ("Run workflow"), or push a tag like v0.1.0 to also attach the files to a GitHub release.
+# ("Run workflow"), or push a tag like v1.0.1 to also attach the files to a GitHub release.
 # The files are not code-signed, so Windows SmartScreen shows a warning the first time ("More info" > "Run anyway").
 name: Build Windows app
 
