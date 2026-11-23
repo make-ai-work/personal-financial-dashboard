@@ -89,7 +89,7 @@ Demo site, web, installed web app, Windows app and Android app all open the same
   The simulation is 1,000 to 10,000 random futures in today's money (lognormal real returns per asset class, correlated, rebalanced yearly). The
   starting return, volatility and correlation figures are **placeholders, not forecasts**; edit them. **Inheritance** is a flat amount added to your
   savings in the calendar year you enter, exactly as typed (not inflation-adjusted); past years and years after the plan-to age are ignored. The
-  **insurance survivor benefit** adds the death benefit of your Finance insurance policies to the nest egg at retirement. A saved plan stores its
+  **insurance survivor benefit** adds the **value at maturity** of your Assets insurance policies (not their death benefit) to the nest egg at retirement. A saved plan stores its
   inputs and seed, and results are recalculated when you open it. Engine: `src/lib/montecarlo.js`; plan and saved plans: `src/lib/retirement.js`;
   screens: `src/retirement/`. Not included in the Excel export.
 - **Property** – properties by country with a value history you enter (USA has an "Open on Zillow" link for

@@ -172,9 +172,9 @@ test('inheritance is a flat amount added in its year; past years and years after
   assert.ok(o.shortfall < without.shortfall)
 })
 
-test('the insurance survivor benefit adds the Finance policies’ death benefits to the nest egg at retirement, only when ticked', () => {
+test('the insurance survivor benefit adds the Assets policies’ value at maturity (not the death benefit) to the nest egg at retirement, only when ticked', () => {
   let d = pick(withAccounts(), ['a1'], { age: 35, retAge: 65, life: 95 })
-  d = { ...d, policies: [{ id: 'p1', country: 'us', name: 'Term', deathBenefit: 500000 }, { id: 'p2', country: 'in', name: 'LIC', deathBenefit: 8000000 }] } // $500,000 + 8,000,000 INR = $100,000
+  d = { ...d, policies: [{ id: 'p1', country: 'us', name: 'Term', deathBenefit: 5000000, maturityValue: 500000 }, { id: 'p2', country: 'in', name: 'LIC', deathBenefit: 90000000, maturityValue: 8000000 }, { id: 'p3', country: 'us', name: 'No maturity', deathBenefit: 1000000, maturityValue: null }] } // $500,000 + 8,000,000 INR = $100,000; death benefits are ignored
   const off = resolvePlan(d, fx, 2026)
   assert.ok(Math.abs(off.insurance - 600000) < 1e-6); assert.deepEqual(off.lumps, [])
   const on = resolvePlan({ ...d, retirement: { ...d.retirement, plan: { ...d.retirement.plan, includeInsurance: true } } }, fx, 2026)
