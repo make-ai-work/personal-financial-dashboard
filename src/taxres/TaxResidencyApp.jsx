@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useVault } from '../finance/VaultContext.jsx'
 import { Modal } from '../finance/ui.jsx'
 import { COUNTRIES, fmtDate, todayISO } from '../lib/format.js'
+import Wizard from './Wizard.jsx'
 import { STATUSES, TAX_YEAR_NOTE, addRange, axis, changes, pos, rangeProblem, removeRange, segments, statusOf, statusOn, taxYearLabel, taxYearTicks, updateRange } from '../lib/taxres.js'
 
 // The tab only exists when both the USA and India are in the countries list. One bar per country on a SHARED time axis, each with its own tax-year
@@ -21,14 +22,17 @@ function Page() {
   const today = todayISO()
   const ax = axis(tr, today)
   const [modal, setModal] = useState(null) // { country, item? }
+  const [wizard, setWizard] = useState(false)
   const save = (country, item, v) => { update((d) => (item ? updateRange(d, country, item.id, v) : addRange(d, country, v))); setModal(null) }
   return (
     <div className="wide-pad tr-page" data-testid="tax-residency">
+      <div className="panel"><div className="pad"><div className="wiz-cta"><span><b>Not sure of your status?</b> Answer a few questions about the days you spent in each country and get your US and India tax residency worked out year by year, with the rule and the official source for each result.</span><button className="btn primary" onClick={() => setWizard(true)} data-testid="open-wizard">Start the guided check</button></div></div></div>
       <div className="panel"><div className="pad sub">Record the date ranges of your tax residency to see when your status changes. Add the first period for each country, then each change. Leave the end date empty for the period you are in now. Rules for becoming resident are not calculated here; you enter the status you were or will be.</div></div>
       <div className="tr-legend" aria-label="Legend">
         {['us', 'in'].flatMap((c) => STATUSES[c].map((s) => <span key={`${c}${s.key}`}><i className={`tr-sw tone-${s.tone}`} />{c === 'us' ? 'US' : 'India'} {s.label}</span>))}
       </div>
       {['us', 'in'].map((c) => <CountryBar key={c} country={c} ranges={tr[c]} ax={ax} today={today} onAdd={() => setModal({ country: c })} onEdit={(item) => setModal({ country: c, item })} onDelete={(item) => window.confirm(`Delete this period (${statusOf(c, item.status).label}, ${fmtDate(item.from)} to ${item.to ? fmtDate(item.to) : 'now'})?`) && update((d) => removeRange(d, c, item.id))} />)}
+      {wizard && <Wizard onClose={() => setWizard(false)} />}
       {modal && <RangeModal country={modal.country} item={modal.item} others={tr[modal.country].filter((r) => r.id !== modal.item?.id)} onSave={(v) => save(modal.country, modal.item, v)} onClose={() => setModal(null)} />}
     </div>
   )

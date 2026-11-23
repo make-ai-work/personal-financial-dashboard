@@ -189,6 +189,34 @@ await page.getByRole('dialog').getByLabel('From date').fill('2022-06-01'); await
 await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click()
 await page.getByRole('dialog').getByText(/overlaps another period/).waitFor()
 await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click()
+step('tax residency guided check: questions, live results, the rule and source for each year, and applying the results as date ranges')
+await page.getByTestId('open-wizard').click()
+const wiz = page.getByTestId('residency-wizard')
+assert.match(await wiz.innerText(), /guidance, not tax advice/i)
+await wiz.getByRole('link', { name: /Determining an individual/ }).waitFor()
+assert.equal(await wiz.getByRole('link', { name: /Residential status/ }).first().getAttribute('href'), 'https://wm.incometaxindia.gov.in/w/residential-status')
+await page.getByTestId('wiz-next').click()
+await page.getByLabel('First year').selectOption('2024')
+await page.getByTestId('wiz-next').click() // USA
+for (const [y, d] of [[2024, 40], [2025, 120], [2026, 160]]) await page.getByLabel(`US days ${y}`).fill(String(d))
+await page.getByTestId('us-res-2025').getByText('Nonresident').waitFor() // 120 + 40/3 = 133 (IRS example style): under 183
+await page.getByTestId('us-res-2026').getByText('Resident', { exact: true }).waitFor() // 160 + 120/3 + 40/6 = 206.7
+await page.screenshot({ path: `${OUT}/wizard-us.png` })
+await page.getByTestId('wiz-next').click() // India
+assert.equal(await page.getByLabel(/Left for employment/).count(), 0, 'citizen questions are hidden until you say you are a citizen')
+for (const [y, d] of [[2024, 10], [2025, 10], [2026, 200]]) await page.getByLabel(`India days ${y}`).fill(String(d))
+await page.getByTestId('in-res-2025').getByText('NRI').waitFor()
+await page.getByTestId('in-res-2026').getByText('RNOR').waitFor() // resident, but non-resident in 9 of the previous 10 years
+await page.getByTestId('wiz-next').click() // results
+await page.getByTestId('wiz-in').locator('summary', { hasText: 'FY 2026-27' }).click()
+assert.match(await page.getByTestId('wiz-in').innerText(), /Resident but not ordinarily resident[\s\S]*non-resident in 10 of the previous 10/)
+assert.equal(await page.getByTestId('wiz-in').getByRole('link', { name: /Residential status/ }).first().getAttribute('href'), 'https://wm.incometaxindia.gov.in/w/residential-status')
+await page.screenshot({ path: `${OUT}/wizard-results.png` })
+await page.getByTestId('wiz-apply').click()
+await page.getByTestId('wiz-applied').waitFor()
+await page.getByRole('dialog').getByRole('button', { name: 'Close', exact: true }).last().click()
+assert.match(await page.getByTestId('tr-now-us').innerText(), /Resident/); assert.match(await page.getByTestId('tr-now-in').innerText(), /RNOR/)
+assert.match(await page.getByTestId('tr-changes-us').innerText(), /1 Jan 2026[\s\S]*Nonresident → Resident/)
 await page.getByRole('tab', { name: /Assets/ }).click()
 
 step('saved file holds no plaintext, then reopen it after a reload')
@@ -214,7 +242,7 @@ await xl.saveAs(`${OUT}/export.xlsx`)
 const ExcelJS = require('exceljs')
 const wb = new ExcelJS.Workbook()
 await wb.xlsx.readFile(`${OUT}/export.xlsx`)
-assert.deepEqual(wb.worksheets.map((w) => w.name), ['Items', 'Insurance', 'Balances', 'Rates', 'Property', 'PropertyValues', 'Loans', 'LoanUpdates', 'Portfolios', 'Holdings', 'TaxResidency', 'Settings'])
+assert.deepEqual(wb.worksheets.map((w) => w.name), ['Items', 'Insurance', 'Balances', 'Rates', 'Property', 'PropertyValues', 'Loans', 'LoanUpdates', 'Portfolios', 'Holdings', 'TaxResidency', 'TaxResidencyDays', 'Settings'])
 assert.ok(JSON.stringify(wb.getWorksheet('Items').getSheetValues()).includes('000123456821'))
 await page.screenshot({ path: `${OUT}/settings.png`, fullPage: true })
 

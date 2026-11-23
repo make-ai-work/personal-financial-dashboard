@@ -66,7 +66,14 @@ export async function exportWorkbook(data) {
     h.units ?? null, h.price ?? null, h.value ?? null, h.priceDate || '', h.notes || '',
   ]))
   sheet(wb, 'TaxResidency', ['Country', 'Status', 'From', 'To'], COUNTRY_KEYS.flatMap((c) => (data.taxResidency?.[c] || []).map((r) => [c === 'us' ? 'US' : 'India', statusOf(c, r.status)?.label || r.status, r.from, r.to || ''])))
+  const ti = data.taxResidency?.inputs
+  sheet(wb, 'TaxResidencyDays', ['Country', 'Year', 'Days', 'US green card / India left for employment', 'US days excluded / India income over 15 lakh', 'US closer connection / India taxed in another country'], [
+    ...Object.entries(ti?.us || {}).map(([y, r]) => ['US', Number(y), r.days === '' ? null : r.days, r.greenCard ? 'yes' : '', r.exempt === '' ? null : r.exempt, r.closer ? 'yes' : '']),
+    ...Object.entries(ti?.in || {}).map(([y, r]) => ['India', Number(y), r.days === '' ? null : r.days, r.left ? 'yes' : '', r.income15 ? 'yes' : '', r.liableElsewhere ? 'yes' : '']),
+  ])
   sheet(wb, 'Settings', ['Key', 'Value'], [
+    ['taxCitizenOfIndia', ti?.citizen ? 'yes' : 'no'],
+    ['taxStartYear', ti?.startYear ?? ''],
     ['countries', data.settings.countries.join(',')],
     ['concentrationLimit', data.settings.concentrationLimit],
     ['rebalanceTol', data.settings.rebalanceTol],
@@ -227,7 +234,21 @@ export async function importWorkbook(buffer) {
     if (!st || !validISO(from) || (to && (!validISO(to) || to < from))) { warnings.push(`Skipped tax residency row "${r.Country} ${r.Status} ${r.From}": needs US or India, a valid status, a start date and an end date after it.`); continue }
     tr[c].push({ status: st.key, from, to })
   }
-  data.taxResidency = normalizeTaxResidency(tr)
+  const inputs = { startYear: null, citizen: false, us: {}, in: {} }
+  const yes = (v) => /^(yes|y|true|1)$/i.test(String(v ?? '').trim())
+  for (const r of readRows(wb.getWorksheet('TaxResidencyDays'))) {
+    const y = String(Number(r.Year)), c = /^us/i.test(String(r.Country)) ? 'us' : /^in/i.test(String(r.Country)) ? 'in' : ''
+    if (!c || !/^\d{4}$/.test(y)) continue
+    const k = Object.keys(r)
+    inputs[c][y] = c === 'us'
+      ? { days: num(r.Days) ?? '', greenCard: yes(r[k[3]]), exempt: num(r[k[4]]) ?? '', closer: yes(r[k[5]]) }
+      : { days: num(r.Days) ?? '', left: yes(r[k[3]]), income15: yes(r[k[4]]), liableElsewhere: yes(r[k[5]]) }
+  }
+  for (const r of readRows(wb.getWorksheet('Settings'))) {
+    if (r.Key === 'taxCitizenOfIndia') inputs.citizen = yes(r.Value)
+    if (r.Key === 'taxStartYear' && num(r.Value) > 1950) inputs.startYear = num(r.Value)
+  }
+  data.taxResidency = normalizeTaxResidency({ ...tr, inputs })
   const legacyCountries = []
   for (const r of readRows(wb.getWorksheet('Settings'))) {
     if (r.Key === 'countries') data.settings.countries = sanitizeCountries(String(r.Value).split(',').map((x) => x.trim()), data.settings.countries)
