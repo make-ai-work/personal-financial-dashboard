@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { emptyData } from '../src/lib/model.js'
+import { addAccount, emptyData } from '../src/lib/model.js'
 import { ACCOUNT_FIELDS, HOLDING_FIELDS, toISODate, detectColumns, parseCsv, planAccountsImport, planHoldingsImport, resolveCountry, tableFromRows, toNumber } from '../src/lib/importer.js'
 import { holdingsOf, portfolioFor } from '../src/lib/portfolio.js'
 
@@ -121,4 +121,27 @@ test('accounts: maturity date and value are read (several date styles) and kept 
   const after = planAccountsImport(d, t2, detectColumns(t2.headers, ACCOUNT_FIELDS), 'update', {}).apply(d)
   assert.deepEqual(after.accounts.find((a) => a.name === 'CD one') && [after.accounts[0].balance, after.accounts[0].maturityDate, after.accounts[0].maturityValue], [22500, '2027-02-01', 23100])
   assert.equal(toISODate('2027-02-30'), ''); assert.equal(toISODate('Feb 1, 2027'), '2027-02-01')
+})
+
+test('an Account name column groups the portfolios and names the Assets accounts', () => {
+  const t = tableFromRows(parseCsv('Account,Symbol,Quantity,Price\nSchwab IRA,VTI,10,200\nSchwab IRA,BND,5,80\nFidelity,AAPL,2,190\n,MSFT,1,400'))
+  const map = detectColumns(t.headers, HOLDING_FIELDS)
+  assert.equal(map.account, 'Account')
+  const plan = planHoldingsImport(emptyData(), t, map, 'update', { today: TODAY })
+  assert.deepEqual(plan.counts, { portfolios: 3, holdings: 4, skipped: 0 }) // Schwab IRA, Fidelity, and the rows with no account (USA portfolio)
+  const d = plan.apply(emptyData())
+  assert.deepEqual(d.portfolios.map((p) => p.name).sort(), ['Fidelity', 'Schwab IRA', 'USA portfolio'])
+  const ira = d.portfolios.find((p) => p.name === 'Schwab IRA')
+  assert.equal(d.accounts.find((a) => a.id === ira.accountId).name, 'Schwab IRA') // passed to the Assets section
+  assert.equal(d.accounts.find((a) => a.id === ira.accountId).balance, 10 * 200 + 5 * 80)
+  // a second upload finds the portfolio by its account name; an existing Assets account of that name is adopted
+  let e = emptyData()
+  e = addAccount(e, { id: 'old', country: 'us', type: 'asset', name: 'Fidelity', number: '9', institution: 'Fidelity', owner: 'mine', balance: 5, mix: null, maturityDate: '', maturityValue: null })
+  const p2 = planHoldingsImport(e, t, map, 'update', { today: TODAY })
+  assert.match(p2.lines.join('\n'), /linked to your existing Assets account "Fidelity"/)
+  const e2 = p2.apply(e)
+  assert.equal(e2.accounts.filter((a) => a.name === 'Fidelity').length, 1)
+  assert.equal(e2.accounts.find((a) => a.id === 'old').balance, 380)
+  const again = planHoldingsImport(d, t, map, 'update', { today: TODAY })
+  assert.match(again.lines.join('\n'), /replace the 2 holdings in "Schwab IRA"/)
 })
