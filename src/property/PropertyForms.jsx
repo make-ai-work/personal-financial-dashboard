@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Modal, OwnerPicker } from '../finance/ui.jsx'
 import { COUNTRIES, parseAmount, todayISO, curSym } from '../lib/format.js'
-import { PROPERTY_TYPES, VALUE_SOURCES } from '../lib/property.js'
+import { COVERAGE_LINES, PREMIUM_FREQUENCIES, PROPERTY_TYPES, VALUE_SOURCES, emptyInsurance } from '../lib/property.js'
+import { uid } from '../lib/model.js'
 
 const s = (v) => (v == null ? '' : String(v))
 const num = (v) => (v === '' || v == null ? null : parseAmount(v))
@@ -202,6 +203,76 @@ export function LoanUpdateModal({ property, loan, initial, onSave, onClose }) {
         <label className="field">Notes (optional)<input value={f.notes} onChange={set('notes')} placeholder="e.g. extra payment, rate change" /></label>
         {!initial && <label className="check"><input type="checkbox" checked={alsoEdit} onChange={(e) => setAlsoEdit(e.target.checked)} /> The interest rate or monthly payment changed — update the loan details too</label>}
         {err && <div className="err">{err}</div>}
+      </form>
+    </Modal>
+  )
+}
+
+// Home insurance for one property: who insures it, the premium, the renewal date and the coverage limits.
+export function InsuranceModal({ property, initial, onSave, onRemove, onClose }) {
+  const sym = curSym(COUNTRIES[property.country].currency)
+  const base = initial || emptyInsurance()
+  const [f, setF] = useState({
+    insurer: base.insurer || '', number: base.number || '', premium: s(base.premium), frequency: base.frequency || 'year', renewal: base.renewal || '',
+    deductible: s(base.deductible), rebuildCost: s(base.rebuildCost), notes: base.notes || '',
+    limits: Object.fromEntries(COVERAGE_LINES.map((l) => [l.key, s(base.limits?.[l.key])])),
+    extras: (base.extras || []).map((x) => ({ id: x.id || uid(), name: x.name || '', limit: s(x.limit) })),
+  })
+  const [err, setErr] = useState('')
+  const set = (k) => (e) => setF({ ...f, [k]: e.target.value })
+  const submit = (e) => {
+    e.preventDefault()
+    const n = (v) => num(v)
+    const all = [n(f.premium), n(f.deductible), n(f.rebuildCost), ...COVERAGE_LINES.map((l) => n(f.limits[l.key])), ...f.extras.map((x) => n(x.limit))]
+    if (all.some((v) => bad(v))) return setErr('Amounts must be numbers (0 or more).')
+    if (!f.insurer.trim() && all.every((v) => v == null) && !f.renewal) return setErr('Enter at least the insurer, a limit or a renewal date.')
+    onSave({
+      insurer: f.insurer.trim(), number: f.number.trim(), premium: n(f.premium), frequency: f.frequency, renewal: f.renewal, deductible: n(f.deductible), rebuildCost: n(f.rebuildCost),
+      limits: Object.fromEntries(COVERAGE_LINES.map((l) => [l.key, n(f.limits[l.key])])),
+      extras: f.extras.filter((x) => x.name.trim() || x.limit !== '').map((x) => ({ id: x.id, name: x.name.trim(), limit: n(x.limit) })), notes: f.notes.trim(),
+    })
+  }
+  return (
+    <Modal
+      title={`Home insurance · ${property.name}`}
+      onClose={onClose}
+      footer={<>{initial && <button type="button" className="btn danger-btn" onClick={onRemove}>Remove</button>}<button type="button" className="btn" onClick={onClose}>Cancel</button><button form="ins-form" className="btn primary">Save home insurance</button></>}
+    >
+      <form id="ins-form" onSubmit={submit}>
+        <div className="two">
+          <label className="field">Insurer<input autoFocus value={f.insurer} onChange={set('insurer')} placeholder="e.g. State Farm" /></label>
+          <label className="field">Policy number (optional)<input value={f.number} onChange={set('number')} /></label>
+        </div>
+        <div className="three">
+          <label className="field">Premium ({sym})<input inputMode="decimal" value={f.premium} onChange={set('premium')} /></label>
+          <label className="field">Paid<select value={f.frequency} onChange={set('frequency')}>{PREMIUM_FREQUENCIES.map((x) => <option key={x.key} value={x.key}>{x.label}</option>)}</select></label>
+          <label className="field">Renewal date<input type="date" value={f.renewal} onChange={set('renewal')} /></label>
+        </div>
+        <div className="two">
+          <label className="field">Deductible ({sym})<input inputMode="decimal" value={f.deductible} onChange={set('deductible')} /></label>
+          <label className="field">Rebuild cost, if you know it ({sym})<input inputMode="decimal" value={f.rebuildCost} onChange={set('rebuildCost')} /></label>
+        </div>
+        <div className="field">Coverage limits ({sym})
+          <div className="two">
+            {COVERAGE_LINES.map((l) => (
+              <label key={l.key} className="field sub-field">{l.label}
+                <input inputMode="decimal" value={f.limits[l.key]} aria-label={`Limit: ${l.label}`} onChange={(e) => setF({ ...f, limits: { ...f.limits, [l.key]: e.target.value } })} />
+              </label>
+            ))}
+          </div>
+        </div>
+        <div className="field">Other cover (flood, earthquake, umbrella…)
+          {f.extras.map((x, i) => (
+            <div className="two" key={x.id}>
+              <input value={x.name} aria-label={`Other cover ${i + 1} name`} placeholder="Name" onChange={(e) => setF({ ...f, extras: f.extras.map((y) => (y.id === x.id ? { ...y, name: e.target.value } : y)) })} />
+              <span className="two-in"><input inputMode="decimal" value={x.limit} aria-label={`Other cover ${i + 1} limit`} placeholder="Limit" onChange={(e) => setF({ ...f, extras: f.extras.map((y) => (y.id === x.id ? { ...y, limit: e.target.value } : y)) })} />
+                <button type="button" className="x" aria-label={`Remove other cover ${i + 1}`} onClick={() => setF({ ...f, extras: f.extras.filter((y) => y.id !== x.id) })}>✕</button></span>
+            </div>
+          ))}
+          <div><button type="button" className="btn sm" onClick={() => setF({ ...f, extras: [...f.extras, { id: uid(), name: '', limit: '' }] })}>+ Add other cover</button></div>
+        </div>
+        <label className="field">Notes<input value={f.notes} onChange={set('notes')} /></label>
+        {err && <div className="err" role="alert">{err}</div>}
       </form>
     </Modal>
   )

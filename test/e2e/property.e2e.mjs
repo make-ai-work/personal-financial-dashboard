@@ -191,6 +191,28 @@ try {
   await dialog().getByLabel('Lender').waitFor() // loan editor opened next
   await page.getByRole('button', { name: 'Cancel' }).click()
 
+  step('home insurance with coverage limits: add it, see the limits and a warning, and it is a reminder')
+  await page.getByRole('tab', { name: /Property/ }).click()
+  const hi = page.getByTestId('home-insurance')
+  await hi.getByRole('button', { name: '+ Add home insurance' }).click()
+  await dialog().getByLabel('Insurer').fill('State Farm')
+  await dialog().getByLabel(/^Premium/).fill('1800')
+  await dialog().getByLabel('Renewal date').fill('2027-03-01')
+  await dialog().getByLabel('Limit: Dwelling (the building)').fill('250000')
+  await dialog().getByLabel('Limit: Personal liability').fill('300000')
+  await dialog().getByRole('button', { name: '+ Add other cover' }).click()
+  await dialog().getByLabel('Other cover 1 name').fill('Flood'); await dialog().getByLabel('Other cover 1 limit').fill('50000')
+  await dialog().getByRole('button', { name: 'Save home insurance' }).click()
+  await hi.getByText('State Farm').waitFor()
+  const limits = await hi.getByTestId('coverage-limits').innerText()
+  assert.match(limits, /Dwelling[\s\S]*250,000/); assert.match(limits, /Flood[\s\S]*50,000/); assert.match(limits, /Medical payments[\s\S]*—/)
+  await hi.getByText(/dwelling limit is below the property value/).waitFor() // 250,000 is under the 410,000 value
+  await hi.getByRole('button', { name: 'Edit' }).click()
+  await dialog().getByLabel(/^Rebuild cost/).fill('240000')
+  await dialog().getByRole('button', { name: 'Save home insurance' }).click()
+  await hi.getByText(/dwelling limit is below/).waitFor({ state: 'detached' }) // 250,000 covers the rebuild cost
+  assert.match(await page.locator('.subpage').innerText(), /Home insurance renewal|Home insurance/)
+
   step('there is ONE list of countries: hiding one that has a property warns, hides it everywhere, and never deletes')
   await page.getByRole('tab', { name: 'Settings' }).click()
   const fset = page.locator('#set-countries')
