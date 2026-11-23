@@ -183,9 +183,16 @@ export function VaultProvider({ children }) {
     let b = bytes.current
     const retry = !!pending.current // changes that could not be saved before locking: open those, then try saving again
     if (handle.current) {
-      if (!(await ensurePermission(handle.current))) throw new Error('Permission to read the file was not granted.')
-      if (retry) b = pending.current
-      else { b = await readHandle(handle.current); bytes.current = b }
+      try {
+        if (!(await ensurePermission(handle.current))) throw new Error('Permission to read the file was not granted.')
+        if (retry) b = pending.current
+        else { b = await readHandle(handle.current); bytes.current = b }
+      } catch (e) {
+        // The remembered link to the file no longer works (moved, locked by a sync tool, or the browser lost access: Windows reports "Catastrophic failure").
+        // Say so, and offer the file picker instead of leaving a lock screen that can never open.
+        if (handle.current.kind === 'drive' || handle.current.kind === 'app' || isDesktop()) throw e
+        throw new Error(`The browser can no longer open the remembered file (${e.message || e.name}). Choose "Use a different file" below and pick your .wvault file again. The file itself is not changed.`)
+      }
     }
     if (!b) throw new Error('No file selected.')
     const { data: d, session: s } = await decryptVault(b, passphrase)
