@@ -513,3 +513,18 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0 }
 @media (max-width: 640px) { .topbar { flex-wrap: wrap; row-gap: 6px } .topbar-actions { flex-wrap: wrap; gap: 6px; justify-content: flex-end; min-width: 0 } .topbar-actions .btn { padding: 5px 9px } }
 .tr-page .p-head .acts { display: flex; gap: 8px; align-items: center; flex-wrap: wrap }
+
+/* Tax residency guided check */
+.wiz-cta { display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap }
+.wiz-steps { display: flex; gap: 6px; flex-wrap: wrap; list-style: none; margin: 0 0 12px; padding: 0 }
+.wiz-steps button { border: 1px solid var(--line); background: var(--surface-2); color: var(--text); border-radius: 99px; padding: 3px 11px; font: inherit; font-size: .8rem }
+.wiz-steps .on button { background: var(--accent); color: var(--accent-text); border-color: var(--accent) }
+.wiz-steps .done button { border-color: var(--green) }
+.wiz-t input[type="number"] { width: 5.2rem; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 4px 6px; font: inherit }
+.wiz-t th { font-size: .74rem; vertical-align: bottom }
+.wiz-res h4 { margin: 12px 0 6px }
+.wiz-year { margin: 4px 0; padding: 4px 8px; border: 1px solid var(--line); border-radius: var(--r-sm) }
+.wiz-year summary { cursor: pointer }
+.wiz-year ul { margin: 6px 0 2px; padding-left: 1.1rem; font-size: .86rem }
+.pill.tone-orange, .pill.tone-green, .pill.tone-lgreen { border-color: transparent }
+[data-testid="residency-wizard"] a, .tr-page a { color: var(--accent) }

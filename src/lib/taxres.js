@@ -18,11 +18,23 @@ const dayNum = (iso) => Math.floor(Date.parse(`${iso}T00:00:00Z`) / 86400000)
 const fromDay = (n) => new Date(n * 86400000).toISOString().slice(0, 10)
 const next = (iso) => fromDay(dayNum(iso) + 1)
 
-export const emptyTaxResidency = () => ({ us: [], in: [] })
+// The answers given in the guided check (days per year and a few yes/no questions); kept so you can come back and change one.
+export const emptyInputs = () => ({ startYear: null, citizen: false, us: {}, in: {} })
+export const emptyTaxResidency = () => ({ us: [], in: [], inputs: emptyInputs() })
+const cleanRow = (r, keys) => Object.fromEntries(keys.map(([k, kind]) => [k, kind === 'bool' ? !!r?.[k] : r?.[k] === '' || r?.[k] == null || !Number.isFinite(Number(r[k])) ? '' : Math.max(0, Number(r[k]))]))
+export function normalizeInputs(i) {
+  const out = emptyInputs()
+  out.startYear = Number.isInteger(i?.startYear) && i.startYear > 1950 && i.startYear < 2200 ? i.startYear : null
+  out.citizen = !!i?.citizen
+  for (const [y, r] of Object.entries(i?.us || {})) if (/^\d{4}$/.test(y)) out.us[y] = cleanRow(r, [['days', 'num'], ['greenCard', 'bool'], ['exempt', 'num'], ['closer', 'bool']])
+  for (const [y, r] of Object.entries(i?.in || {})) if (/^\d{4}$/.test(y)) out.in[y] = cleanRow(r, [['days', 'num'], ['left', 'bool'], ['income15', 'bool'], ['liableElsewhere', 'bool']])
+  return out
+}
 
 // Anything stored or imported -> a clean { us: [...], in: [...] }: unknown statuses and bad dates are dropped, ranges sorted by start date.
 export function normalizeTaxResidency(t) {
   const out = emptyTaxResidency()
+  out.inputs = normalizeInputs(t?.inputs)
   for (const c of COUNTRY_KEYS) {
     const list = Array.isArray(t?.[c]) ? t[c] : []
     out[c] = list
