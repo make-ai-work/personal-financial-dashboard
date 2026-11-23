@@ -104,7 +104,7 @@ Demo site, web, installed web app, Windows app and Android app all open the same
   one of your Assets accounts: that account's balance is then calculated from the holdings, and Retirement uses their mix.
   **Add holding** starts with the ticker or symbol; "Look up" fills the name, type and currency from Alpha Vantage (free key under Settings → Home; the free
   tier allows 25 requests a day, and the dialog shows how many you have used and says so plainly when the limit is reached).
-  **Upload holdings…** reads a CSV or Excel (.xlsx) file: it guesses the columns (you can change them), makes **one portfolio per country** (each with its own Assets account), asks whether
+  **Upload holdings…** reads a CSV or Excel (.xlsx) file: it guesses the columns (you can change them), makes **one portfolio per country** (or one per **Account name** if the file has that column, named after it, with an Assets account of the same name), asks whether
   this is **Update and overwrite** or a **New addition**, shows exactly what will change, and applies it only when you confirm. Allocation by asset class, sector, geography and portfolio, a single-stock concentration warning,
   stale-price flags, a bulk "Update prices" screen, and class-level rebalancing with a buy-only plan for new money.
   When you link an account, a difference between its typed balance and your holdings is added as an

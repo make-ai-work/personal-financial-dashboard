@@ -66,14 +66,14 @@ export default function PortfolioPanel({ portfolio, country, account, staleDays,
         </div>
       </div>
       {!portfolio.reconciled && <ReconcileBanner portfolio={portfolio} country={country} hasHoldings={hs.length > 0} />}
-      <div className="tblw"><table className="t-left t-h"><thead><tr><th>Holding</th><th>Class</th><th>Sector</th><th>Geography</th><th className="r">Units</th><th className="r">Price · date</th><th className="r">Value</th><th className="r">% of portfolio</th><th /></tr></thead><tbody>
+      <div className="tblw"><table className="t-left t-h"><thead><tr><th>Ticker / description</th><th>Class</th><th>Sector</th><th>Geography</th><th className="r">Units</th><th className="r">Price · date</th><th className="r">Value</th><th className="r">% of portfolio</th><th /></tr></thead><tbody>
         {hs.length === 0 && <tr><td colSpan="9" className="none">No holdings yet. Add one to start.</td></tr>}
         {hs.map((h) => {
           const age = priceAge(h, today)
           const stale = h.type !== 'unallocated' && age != null && age > staleDays
           return (
             <tr key={h.id}>
-              <td><b>{h.name}</b> <span className="sub">{[h.ticker, typeLabel(h.type)].filter(Boolean).join(' · ')}</span></td>
+              <td><b className="h-tick">{h.ticker || h.name}</b>{h.ticker && <div className="sub h-desc">{[h.name, typeLabel(h.type)].filter(Boolean).join(' · ')}</div>}{!h.ticker && <div className="sub h-desc">{typeLabel(h.type)}</div>}</td>
               <td>{h.cls === 'mixed' ? 'Mixed' : h.cls === 'unallocated' ? 'Unallocated' : ({ equities: 'Equities', bonds: 'Bonds', cash: 'Cash equivalents', metals: 'Precious metals' })[h.cls]}</td>
               <td>{h.sector || '—'}</td><td>{h.geo || '—'}</td>
               <td className="r">{h.trackBy === 'units' ? h.units?.toLocaleString(c.locale) : '—'}</td>

@@ -308,6 +308,28 @@ try {
   await page.getByText('USA portfolio').first().waitFor()
   await page.getByText('VTI').first().waitFor()
 
+  step('holdings table: ticker in bold, description smaller on the line below')
+  const vti = page.locator('.h-tick', { hasText: 'VTI' }).first()
+  await vti.waitFor()
+  assert.ok((await vti.evaluate((e) => Number(getComputedStyle(e).fontWeight))) >= 600, 'ticker is bold')
+  const desc = vti.locator('xpath=following-sibling::div[contains(@class,"h-desc")]')
+  assert.match(await desc.innerText(), /Vanguard Total Market/)
+  const [fb, fd] = [await vti.evaluate((e) => parseFloat(getComputedStyle(e).fontSize)), await desc.evaluate((e) => parseFloat(getComputedStyle(e).fontSize))]
+  assert.ok(fd < fb, 'description is smaller'); assert.ok((await desc.boundingBox()).y > (await vti.boundingBox()).y, 'description is below')
+
+  step('upload with an Account name column: portfolios are named after it and so are the Assets accounts')
+  await topTab(/Portfolio/).click()
+  await page.getByTestId('upload-holdings').click()
+  await page.getByLabel('File to upload').setInputFiles({ name: 'h2.csv', mimeType: 'text/csv', buffer: Buffer.from('Account,Symbol,Quantity,Price,Currency\nSchwab IRA,VTI,10,200,USD\nFidelity,AAPL,2,190,USD\n') })
+  await page.getByLabel('New addition').check()
+  const pv = await page.getByTestId('import-preview').innerText()
+  assert.match(pv, /portfolio "Schwab IRA"/); assert.match(pv, /portfolio "Fidelity"/)
+  await page.getByRole('button', { name: 'Apply changes' }).click()
+  await subtab(/USA/).click()
+  await page.getByText('Schwab IRA').first().waitFor()
+  await topTab(/Assets/).click()
+  await page.getByText('Schwab IRA').first().waitFor() // the same name in the Assets section
+
   step('upload accounts on the Assets tab')
   await topTab(/Assets/).click()
   await page.getByTestId('upload-accounts').click()
