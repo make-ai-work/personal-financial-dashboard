@@ -71,6 +71,11 @@ export async function exportWorkbook(data) {
     ...Object.entries(ti?.us || {}).map(([y, r]) => ['US', Number(y), r.days === '' ? null : r.days, r.greenCard ? 'yes' : '', r.exempt === '' ? null : r.exempt, r.closer ? 'yes' : '']),
     ...Object.entries(ti?.in || {}).map(([y, r]) => ['India', Number(y), r.days === '' ? null : r.days, r.left ? 'yes' : '', r.income15 ? 'yes' : '', r.liableElsewhere ? 'yes' : '']),
   ])
+  sheet(wb, 'TaxResidencyTravel', ['Kind', 'From', 'To', 'Trip was to India'], [
+    ...(ti?.travel?.usArrival ? [['US arrival', ti.travel.usArrival, '', '']] : []),
+    ...(ti?.travel?.usDeparture ? [['US departure for good', ti.travel.usDeparture, '', '']] : []),
+    ...(ti?.travel?.trips || []).map((x) => ['Trip out of the US', x.exit, x.entry || '', x.india ? 'yes' : '']),
+  ])
   sheet(wb, 'Settings', ['Key', 'Value'], [
     ['taxCitizenOfIndia', ti?.citizen ? 'yes' : 'no'],
     ['taxStartYear', ti?.startYear ?? ''],
@@ -234,7 +239,7 @@ export async function importWorkbook(buffer) {
     if (!st || !validISO(from) || (to && (!validISO(to) || to < from))) { warnings.push(`Skipped tax residency row "${r.Country} ${r.Status} ${r.From}": needs US or India, a valid status, a start date and an end date after it.`); continue }
     tr[c].push({ status: st.key, from, to })
   }
-  const inputs = { startYear: null, citizen: false, us: {}, in: {} }
+  const inputs = { startYear: null, citizen: false, us: {}, in: {}, travel: null }
   const yes = (v) => /^(yes|y|true|1)$/i.test(String(v ?? '').trim())
   for (const r of readRows(wb.getWorksheet('TaxResidencyDays'))) {
     const y = String(Number(r.Year)), c = /^us/i.test(String(r.Country)) ? 'us' : /^in/i.test(String(r.Country)) ? 'in' : ''
@@ -244,6 +249,14 @@ export async function importWorkbook(buffer) {
       ? { days: num(r.Days) ?? '', greenCard: yes(r[k[3]]), exempt: num(r[k[4]]) ?? '', closer: yes(r[k[5]]) }
       : { days: num(r.Days) ?? '', left: yes(r[k[3]]), income15: yes(r[k[4]]), liableElsewhere: yes(r[k[5]]) }
   }
+  const travel = { usArrival: '', usDeparture: '', trips: [] }
+  for (const r of readRows(wb.getWorksheet('TaxResidencyTravel'))) {
+    const kind = String(r.Kind), from = String(r.From ?? '').slice(0, 10), to = String(r.To ?? '').slice(0, 10)
+    if (/arrival/i.test(kind)) travel.usArrival = from
+    else if (/departure/i.test(kind)) travel.usDeparture = from
+    else if (/trip/i.test(kind)) travel.trips.push({ exit: from, entry: to, india: yes(r['Trip was to India']) })
+  }
+  inputs.travel = travel
   for (const r of readRows(wb.getWorksheet('Settings'))) {
     if (r.Key === 'taxCitizenOfIndia') inputs.citizen = yes(r.Value)
     if (r.Key === 'taxStartYear' && num(r.Value) > 1950) inputs.startYear = num(r.Value)

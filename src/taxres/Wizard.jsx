@@ -4,8 +4,9 @@ import { useVault } from '../finance/VaultContext.jsx'
 import { todayISO } from '../lib/format.js'
 import { REF, INCOME_LIMIT_LAKH, indiaFYOf, indiaResidency, usResidency, yearsToRanges } from '../lib/residency.js'
 import { normalizeInputs, setRanges, statusOf } from '../lib/taxres.js'
+import { countDays, travelProblems } from '../lib/travel.js'
 
-const STEPS = ['Start', 'About you', 'USA', 'India', 'Results']
+const STEPS = ['Start', 'About you', 'Travel dates (optional)', 'USA', 'India', 'Results']
 const Src = ({ r }) => <a href={r.url} target="_blank" rel="noreferrer">{r.label}</a>
 const Tone = ({ country, status }) => { const s = statusOf(country, status); return <span className={`pill tone-${s.tone}`}>{s.label}</span> }
 
@@ -51,8 +52,8 @@ export default function Wizard({ onClose }) {
     <>
       {step > 0 && <button className="btn" onClick={() => setStep(step - 1)}>← Back</button>}
       <span style={{ flex: 1 }} />
-      <button className="btn" onClick={onClose}>{step === 4 ? 'Close' : 'Save and close'}</button>
-      {step < 4 && <button className="btn primary" onClick={() => setStep(step + 1)} data-testid="wiz-next">{step === 3 ? 'See my results →' : 'Next →'}</button>}
+      <button className="btn" onClick={onClose}>{step === 5 ? 'Close' : 'Save and close'}</button>
+      {step < 5 && <button className="btn primary" onClick={() => setStep(step + 1)} data-testid="wiz-next">{step === 4 ? 'See my results →' : step === 2 ? 'Next (skip if you will type days) →' : 'Next →'}</button>}
     </>
   )
   return (
@@ -85,7 +86,9 @@ export default function Wizard({ onClose }) {
           </>
         )}
 
-        {step === 2 && (
+        {step === 2 && <TravelStep inputs={inputs} start={start} today={today} usYears={usYears} inYears={inYears} set={set} />}
+
+        {step === 3 && (
           <>
             <p className="sub">Days you were physically in the USA in each calendar year (1 January to 31 December). Count any part of a day. The result updates as you type. <Src r={REF.usSpt} /></p>
             <div className="tblw"><table className="t-left wiz-t">
@@ -111,7 +114,7 @@ export default function Wizard({ onClose }) {
           </>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <>
             <p className="sub">Days you were in India in each financial year (1 April to 31 March). <Src r={REF.india} /></p>
             <div className="tblw"><table className="t-left wiz-t">
@@ -139,11 +142,70 @@ export default function Wizard({ onClose }) {
           </>
         )}
 
-        {step === 4 && (
+        {step === 5 && (
           <Results usYears={usYears} inYears={inYears} entered={entered} usRes={usRes} inRes={inRes} usList={usList} inList={inList} apply={apply} applied={applied} />
         )}
       </div>
     </Modal>
+  )
+}
+
+// Optional: the dates you arrived in and left the US, and each trip out of it (with a tick for India), turned into days per year for both countries.
+function TravelStep({ inputs, start, today, usYears, inYears, set }) {
+  const t = inputs.travel
+  const [done, setDone] = useState('')
+  const setT = (patch) => { setDone(''); set((i) => { i.travel = { ...i.travel, ...patch }; return i }) }
+  const setTrip = (id, patch) => setT({ trips: t.trips.map((x) => (x.id === id ? { ...x, ...patch } : x)) })
+  const hasDates = !!(t.usArrival || t.usDeparture || t.trips.length)
+  const problems = travelProblems(t)
+  const days = hasDates && !problems.length ? countDays(t, start, today) : null
+  const fill = () => {
+    set((i) => {
+      for (const y of usYears) i.us[y] = { ...(i.us[y] || {}), days: days.us[y] || 0 }
+      for (const y of inYears) i.in[y] = { ...(i.in[y] || {}), days: days.in[y] || 0 }
+      return i
+    })
+    setDone(`Filled in the days for ${usYears.length} US year${usYears.length === 1 ? '' : 's'} and ${inYears.length} India year${inYears.length === 1 ? '' : 's'}. You can still change any number on the next two steps.`)
+  }
+  return (
+    <div data-testid="travel-step">
+      <p>Optional. Instead of counting days yourself, enter when you arrived in or left the US and each trip you took out of it. The days in each country are worked out for every year. <b>Skip this step to type the days yourself.</b></p>
+      <div className="two">
+        <label className="field">I arrived in the US on <span className="sub">(leave empty if you were already there at the start)</span><input type="date" value={t.usArrival} onChange={(e) => setT({ usArrival: e.target.value })} aria-label="US arrival date" /></label>
+        <label className="field">I left the US for good on <span className="sub">(leave empty if you are still there)</span><input type="date" value={t.usDeparture} onChange={(e) => setT({ usDeparture: e.target.value })} aria-label="US departure date" /></label>
+      </div>
+      <h4>Trips out of the US</h4>
+      {t.trips.length === 0 && <div className="sub">No trips yet.</div>}
+      {t.trips.length > 0 && (
+        <div className="tblw"><table className="t-left wiz-t">
+          <thead><tr><th>Left the US on</th><th>Came back on</th><th>Trip was to India</th><th /></tr></thead>
+          <tbody>
+            {t.trips.map((x, i) => (
+              <tr key={x.id}>
+                <td><input type="date" value={x.exit} aria-label={`Trip ${i + 1} left the US`} onChange={(e) => setTrip(x.id, { exit: e.target.value })} /></td>
+                <td><input type="date" value={x.entry} aria-label={`Trip ${i + 1} came back`} onChange={(e) => setTrip(x.id, { entry: e.target.value })} /><div className="sub">empty = not back yet</div></td>
+                <td><input type="checkbox" checked={x.india} aria-label={`Trip ${i + 1} was to India`} onChange={(e) => setTrip(x.id, { india: e.target.checked })} /></td>
+                <td className="act"><button className="link danger" onClick={() => setT({ trips: t.trips.filter((y) => y.id !== x.id) })} aria-label={`Remove trip ${i + 1}`}>Remove</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table></div>
+      )}
+      <button className="btn sm" onClick={() => setT({ trips: [...t.trips, { id: Math.random().toString(36).slice(2), exit: '', entry: '', india: false }] })} data-testid="add-trip">+ Add trip</button>
+      {problems.map((p) => <div key={p} className="badrow">{p}</div>)}
+      {days && (
+        <>
+          <h4>Days worked out from your dates</h4>
+          <div className="tblw"><table className="t-left wiz-t" data-testid="travel-days">
+            <thead><tr><th>Year</th><th>Days in the US</th><th>Days in India (financial year starting that year)</th></tr></thead>
+            <tbody>{usYears.map((y) => <tr key={y}><td><b>{y}</b></td><td data-testid={`travel-us-${y}`}>{days.us[y] || 0}</td><td data-testid={`travel-in-${y}`}>{inYears.includes(y) ? days.in[y] || 0 : '—'}</td></tr>)}</tbody>
+          </table></div>
+          <button className="btn primary" onClick={fill} data-testid="travel-fill">Use these days</button>
+          {done && <div className="okrow" data-testid="travel-done">{done}</div>}
+        </>
+      )}
+      <div className="sub" style={{ marginTop: 10 }}>How the days are counted: any part of a day in the US counts, so the day you arrive and the day you leave both count there. India counts the day you arrive and the day you leave too, so a crossing day counts in both countries. Time outside the US before you arrived and after you left for good is counted as time in India, and a trip marked "to India" counts as India from the day you left the US to the day you came back. Trips elsewhere only take days out of the US. The current year is counted up to today.</div>
+    </div>
   )
 }
 

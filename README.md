@@ -119,12 +119,12 @@ Demo site, web, installed web app, Windows app and Android app all open the same
   (tax year 1 January to 31 December) and India *NRI*, *RNOR* or *ROR* (tax year 1 April to 31 March). One bar per country on a shared timeline, with each country's
   tax-year ticks, a marker and a list at every date the status changes, and today's status. Colours: Resident and ROR orange, Nonresident and RNOR green, NRI light green.
   The ranges are included in the Excel export and import. The **guided check** ("Start the guided check") asks a few questions in order (are you an Indian citizen or person of
-  Indian origin, the first year to include, days in the US and in India for each year, green card, days not counted, closer connection, income over ₹15 lakh, taxed elsewhere),
+  Indian origin, the first year to include, an **optional travel-dates step** (when you arrived in and left the US, and each trip out of it with a tick for "to India": the days in each country are worked out for every year, with the counting rules stated, and can be filled into the tables), days in the US and in India for each year, green card, days not counted, closer connection, income over ₹15 lakh, taxed elsewhere),
   shows each year's result live, then lists every year with the rule behind it and a link to the official page ([IRS residency status](https://www.irs.gov/individuals/international-taxpayers/determining-an-individuals-tax-residency-status),
   [IRS substantial presence test](https://itap1.for.irs.gov/owda/0/resource/Commentary_Files_Redirect_ITA/en-US/help/subprestest.html), [India residential status](https://wm.incometaxindia.gov.in/w/residential-status));
-  "Use these results" turns them into the date ranges (periods they overlap are replaced). Your answers are kept in the vault and in the Excel export. It follows the green card and
+  "Use these results" turns them into the date ranges (periods they overlap are replaced). Your answers, including the travel dates, are kept in the vault and in the Excel export. It follows the green card and
   substantial presence tests (USA) and the 182-day, 60 plus 365-day, citizen/PIO, deemed-resident and RNOR rules (India), but not treaty tie-breakers, the first-year choice or
-  dual-status years. It is guidance, not tax advice. Rules: `src/lib/residency.js`; screen: `src/taxres/Wizard.jsx`.
+  dual-status years. It is guidance, not tax advice. Rules: `src/lib/residency.js`; travel-day counting: `src/lib/travel.js`; screen: `src/taxres/Wizard.jsx`.
 - **⚙ Settings** (the gear, far right) – one page for everything: *Account & sign-in* (sign in, your own Google client, sign out), *AI assistant*, countries and display,
   *Your data & security* (where the vault lives, move it, passphrase, **recovery key**, auto-lock, Excel export and import), *Home* (weather and prices), *Property*, *Portfolio*,
   and a **Danger zone** (Wipe data). *This device* shows the version, the install button and where your data is.
