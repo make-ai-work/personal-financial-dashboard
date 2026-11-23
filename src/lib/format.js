@@ -21,10 +21,20 @@ export const MIX = [
   { key: 'bonds', label: 'Bonds', short: 'Bonds' },
 ]
 
+// An amount is shown in WORDS once its whole-number part has more than 9 digits (1,000,000,000 and up; decimals are not counted):
+// "$ 1.25 billion", "£ 3.4 trillion", and for rupees in crore ("₹ 1,250 crore"). Smaller amounts keep every digit.
+export function bigWords(currency, abs) {
+  if (abs < 1e9) return null
+  if (currency === 'INR') return { n: abs / 1e7, unit: 'crore' }
+  return abs >= 1e12 ? { n: abs / 1e12, unit: 'trillion' } : { n: abs / 1e9, unit: 'billion' }
+}
 export function money(countryCode, n) {
   const c = COUNTRIES[countryCode]
   const v = Math.round(n || 0)
-  return (v < 0 ? '-' : '') + c.symbol + Math.abs(v).toLocaleString(c.locale)
+  const abs = Math.abs(v)
+  const w = bigWords(c.currency, abs)
+  const text = w ? `${w.n.toLocaleString(c.locale, { maximumFractionDigits: 2 })} ${w.unit}` : abs.toLocaleString(c.locale)
+  return (v < 0 ? '-' : '') + c.symbol + text
 }
 
 export function moneyCurrency(currency, n) {

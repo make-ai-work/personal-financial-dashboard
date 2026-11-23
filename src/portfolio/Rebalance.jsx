@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { parseAmount } from '../lib/format.js'
 import { holdingsOf, rebalance } from '../lib/portfolio.js'
 import NumInput from '../finance/NumInput.jsx'
+import { Collapsible } from '../finance/ui.jsx'
 
 export default function Rebalance({ data, portfolios, tolerance, format, onEditTargets }) {
   const [id, setId] = useState(portfolios[0]?.id)
@@ -12,9 +13,8 @@ export default function Rebalance({ data, portfolios, tolerance, format, onEditT
   const r = rebalance(p, holdingsOf(data, p.id), tolerance, nm)
 
   return (
-    <div className="panel">
-      <div className="p-head">
-        <div className="title">Rebalancing</div>
+    <Collapsible id="pf-rebalance" title="Rebalancing" defaultOpen={false}
+      action={(
         <div className="row-actions">
           {portfolios.length > 1 && (
             <select className="pw sm" aria-label="Portfolio to rebalance" value={p.id} onChange={(e) => setId(e.target.value)}>
@@ -23,7 +23,7 @@ export default function Rebalance({ data, portfolios, tolerance, format, onEditT
           )}
           <button className="btn" onClick={() => onEditTargets(p)}>{p.targets ? 'Edit targets' : 'Set targets'}</button>
         </div>
-      </div>
+      )}>
       {!r && <div className="empty">Set target percentages for {p.name} to see how far each asset class has drifted and what to buy or sell.</div>}
       {r?.invalid && <div className="empty">The targets for {p.name} don't add up to 100%. Edit them to continue.</div>}
       {r && !r.invalid && (
@@ -64,6 +64,6 @@ export default function Rebalance({ data, portfolios, tolerance, format, onEditT
           </div>
         </>
       )}
-    </div>
+    </Collapsible>
   )
 }

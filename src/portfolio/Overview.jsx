@@ -1,6 +1,7 @@
 import { useVault } from '../finance/VaultContext.jsx'
 import FxBar from '../finance/FxBar.jsx'
 import Allocation from './Allocation.jsx'
+import { Collapsible } from '../finance/ui.jsx'
 import { convert } from '../lib/model.js'
 import { COUNTRIES, money, moneyCurrency, todayISO, curSym } from '../lib/format.js'
 import { concentration, countryOf, holdingValue, holdingsOf, portfolioTotals, rebalance, staleHoldings } from '../lib/portfolio.js'
@@ -39,8 +40,7 @@ export default function Overview({ fx, onOpenCountry }) {
   return (
     <div className="split7030">
       <div className="sp-l">
-      <div className="panel">
-        <div className="p-head"><div className="title">Portfolio summary</div></div>
+      <Collapsible id="pf-summary" title="Portfolio summary" defaultOpen={false}>
         <div className="tblw"><table><thead><tr><th>Country</th><th>Portfolios</th><th>Holdings</th><th>Value</th></tr></thead><tbody>
           {per.map(({ c, t }) => (
             <tr key={c}><td><button className="link" onClick={() => onOpenCountry(c)}>{COUNTRIES[c].flag} {COUNTRIES[c].name}</button> <span className="cur">{curSym(cur(c))}</span></td><td>{t.count}</td><td>{t.holdings}</td><td>{money(c, t.value)}</td></tr>
@@ -50,22 +50,21 @@ export default function Overview({ fx, onOpenCountry }) {
           ))}
         </tbody></table></div>
         {multi ? <FxBar fx={fx} note="These totals are already inside your Assets totals, through the linked accounts." /> : <div className="fx"><span>These totals are already inside your Assets totals, through the linked accounts.</span></div>}
-      </div>
+      </Collapsible>
       </div>
       <aside className="sp-r">
       {converted.length > 0 && (
-        <Allocation holdings={converted} names={{}} format={(n) => moneyCurrency(cur(base), n)} views={multi ? VIEWS : VIEWS.slice(0, 2)}
+        <Allocation id="pf-alloc-all" holdings={converted} names={{}} format={(n) => moneyCurrency(cur(base), n)} views={multi ? VIEWS : VIEWS.slice(0, 2)}
           title="Combined allocation" sub={multi ? `all countries, in ${curSym(cur(base))} at today's rate` : ''} />
       )}
       {!fx.ready && shown.length > 0 && <div className="panel"><div className="empty">The combined allocation needs exchange rates. Press Refresh above or set them manually.</div></div>}
 
-      <div className="panel">
-        <div className="p-head"><div className="title">Needs attention</div></div>
+      <Collapsible id="pf-attention" title="Needs attention" sub={attention.length ? `${attention.length}` : ''} defaultOpen={false}>
         {attention.length === 0 && <div className="okrow">Nothing needs attention.</div>}
         {attention.map((a) => (
           <div className="warnrow" key={a.k}>{COUNTRIES[a.c]?.flag} {a.text} <button className="link" onClick={() => onOpenCountry(a.c)}>Open</button></div>
         ))}
-      </div>
+      </Collapsible>
       </aside>
     </div>
   )

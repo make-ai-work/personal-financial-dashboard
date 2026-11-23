@@ -75,10 +75,13 @@ Demo site, web, installed web app, Windows app and Android app all open the same
 
 ## Tabs
 
-- **Home** – the landing page. A rolling **market ticker** (always visible; dashes until prices load), a **Total net worth** card on the
-  left (choose All, Mine, Me + Others, Spouse or Parent; everything converted into your first country's currency; needs your vault unlocked),
-  and on the right one compact block per country you selected in Settings → Countries: the **city of its main stock exchange**, the **time**
-  (AM/PM with a day or night icon), **market open/closed** (or when it opens) and the **weather**. See "Home settings" below.
+- **Home** – the landing page: a rolling **market ticker** (always visible; dashes until prices load) that also carries the **exchange rates** between your countries'
+  currencies, then a **3 by 2 grid of tiles**. Row 1: **Total net worth** (owner choice, the number, the change over the last 12 months, a trend line and a split bar by country),
+  **Retirement at a glance** (a gauge of the chance of success of the saved plan you are on against your target, retire-at, years to go, plan name, median at retirement,
+  spending) and a **Portfolio heatmap** (every holding as a block sized by value and coloured by its % of the total; switch between Holding, Class, Sector, Geography and
+  Portfolio). Row 2: **Summary** (the country table and, under it, **by ownership** as a heatmap), **Markets, time and weather** (per country: the exchange city, time,
+  market open or closed, weather) and **Properties** (value, loan, equity and loan-to-value bar, time left on the loan). On a phone the tiles stack in that order.
+  It works before the data file is unlocked: the country list is remembered, and the money tiles ask you to unlock. See "Home settings" below.
 - **Retirement** – one page. The left column starts with your **saved plans** (up to three small square-ish tiles side by side within the column's width; click a tile to choose
   one; the highlighted one is the plan you are on, and under the tiles it has Save changes, Rename and Delete; an empty "+" tile saves your current inputs as another plan), then the **inputs** (your situation including
   contribution growth, *Savings used* picked from Finance asset accounts, *Inheritance*, *Income in retirement* with the **insurance survivor benefit**
@@ -102,7 +105,7 @@ Demo site, web, installed web app, Windows app and Android app all open the same
   Each property can also hold its **home insurance**: insurer, policy number, premium, deductible, renewal date, and **coverage limits** (dwelling, other structures,
   personal property, loss of use, liability, medical payments, plus your own lines), with a warning if the dwelling limit is below the rebuild cost you entered.
   Not counted in the Assets totals. Zillow has no public API and forbids scraping, so values are typed in.
-- **Portfolio** – holdings per portfolio (stocks, ETFs, funds, bonds, cash) with prices you type in, linked to
+- **Portfolio** – every section on the tab is **collapsible and closed by default** (the choice is remembered on that device); the allocation views (Asset class, Sector, Geography, Portfolio) are **heatmaps** (block size = value, colour = % of the total) with the legend and amounts under them. Holdings per portfolio (stocks, ETFs, funds, bonds, cash) with prices you type in, linked to
   one of your Assets accounts: that account's balance is then calculated from the holdings, and Retirement uses their mix.
   **Add holding** starts with the ticker or symbol; "Look up" fills the name, type and currency from Alpha Vantage (free key under Settings → Home; the free
   tier allows 25 requests a day, and the dialog shows how many you have used and says so plainly when the limit is reached).
@@ -134,7 +137,7 @@ Demo site, web, installed web app, Windows app and Android app all open the same
 On the lock screen, *Forgot the passphrase? Use your recovery key…* opens the vault with it and sets a new passphrase. Without a recovery key a forgotten passphrase cannot be reset.
 Files use format `WVLT2` (a random data key, stored once under the passphrase and once under the recovery key); older `WVLT1` files still open and are upgraded on the next save.
 
-**Number fields** show thousands separators as you type (1,250,000); the stored value is always the plain number.
+**Number fields** show thousands separators as you type (1,250,000); the stored value is always the plain number. **Displayed amounts** with more than 9 digits in the whole-number part (1,000,000,000 and up) are shown in words instead: "$ 1.25 billion", and rupees in crore ("₹ 1,250 crore"); smaller amounts keep every digit.
 
 - Everything lives in one encrypted file (`*.wvault`), created and opened from the app. Nothing is
   sent to a server. Full account and policy numbers are stored in it.

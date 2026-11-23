@@ -266,7 +266,19 @@ try {
   await page.screenshot({ path: `${OUT}/desktop.png`, fullPage: true })
   assert.equal(await overflow(), 0, 'no sideways scroll on desktop')
 
-  step('phone: plans, results, charts, then inputs; no sideways scrolling')
+  step('Home shows the saved plan you are on: a gauge of the chance of success, retire-at, years to go and the plan name')
+  await topTab('Home').click()
+  const rt = page.getByTestId('retirement-tile')
+  await rt.getByTestId('gauge-pct').waitFor()
+  assert.match(await rt.getByTestId('gauge-pct').textContent(), /^\d+%$/)
+  const tileText = await rt.innerText()
+  assert.match(tileText, /Retire at/); assert.match(tileText, /Years to go/); assert.match(tileText, /on track|off track/i)
+  assert.match(tileText, /Frugal|Spend more|Base/) // the name of the plan you are on
+  await rt.getByRole('button', { name: /Open Retirement/ }).click()
+  await page.getByTestId('chance-box').waitFor()
+  await topTab(/Retirement/).click()
+
+
   await page.setViewportSize({ width: 390, height: 844 })
   await page.waitForTimeout(300); await chance()
   assert.equal(await overflow(), 0, 'no sideways scroll on phone')
