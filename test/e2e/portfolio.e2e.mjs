@@ -17,6 +17,12 @@ const browser = await chromium.launch()
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true })
 await ctx.route(/open-meteo\.com/, (r) => r.fulfill({ json: { current: { temperature_2m: 20, relative_humidity_2m: 50, weather_code: 1, wind_speed_10m: 5, us_aqi: 40 }, daily: { time: ['2026-11-16', '2026-11-17'], weather_code: [1, 1], temperature_2m_max: [22, 22], temperature_2m_min: [12, 12] } } })) // Home's weather: not under test here
 await ctx.addInitScript(() => { delete window.showSaveFilePicker; delete window.showOpenFilePicker }) // start signed in
+// Every Portfolio section starts CLOSED. The steps below work inside them, so a helper opens whatever is closed, until a step switches it off.
+await ctx.addInitScript(() => {
+  window.__autoOpen = true
+  const run = () => { if (window.__autoOpen) document.querySelectorAll('.subpage .ctoggle[aria-expanded="false"]').forEach((b) => b.click()) }
+  new MutationObserver(run).observe(document, { childList: true, subtree: true })
+})
 const PER_USD = { USD: 1, INR: 84, GBP: 0.8, AUD: 1.5, CHF: 0.9 }
 await ctx.route('**/api.frankfurter.dev/**', (r) => {
   const u = new URL(r.request().url())
@@ -149,6 +155,13 @@ try {
   await topTab(/Portfolio/).click(); await subtab(/USA/).click()
   let leg = await page.locator('.leg').first().innerText()
   assert.match(leg, /Equities\s+75\.2%/); assert.match(leg, /Bonds\s+21\.4%/); assert.match(leg, /Cash equivalents\s+1\.7%/); assert.match(leg, /Unallocated\s+1\.7%/)
+  // the allocation is a heatmap: one block per legend entry, darker = bigger share of the total
+  const hm = page.getByTestId('heatmap').first()
+  assert.equal(await hm.getByTestId('heat-tile').count(), (await page.locator('.alloc .leg').first().locator('> span').count()))
+  const lvls = await hm.getByTestId('heat-tile').evaluateAll((els) => els.map((e) => ({ k: e.dataset.key, l: Number(e.dataset.level), a: e.getBoundingClientRect().width * e.getBoundingClientRect().height })))
+  const big = lvls.reduce((m, x) => (x.a > m.a ? x : m)); const small = lvls.reduce((m, x) => (x.a < m.a ? x : m))
+  assert.ok(big.l > small.l, 'the biggest block is a darker colour than the smallest')
+  for (const v of ['Sector', 'Geography', 'Portfolio']) { await page.getByRole('group', { name: 'Allocation view' }).getByRole('button', { name: v }).click(); assert.ok(await page.getByTestId('heatmap').first().getByTestId('heat-tile').count() > 0, `${v} is a heatmap`) }
   await page.getByRole('group', { name: 'Allocation view' }).getByRole('button', { name: 'Portfolio' }).click()
   leg = await page.locator('.leg').first().innerText()
   assert.match(leg, /401\(k\) · Fidelity\s+66\.9%/); assert.match(leg, /Brokerage · Schwab\s+33\.1%/)
@@ -321,6 +334,7 @@ try {
 
   step('upload with an Account name column: portfolios are named after it and so are the Assets accounts')
   await topTab(/Portfolio/).click()
+  await page.evaluate(() => { window.__autoOpen = false }) // from here to the end of this step, sections stay as they come
   await page.getByTestId('upload-holdings').click()
   await page.getByLabel('File to upload').setInputFiles({ name: 'h2.csv', mimeType: 'text/csv', buffer: Buffer.from('Account,Symbol,Quantity,Price,Currency\nSchwab IRA,VTI,10,200,USD\nFidelity,AAPL,2,190,USD\n') })
   await page.getByLabel('New addition').check()
@@ -329,6 +343,17 @@ try {
   await page.getByRole('button', { name: 'Apply changes' }).click()
   await subtab(/USA/).click()
   await page.getByText('Schwab IRA').first().waitFor()
+  // sections are collapsible and CLOSED by default; opening one is remembered on this device
+  const fid = page.locator('.subpage .ctoggle', { hasText: 'Fidelity' }).first()
+  assert.equal(await fid.getAttribute('aria-expanded'), 'false', 'a new portfolio section starts closed')
+  assert.equal(await page.locator('.subpage .h-tick', { hasText: 'AAPL' }).count(), 0, 'its holdings are hidden while closed')
+  assert.ok(await page.locator('.subpage .ctoggle[aria-expanded="false"]').count() >= 2, 'the other sections start closed too')
+  await fid.click()
+  assert.equal(await fid.getAttribute('aria-expanded'), 'true')
+  await page.locator('.subpage .h-tick', { hasText: 'AAPL' }).first().waitFor()
+  await subtab('Overview').click(); await subtab(/USA/).click()
+  assert.equal(await page.locator('.subpage .ctoggle', { hasText: 'Fidelity' }).first().getAttribute('aria-expanded'), 'true', 'the choice is remembered')
+  await page.evaluate(() => { window.__autoOpen = true })
   await topTab(/Assets/).click()
   await page.getByText('Schwab IRA').first().waitFor() // the same name in the Assets section
 

@@ -5,6 +5,7 @@ import { COUNTRIES, OWNERS, moneyCurrency, ownerLabel, curSym } from '../lib/for
 import { describe, loadPlaceWeather } from '../lib/weather.js'
 import { netWorth } from '../lib/networth.js'
 import { homePrefs } from '../lib/homeprefs.js'
+import { NetWorthExtras } from './Tiles.jsx'
 
 // A Date that refreshes itself (every 15 seconds is plenty for minute-accurate clocks).
 export function useNow(ms = 15_000) {
@@ -130,6 +131,7 @@ function NetWorthBody({ data, owner, fx }) {
           ))}
         </div>
       </div>
+      <NetWorthExtras data={data} owner={owner} fx={fx} />
       <div className="nwtiles">
         <div><small>Assets</small><b className="pos">{show(nw.total.assets)}</b></div>
         <div><small>Liabilities</small><b className="neg">{show(nw.total.liabilities)}</b></div>

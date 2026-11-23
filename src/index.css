@@ -543,3 +543,34 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 .tr-years { position: absolute; left: calc(2rem + 8px); right: 0; bottom: 0; height: 18px; font-size: .72rem; color: var(--muted) }
 .tr-years span { position: absolute; transform: translateX(-50%); white-space: nowrap }
 .tr-planned td { opacity: .85 }
+
+/* Heatmaps: one green ramp (light to dark = small to large share of the total) */
+:root { --h0: #e7efe8; --h1: #bcd9c4; --h2: #86bd97; --h3: #4f9a6c; --h4: #2d7550; --t0: #1b2a20; --t1: #1b2a20; --t2: #10261a; --t3: #fff; --t4: #fff }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --h0: #1c2a4a; --h1: #24427a; --h2: #2f5ba8; --h3: #4a82d6; --h4: #7fb0ff; --t0: #e7ebf3; --t1: #e7ebf3; --t2: #fff; --t3: #fff; --t4: #0b1220 } }
+:root[data-theme="dark"] { --h0: #1c2a4a; --h1: #24427a; --h2: #2f5ba8; --h3: #4a82d6; --h4: #7fb0ff; --t0: #e7ebf3; --t1: #e7ebf3; --t2: #fff; --t3: #fff; --t4: #0b1220 }
+.heat-l0 { background: var(--h0); color: var(--t0) } .heat-l1 { background: var(--h1); color: var(--t1) } .heat-l2 { background: var(--h2); color: var(--t2) } .heat-l3 { background: var(--h3); color: var(--t3) } .heat-l4 { background: var(--h4); color: var(--t4) }
+.heat { position: relative; width: 100%; border-radius: var(--r-sm); overflow: hidden; background: var(--surface-2) }
+.heat-tile { position: absolute; box-sizing: border-box; border: 1.5px solid var(--surface); padding: 5px 7px; display: flex; flex-direction: column; justify-content: center; overflow: hidden; font-size: .74rem; line-height: 1.2; min-width: 0 }
+.heat-tile b { font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.heat-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; font-size: .74rem; align-items: center }
+.heat-legend span { display: inline-flex; gap: 5px; align-items: center } .heat-legend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; border: 1px solid var(--line) }
+
+/* Home: a 3 by 2 grid of tiles */
+.home-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: stretch; margin-bottom: 16px }
+@media (max-width: 1100px) { .home-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
+@media (max-width: 700px) { .home-grid { grid-template-columns: minmax(0, 1fr) } }
+.home-grid > .card { margin-bottom: 0; display: flex; flex-direction: column; gap: 12px; min-width: 0 }
+.home-grid .nwtop { gap: 12px } .home-grid .nwbig { font-size: 1.85rem }
+.spark { width: 100%; height: auto; display: block }
+.split { display: flex; height: 14px; border-radius: 99px; overflow: hidden; background: var(--surface-2) } .split i { display: block; height: 100% }
+.hleg { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .78rem } .hleg span { display: inline-flex; align-items: center; gap: 5px } .sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block }
+.delta { font-size: .82rem; font-weight: 600 }
+.gauge { display: flex; justify-content: center }
+.mini3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px } .mini3 div { background: var(--surface-2); border-radius: var(--r-sm); padding: 7px 8px; font-size: .74rem; min-width: 0 } .mini3 b { display: block; font-size: .92rem; overflow-wrap: anywhere }
+.pill.ok { border-color: var(--green); color: var(--green) } .pill.bad { border-color: var(--red); color: var(--red) }
+.pr { display: flex; flex-direction: column; gap: 5px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: .85rem } .pr:last-of-type { border-bottom: 0 }
+.pr .row { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap }
+.pr .bar { height: 7px; border-radius: 99px; background: var(--surface-2); overflow: hidden } .pr .bar i { display: block; height: 100%; background: var(--accent); border-radius: 99px }
+.fxchip b { font-weight: 600 }
+.home-grid .sumt { table-layout: auto; font-size: .76rem } .home-grid .sumt th, .home-grid .sumt td { padding: 6px 4px } .home-grid .sumt .cur { display: none } .home-grid .sumt th { font-size: .66rem }
+.home-grid .tblw { overflow-x: auto }

@@ -3,12 +3,12 @@ import { useVault } from '../finance/VaultContext.jsx'
 import { useFx } from '../finance/useFx.js'
 import { homePrefs } from '../lib/homeprefs.js'
 import { CountriesCard, NetWorthCard, useNow } from './Cards.jsx'
-import { CombinedChartPanel, OwnershipPanel, RatesCard, SummaryPanel } from './HomeSummary.jsx'
+import { Locked, PortfolioHeatTile, PropertiesTile, RetirementTile, SummaryTile } from './Tiles.jsx'
 import Ticker from './Ticker.jsx'
 import { useNav } from '../nav.jsx'
 
-// The landing page, 70 : 30. Left (70%): the Summary and who owns what side by side, then the combined history. Right (30%): total
-// net worth and, for each country, its exchange city, time, market status and weather. It works before the data file is unlocked: the
+// The landing page: a 3 by 2 grid of tiles under the ticker (which also carries the exchange rates). Row 1: Total net worth, Retirement at a glance,
+// Portfolio heatmap. Row 2: Summary (with who owns what as a heatmap), Markets / time / weather, Properties. On a phone the tiles stack in that order. It works before the data file is unlocked: the
 // country list is remembered from the last time it was, and the money panels ask you to unlock.
 export default function Home() {
   const vault = useVault()
@@ -29,25 +29,15 @@ export default function Home() {
 
   return (
     <div className="home">
-      <Ticker countries={countries} version={version} onSettings={openSettings} />
+      <Ticker countries={countries} version={version} onSettings={openSettings} fx={fx} />
       <div className="home-page">
-        <div className="home70">
-          <div className="h-left">
-            {data ? (
-              <>
-                <div className="h-top">
-                  <SummaryPanel data={data} owner={owner} fx={fx} parentLabel={parentLabel} />
-                  <OwnershipPanel data={data} fx={fx} parentLabel={parentLabel} />
-                </div>
-                <CombinedChartPanel data={data} owner={owner} onOwner={pickOwner} fx={fx} parentLabel={parentLabel} />
-              </>
-            ) : <div className="card"><h3 className="ch"><span>Summary</span></h3><p className="c">Unlock your data to see your summary, who owns what, and your net worth history.</p></div>}
-          </div>
-          <div className="h-right">
-            <NetWorthCard data={data} owner={owner} onOwner={pickOwner} fx={fx} parentLabel={parentLabel} />
-            {data && countries.length > 1 && <RatesCard fx={fx} />}
-            <CountriesCard countries={countries} now={now} version={version} onSettings={openSettings} />
-          </div>
+        <div className="home-grid" data-testid="home-grid">
+          <NetWorthCard data={data} owner={owner} onOwner={pickOwner} fx={fx} parentLabel={parentLabel} />
+          {data ? <RetirementTile data={data} /> : <Locked title="Retirement at a glance" />}
+          {data ? <PortfolioHeatTile data={data} fx={fx} /> : <Locked title="Portfolio heatmap" />}
+          {data ? <SummaryTile data={data} owner={owner} fx={fx} parentLabel={parentLabel} /> : <Locked title="Summary" />}
+          <CountriesCard countries={countries} now={now} version={version} onSettings={openSettings} />
+          {data ? <PropertiesTile data={data} /> : <Locked title="Properties" />}
         </div>
       </div>
     </div>
