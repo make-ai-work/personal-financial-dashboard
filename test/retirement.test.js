@@ -42,16 +42,21 @@ test('a liability can never be ticked in, and a missing rate is flagged instead 
   assert.equal(p.savings, 0)
 })
 
-test('equity share and weights come from the account mixes, weighted by balance', () => {
-  const p = resolvePlan(pick(withAccounts(), ['a1', 'a2']), fx)
+test('equity share and weights come from the LINKED portfolios’ mixes, weighted by balance; unlinked accounts add savings but no mix', () => {
+  let d = withAccounts()
+  d = { ...d, portfolios: [{ id: 'pf1', name: 'P1', accountId: 'a1', country: 'us' }, { id: 'pf2', name: 'P2', accountId: 'a2', country: 'in' }] }
+  const p = resolvePlan(pick(d, ['a1', 'a2']), fx)
   assert.ok(Math.abs(p.eqAuto - 90) < 1e-9) // (80% of 100k + 100% of 100k) / 200k
-  assert.equal(p.autoWeights.equities, 90)
-  assert.equal(p.autoWeights.cash, 5)
-  assert.equal(p.autoWeights.bonds, 5)
+  assert.equal(p.mixFrom, 'portfolios')
+  assert.equal(p.autoWeights.equities, 90); assert.equal(p.autoWeights.cash, 5); assert.equal(p.autoWeights.bonds, 5)
   assert.equal(Math.round(Object.values(p.autoWeights).reduce((a, b) => a + b, 0) * 10) / 10, 100)
-  // an account with no mix counts as cash
-  const c = resolvePlan(pick(withAccounts(), ['a3']), fx)
-  assert.equal(c.autoWeights.cash, 100)
+  // an account that is not linked to a portfolio is still savings, but has no mix of its own: the plan starts from the neutral 60/30/10
+  const c = resolvePlan(pick(withAccounts(), ['a1', 'a3']), fx)
+  assert.equal(c.mixFrom, 'default'); assert.deepEqual(c.autoWeights, { equities: 60, bonds: 30, cash: 10, metals: 0 }); assert.equal(c.eqAuto, 60)
+  assert.equal(c.savings, 120000)
+  // mixed: only the linked account's mix counts
+  const m = resolvePlan(pick({ ...withAccounts(), portfolios: [{ id: 'pf1', name: 'P1', accountId: 'a1', country: 'us' }] }, ['a1', 'a3']), fx)
+  assert.equal(m.autoWeights.equities, 80)
   // typed equity share wins over the automatic one
   assert.equal(resolvePlan(pick(withAccounts(), ['a1'], { eqOverride: 50 }), fx).we, 0.5)
 })

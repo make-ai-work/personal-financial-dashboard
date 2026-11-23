@@ -67,16 +67,16 @@ export default function Inputs({ plan, fx }) {
               <span className="amt">{moneyCurrency(c, ac.balance)}</span>
               <span className="sec">
                 <span className={`chip c-${ac.owner}`}>{ownerLabel(ac.owner, data.settings.parentLabel)}</span>
-                <span className="src">{linked ? '📈 from holdings' : ac.mix?.[0] ? 'asset mix' : 'cash'}</span>
+                <span className="src">{linked ? '📈 from holdings' : 'savings only'}</span>
               </span>
             </label>
           )
         })}
         <NumRow label="Adjustment" hint="add or subtract money not in Finance" value={r.adjustment} onChange={(v) => set({ adjustment: v })} />
         <Row label={<b>Invested savings today</b>}><b>{fmt(plan.savings)}</b></Row>
-        <NumRow label="Equity share of portfolio" hint={r.eqOverride === null || r.eqOverride === '' ? `auto: ${plan.eqAuto.toFixed(1)}% from your accounts` : 'typed by you'}
+        <NumRow label="Equity share of portfolio" hint={r.eqOverride === null || r.eqOverride === '' ? (plan.mixFrom === 'portfolios' ? `auto: ${plan.eqAuto.toFixed(1)}% from your linked portfolios` : 'auto: 60% (no portfolio linked)') : 'typed by you'}
           value={r.eqOverride} placeholder="auto" width={70} suffix=" %" onChange={(v) => set({ eqOverride: v === '' ? null : v })} />
-        <div className="sub">Leave blank to use the asset mix of the ticked accounts (from your Portfolio holdings where an account is linked).</div>
+        <div className="sub">Leave blank to use the mix of the ticked accounts that are linked to a Portfolio (calculated from its holdings), or a neutral 60% when none is.</div>
       </Fold>
 
       <Fold id="r-inherit" title="Inheritance" summary={r.inherit.length ? `${r.inherit.length} entr${r.inherit.length === 1 ? 'y' : 'ies'} · ${fmt(inheritTotal)}` : 'none'}

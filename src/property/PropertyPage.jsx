@@ -3,6 +3,8 @@ import { useVault } from '../finance/VaultContext.jsx'
 import Chart from '../finance/Chart.jsx'
 import { OwnerChip } from '../finance/ui.jsx'
 import { LoanModal, LoanUpdateModal, PropertyModal, ValuationModal, zillowUrl } from './PropertyForms.jsx'
+import PayoffCalculator, { regularPayment } from './PayoffCalculator.jsx'
+import { describeMonths, timeRemaining } from '../lib/amortization.js'
 import { COUNTRIES, fmtDate, maskNumber, money, todayISO } from '../lib/format.js'
 import { daysBetween } from '../lib/dates.js'
 import {
@@ -103,6 +105,7 @@ export default function PropertyPage({ property, reveal, onDeleted }) {
       {snap.loans.map(({ loan: l, balance, date, recorded }) => {
         const ups = updatesOf(data, l.id)
         const payoff = scheduledPayoff(l)
+        const left = timeRemaining({ balance, ratePct: l.rate, payment: regularPayment(l), startDate: l.startDate, termYears: l.termYears }, today)
         return (
           <div className="panel" key={l.id}>
             <div className="p-head">
@@ -122,8 +125,10 @@ export default function PropertyPage({ property, reveal, onDeleted }) {
               <div><small>Current balance</small><b className="neg" style={{ fontSize: '1.2rem' }}>{fmt(balance)}</b><br />
                 <span className="sub">{recorded ? `recorded ${fmtDate(date)}` : 'estimated from the loan schedule — record an update'}</span></div>
               <Kv label="Scheduled payoff" sub={payoff ? 'from rate & term' : ''}>{payoff && new Date(payoff + 'T00:00:00').toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}</Kv>
+              <Kv label="Time remaining" sub={left && left.months > 0 ? `until ${new Date(left.payoffDate + 'T00:00:00').toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}${left.source === 'term' ? ' · from the start date and term' : ' · at your regular payment'}` : ''}>{left ? <span data-testid="time-remaining">{describeMonths(left.months)}</span> : null}</Kv>
               <Kv label="Notes">{l.notes}</Kv>
             </div>
+            <PayoffCalculator loan={l} balance={balance} fmt={fmt} />
             <div className="tblw"><table className="t-left t-loan"><thead><tr><th>Date</th><th className="r">Balance after</th><th className="r">Principal paid</th><th className="r">Interest paid</th><th className="r">Escrow paid</th><th>Notes</th><th /></tr></thead><tbody>
               {ups.length === 0 && <tr><td colSpan="7" className="none">No updates recorded yet.</td></tr>}
               {ups.map((u) => (

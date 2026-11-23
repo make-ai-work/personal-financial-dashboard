@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { passphraseStrength } from '../lib/vault.js'
-import { MIX, ownerLabel } from '../lib/format.js'
+import { ownerLabel } from '../lib/format.js'
 import { getCollapsed, setCollapsed } from '../lib/uiprefs.js'
 
 const openModals = [] // Escape (and the Android Back button) close only the top-most dialog
@@ -72,18 +72,6 @@ export function OwnerPicker({ value, onChange, parentLabel }) {
   )
 }
 
-export function MixBar({ mix }) {
-  if (!mix) return <span className="muted">n/a</span>
-  const txt = mix.map((p, i) => (p ? `${MIX[i].short} ${p}` : '')).filter(Boolean).join(' · ')
-  return (
-    <>
-      <div className="mix">
-        {mix.map((p, i) => p > 0 && <i key={i} className={`m-${MIX[i].key}`} style={{ width: `${p}%` }} title={`${MIX[i].label} ${p}%`} />)}
-      </div>
-      <div className="mixtxt">{txt}</div>
-    </>
-  )
-}
 
 export function PassphraseForm({ submitLabel, onSubmit, busy, error }) {
   const [pass, setPass] = useState('')

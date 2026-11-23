@@ -267,7 +267,7 @@ try {
   step('net worth card: owner choices include Spouse, an empty file shows zero, the choice is remembered')
   const nw = page.getByLabel('Total net worth')
   const owners = await nw.getByRole('group', { name: 'Whose net worth' }).getByRole('button').allInnerTexts()
-  assert.deepEqual(owners, ['All', 'Mine', 'Joint', 'Spouse', 'Parent'])
+  assert.deepEqual(owners, ['All', 'Mine', 'Me + Others', 'Spouse', 'Parent'])
   assert.match(await nw.getByTestId('networth').innerText(), /^\$\s?0$/)
   await nw.getByRole('button', { name: 'Spouse' }).click()
   assert.equal(await page.evaluate(() => localStorage.getItem('home.owner')), 'spouse')

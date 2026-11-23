@@ -41,7 +41,7 @@ async function addFinanceAsset(name, institution, balance, owner) {
   await dialog().getByLabel('Account name').fill(name)
   await dialog().getByLabel('Bank / holding company').fill(institution)
   await dialog().getByLabel(/Current balance/).fill(balance)
-  await dialog().locator('.radios label', { hasText: new RegExp('^' + owner) }).click()
+  await dialog().locator('.radios label', { hasText: new RegExp('^' + owner.replace(/[+]/g, '\\+')) }).click()
   await dialog().getByRole('button', { name: 'Save' }).click()
   await dialog().waitFor({ state: 'detached' })
 }
@@ -62,7 +62,7 @@ try {
   await page.getByRole('tab', { name: /Assets/ }).click()
   await page.getByText('Update date', { exact: true }).waitFor()
   await subtab(/USA/).click()
-  await addFinanceAsset('Brokerage', 'Schwab', '96000', 'Joint')
+  await addFinanceAsset('Brokerage', 'Schwab', '96000', 'Me + Others')
   await addFinanceAsset('401(k)', 'Fidelity', '184000', 'Mine')
   await subtab(/India/).click()
   await addFinanceAsset('Mutual funds', 'Zerodha', '4200000', 'Mine')

@@ -4,9 +4,9 @@ import {
   addAccount, addPolicy, byOwner, hasUnsavedBalances, inCountry, monthSeries, removeAccount, removePolicy,
   saveUpdate, totals, updateAccount, updatePolicy,
 } from '../lib/model.js'
-import { COUNTRIES, fmtDate, maskNumber, maturesSoon, money, ownerLabel, MIX, todayISO, curSym } from '../lib/format.js'
+import { COUNTRIES, fmtDate, maskNumber, maturesSoon, money, ownerLabel, todayISO, curSym } from '../lib/format.js'
 import { AccountModal, PolicyModal } from './Forms.jsx'
-import { Collapsible, MixBar, OwnerChip } from './ui.jsx'
+import { Collapsible, OwnerChip } from './ui.jsx'
 import { usePhone } from '../lib/usePhone.js'
 import { performance, sinceMonth } from '../lib/performance.js'
 import Chart from './Chart.jsx'
@@ -85,17 +85,16 @@ export default function CountryView({ code, owner, reveal, fx }) {
       <Collapsible id="assets" title="Assets" sub={fmt(t.assets)} phone={phone} phoneFolded action={<button className="btn" onClick={() => setModal({ kind: 'account', type: 'asset' })}>+ Add asset</button>}>
         <div className="tblw">
           <table className="t-a">
-            <thead><tr><th>Account name</th><th>Account number</th><th>Bank / holding co.</th><th>Owner</th><th>Current balance</th><th>Asset mix</th><th>Maturity date</th><th>Value at maturity</th><th /></tr></thead>
+            <thead><tr><th>Account name</th><th>Account number</th><th>Bank / holding co.</th><th>Owner</th><th>Current balance</th><th>Maturity date</th><th>Value at maturity</th><th /></tr></thead>
             <tbody>
-              {assets.length === 0 && <tr><td colSpan="9" className="none">No assets{owner !== 'all' ? ' in this category' : ' yet'}.</td></tr>}
+              {assets.length === 0 && <tr><td colSpan="8" className="none">No assets{owner !== 'all' ? ' in this category' : ' yet'}.</td></tr>}
               {assets.map((a) => (
                 <tr key={a.id}>
-                  <td><b>{a.name}</b> {portfolioFor(data, a.id) && <span className="chiplink" title="Balance and asset mix are calculated from the portfolio's holdings">📈 from portfolio</span>}</td>
+                  <td><b>{a.name}</b> {portfolioFor(data, a.id) && <span className="chiplink" title="The balance is calculated from the portfolio's holdings">📈 from portfolio</span>}</td>
                   <td className="mono">{num(a.number)}</td>
                   <td>{a.institution || '—'}</td>
                   <td><OwnerChip owner={a.owner} parentLabel={parentLabel} /></td>
                   <td><b>{fmt(a.balance)}</b></td>
-                  <td><MixBar mix={a.mix} /></td>
                   <td>{fmtDate(a.maturityDate)} {maturesSoon(a.maturityDate) && <span className="chip soon" title="Matures within 12 months">soon</span>}</td>
                   <td>{a.maturityValue != null ? fmt(a.maturityValue) : '—'}</td>
                   <Actions kind="account" item={a} />
@@ -104,7 +103,6 @@ export default function CountryView({ code, owner, reveal, fx }) {
             </tbody>
           </table>
         </div>
-        <div className="mixleg">{MIX.map((m) => <span key={m.key}><i className={`m-${m.key}`} />{m.label}</span>)}</div>
       </Collapsible>
 
       <Collapsible id="liabilities" title="Liabilities" sub={fmt(t.liabilities)} phone={phone} phoneFolded action={<button className="btn" onClick={() => setModal({ kind: 'account', type: 'liability' })}>+ Add liability</button>}>

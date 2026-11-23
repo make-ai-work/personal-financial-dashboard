@@ -35,7 +35,7 @@ const addAccount = async (btn, f, owner) => {
   await page.getByRole('button', { name: btn }).click()
   const m = page.getByRole('dialog')
   for (const [label, v] of Object.entries(f)) await m.getByLabel(label).fill(v)
-  if (owner) await m.locator('.radios label', { hasText: new RegExp('^' + owner) }).click()
+  if (owner) await m.locator('.radios label', { hasText: new RegExp('^' + owner.replace(/[+]/g, '\\+')) }).click()
   await m.getByRole('button', { name: 'Save' }).click()
   await m.waitFor({ state: 'detached' })
 }
@@ -56,9 +56,9 @@ try {
   step('add accounts and policy in USA')
   await page.getByRole('button', { name: /USA/ }).first().click()
   await addAccount('+ Add asset', { 'Account name': 'Checking', 'Account number': '000123456821', 'Bank / holding company': 'Chase', 'Current balance ($)': '8200', 'Cash equivalents': '100' })
-  await addAccount('+ Add asset', { 'Account name': 'Brokerage', 'Account number': 'X55203718', 'Bank / holding company': 'Schwab', 'Current balance ($)': '96000', Equities: '85', 'Cash equivalents': '10', Bonds: '5' }, 'Joint')
+  await addAccount('+ Add asset', { 'Account name': 'Brokerage', 'Account number': 'X55203718', 'Bank / holding company': 'Schwab', 'Current balance ($)': '96000', Equities: '85', 'Cash equivalents': '10', Bonds: '5' }, 'Me + Others')
   await addAccount('+ Add asset', { 'Account name': 'CD', 'Account number': '7710334450', 'Bank / holding company': 'Ally', 'Current balance ($)': '22000', 'Cash equivalents': '100', 'Deposit maturity date (optional)': '2027-02-01', 'Value at maturity (optional, $)': '23100' }, 'Parent')
-  await addAccount('+ Add liability', { 'Account name': 'Mortgage', 'Account number': '3300918823', Lender: 'Wells Fargo', 'Current balance ($)': '78000' }, 'Joint')
+  await addAccount('+ Add liability', { 'Account name': 'Mortgage', 'Account number': '3300918823', Lender: 'Wells Fargo', 'Current balance ($)': '78000' }, 'Me + Others')
   await page.getByRole('button', { name: '+ Add policy' }).click()
   const pm = page.getByRole('dialog')
   for (const [l, v] of Object.entries({ 'Policy name': 'Term life', 'Policy number': 'POL-100234', 'Policy company': 'AIG', 'Death benefit ($)': '750000' })) await pm.getByLabel(l).fill(v)
@@ -94,7 +94,7 @@ try {
   await page.screenshot({ path: `${OUT}/usa.png`, fullPage: true })
 
   step('owner filter')
-  await page.locator('.filterbar .seg').getByRole('button', { name: 'Joint' }).click()
+  await page.locator('.filterbar .seg').getByRole('button', { name: 'Me + Others' }).click()
   assert.match(await page.locator('.kpis').innerText(), /\$ 18,000/) // 96000 - 78000
   await page.locator('.filterbar .seg').getByRole('button', { name: 'All' }).click()
 
