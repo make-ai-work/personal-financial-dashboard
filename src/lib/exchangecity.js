@@ -6,6 +6,7 @@ export const EXCHANGE_CITIES = {
   uk: { city: 'London', tz: 'Europe/London', lat: 51.5072, lon: -0.1276, unit: 'C' },
   au: { city: 'Sydney', tz: 'Australia/Sydney', lat: -33.8688, lon: 151.2093, unit: 'C' },
   ch: { city: 'Zurich', tz: 'Europe/Zurich', lat: 47.3769, lon: 8.5417, unit: 'C' },
+  ie: { city: 'Dublin', tz: 'Europe/Dublin', lat: 53.3498, lon: -6.2603, unit: 'C' },
 }
 
 const clean = (s) => s.replace(/[  ]/g, ' ')

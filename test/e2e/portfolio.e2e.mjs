@@ -47,7 +47,7 @@ async function addFinanceAsset(name, institution, balance, owner) {
   await dialog().getByLabel('Account name').fill(name)
   await dialog().getByLabel('Bank / holding company').fill(institution)
   await dialog().getByLabel(/Current balance/).fill(balance)
-  await dialog().locator('.radios label', { hasText: new RegExp('^' + owner) }).click()
+  await dialog().locator('.radios label', { hasText: new RegExp('^' + owner.replace(/[+]/g, '\\+')) }).click()
   await dialog().getByRole('button', { name: 'Save' }).click()
   await dialog().waitFor({ state: 'detached' })
 }
@@ -78,19 +78,19 @@ try {
   await page.getByRole('tab', { name: /Assets/ }).click()
   await page.getByText('Update date', { exact: true }).waitFor()
   await subtab(/USA/).click()
-  await addFinanceAsset('Brokerage', 'Schwab', '96000', 'Joint')
+  await addFinanceAsset('Brokerage', 'Schwab', '96000', 'Me + Others')
   await addFinanceAsset('401(k)', 'Fidelity', '184000', 'Mine')
 
   step('link a portfolio to the Brokerage account; nothing changes in Finance yet')
   await topTab(/Portfolio/).click()
   await page.getByText('Portfolio summary').waitFor()
   await subtab('+ Add portfolio').click()
-  const opts = await dialog().getByLabel('Finance account').locator('option').allInnerTexts()
-  assert.ok(opts.includes('Brokerage · Schwab — $ 96,000') && opts.includes('401(k) · Fidelity — $ 184,000') && opts.at(-1).includes('Create a new Finance account'))
-  await dialog().getByLabel('Finance account').selectOption({ label: 'Brokerage · Schwab — $ 96,000' })
+  const opts = await dialog().getByLabel('Assets account').locator('option').allInnerTexts()
+  assert.ok(opts.includes('Brokerage · Schwab — $ 96,000') && opts.includes('401(k) · Fidelity — $ 184,000') && opts.at(-1).includes('Create a new Assets account'))
+  await dialog().getByLabel('Assets account').selectOption({ label: 'Brokerage · Schwab — $ 96,000' })
   await dialog().getByRole('button', { name: 'Create portfolio' }).click()
   await dialog().waitFor({ state: 'detached' })
-  await page.getByText('linking to Finance: Brokerage · Schwab').waitFor()
+  await page.getByText('linking to Assets: Brokerage · Schwab').waitFor()
   assert.ok(await page.getByRole('button', { name: 'Finish linking' }).isDisabled()) // no holdings yet
 
   step('enter holdings worth $91,000 (the gold ETF is missing), then reconcile with the DEFAULT choice')
@@ -104,7 +104,7 @@ try {
   const banner = page.getByRole('region', { name: 'Finish linking' })
   const bt = await banner.innerText()
   assert.match(bt, /Holdings total\s+\$ 91,000/)
-  assert.match(bt, /Finance account says\s+\$ 96,000/)
+  assert.match(bt, /Assets account says\s+\$ 96,000/)
   assert.match(bt, /\$ 5,000 unexplained/)
   assert.ok(await banner.getByRole('radio', { name: /Add the difference as an unallocated holding/ }).isChecked(), 'unallocated must be the default')
   await subtab(/USA/).click()
@@ -112,7 +112,7 @@ try {
   await banner.waitFor({ state: 'detached' })
   const pfText = await panelOf(P).innerText()
   assert.match(pfText, /Unallocated \(difference when linked\)[\s\S]*\$ 5,000/)
-  assert.match(pfText, /linked to Finance: Brokerage · Schwab/)
+  assert.match(pfText, /linked to Assets: Brokerage · Schwab/)
 
   step('Finance now follows the portfolio: balance unchanged, tag shown, mix derived from holdings, balance locked')
   await topTab(/Assets/).click()
@@ -120,7 +120,7 @@ try {
   let row = await financeRow('Brokerage').innerText()
   assert.match(row, /from portfolio/)
   assert.match(row, /\$ 96,000/)
-  assert.match(row, /Eq 81\.3 · Cash 5\.5 · Bonds 13\.2/) // unallocated is left out of the mix
+  assert.doesNotMatch(row, /Eq \d|Cash \d/) // the asset mix is no longer shown in Assets
   await financeRow('Brokerage').getByRole('button', { name: 'Edit' }).click()
   assert.ok(await dialog().getByLabel(/Current balance/).isDisabled())
   assert.match(await dialog().innerText(), /Comes from the linked portfolio/)
@@ -130,7 +130,7 @@ try {
   step('second portfolio whose holdings EXCEED the typed balance: no unallocated option, balance rises')
   await topTab(/Portfolio/).click()
   await subtab('+ Add portfolio').click()
-  await dialog().getByLabel('Finance account').selectOption({ label: '401(k) · Fidelity — $ 184,000' })
+  await dialog().getByLabel('Assets account').selectOption({ label: '401(k) · Fidelity — $ 184,000' })
   await dialog().getByRole('button', { name: 'Create portfolio' }).click()
   await dialog().waitFor({ state: 'detached' })
   const K = '401(k) · Fidelity'
@@ -188,7 +188,7 @@ try {
   await panelOf(P).getByRole('row', { name: /Unallocated/ }).getByRole('button', { name: 'Delete' }).click()
   await topTab(/Assets/).click(); await subtab(/USA/).click()
   row = await financeRow('Brokerage').innerText()
-  assert.match(row, /\$ 96,000/); assert.match(row, /Metals 5\.2/)
+  assert.match(row, /\$ 96,000/); assert.doesNotMatch(row, /Metals/)
 
   step('bulk price update changes values, stamps the date, clears the stale flag, and Finance follows')
   await topTab(/Portfolio/).click(); await subtab(/USA/).click()
@@ -201,6 +201,47 @@ try {
   await topTab(/Assets/).click(); await subtab(/USA/).click()
   assert.match(await financeRow('Brokerage').innerText(), /\$ 96,248/) // + 20 x 12.40
 
+  step('Add holding: ticker first, a Look up button, the free-limit count always visible, and every failure explained')
+  await topTab(/Portfolio/).click(); await subtab(/USA/).click()
+  const av = { calls: [], mode: 'ok' }
+  await ctx.route(/alphavantage\.co\/query/, (route) => {
+    av.calls.push(route.request().url())
+    const body = av.mode === 'limit' ? { Note: 'Our standard API call frequency is 25 requests per day.' } : { bestMatches: [{ '1. symbol': 'VTI', '2. name': 'Vanguard Total Stock Market ETF', '3. type': 'ETF', '4. region': 'United States', '8. currency': 'USD', '9. matchScore': '0.9' }] }
+    return route.fulfill({ headers: { 'access-control-allow-origin': '*' }, json: body })
+  })
+  await panelOf(P).getByRole('button', { name: '+ Add holding' }).click()
+  const lk = dialog().getByTestId('ticker-lookup')
+  assert.equal(await dialog().getByLabel('Ticker / symbol').evaluate((e) => e === document.activeElement), true, 'the ticker is the first, focused field')
+  await lk.getByText(/No Alpha Vantage key yet/).waitFor()
+  await dialog().getByLabel('Ticker / symbol').fill('vti'); await lk.getByRole('button', { name: 'Look up' }).click()
+  await lk.getByTestId('lookup-error').getByText(/Add your Alpha Vantage key in Settings → Home/).waitFor()
+  assert.equal(av.calls.length, 0, 'nothing is requested without a key')
+  await page.evaluate(() => localStorage.setItem('home.avKey', 'DEMOKEY123'))
+  await dialog().getByRole('button', { name: 'Cancel' }).click()
+  await panelOf(P).getByRole('button', { name: '+ Add holding' }).click()
+  await lk.getByTestId('av-usage').getByText(/0 of 25/).waitFor()
+  await dialog().getByLabel('Ticker / symbol').fill('vti')
+  assert.equal(av.calls.length, 0, 'typing asks nothing')
+  await lk.getByRole('button', { name: 'Look up' }).click()
+  await lk.getByRole('option', { name: /VTI.*Vanguard Total Stock Market ETF/ }).click()
+  assert.equal(await dialog().getByLabel('Name', { exact: true }).inputValue(), 'Vanguard Total Stock Market ETF')
+  assert.equal(await dialog().getByLabel(/^Type/).inputValue(), 'etf')
+  await lk.getByTestId('av-usage').getByText(/1 of 25/).waitFor()
+  assert.equal(av.calls.length, 1); assert.match(av.calls[0], /function=SYMBOL_SEARCH.*keywords=vti|keywords=vti.*function=SYMBOL_SEARCH/)
+  await dialog().getByLabel('Ticker / symbol').fill('VTI'); await lk.getByRole('button', { name: 'Look up' }).click()
+  await lk.getByText(/From an earlier lookup \(no request used\)/).waitFor()
+  assert.equal(av.calls.length, 1, 'the same symbol is not asked twice'); await lk.getByTestId('av-usage').getByText(/1 of 25/).waitFor()
+  av.mode = 'limit'
+  await dialog().getByLabel('Ticker / symbol').fill('MSFT'); await lk.getByRole('button', { name: 'Look up' }).click()
+  await lk.getByTestId('lookup-error').getByText(/daily limit is reached/).waitFor()
+  await lk.getByTestId('av-usage').getByText(/25 of 25/).waitFor()
+  await dialog().getByLabel('Ticker / symbol').fill('GOOG'); await lk.getByRole('button', { name: 'Look up' }).click()
+  await lk.getByTestId('lookup-error').getByText(/25 free lookups for today are used/).waitFor()
+  assert.equal(av.calls.length, 2, 'once the limit is reached nothing more is requested')
+  await dialog().getByLabel('Name', { exact: true }).fill('Typed by hand') // typing the name always works
+  await dialog().getByRole('button', { name: 'Cancel' }).click()
+  await page.evaluate(() => { localStorage.removeItem('home.avKey'); localStorage.removeItem('av.usage'); localStorage.removeItem('av.symcache') })
+
   step('overview: totals, attention list')
   await topTab(/Portfolio/).click(); await subtab('Overview').click()
   await split(page, '.sp-l', '.sp-r')
@@ -212,11 +253,11 @@ try {
 
   step('navigation both ways between Portfolio and Finance')
   await subtab(/USA/).click()
-  await panelOf(P).getByRole('button', { name: 'Open in Finance' }).click()
+  await panelOf(P).getByRole('button', { name: 'Open in Assets' }).click()
   await page.getByText('Assets').first().waitFor()
   await page.locator('.subtabs button.on', { hasText: 'USA' }).waitFor() // waits for the tab to switch
   await financeRow('Brokerage').getByRole('button', { name: 'Open portfolio' }).click()
-  await page.getByText('linked to Finance: Brokerage · Schwab').waitFor()
+  await page.getByText('linked to Assets: Brokerage · Schwab').waitFor()
   await page.screenshot({ path: `${OUT}/usa.png`, fullPage: true })
 
   step('lock / unlock keeps the link, holdings and targets')
@@ -225,7 +266,7 @@ try {
   await page.getByRole('button', { name: 'Unlock' }).click()
   await page.getByText('Portfolio summary').waitFor() // locking resets you to the Overview
   await subtab(/USA/).click()
-  await page.getByText('linked to Finance: Brokerage · Schwab').waitFor()
+  await page.getByText('linked to Assets: Brokerage · Schwab').waitFor()
   await page.getByLabel('Portfolio to rebalance').selectOption({ label: 'Brokerage · Schwab' })
   assert.match(await page.locator('.panel').filter({ hasText: 'Targets are percentages of' }).innerText(), /70%/)
 
@@ -251,6 +292,31 @@ try {
   await page.getByText('Nothing here yet').or(page.getByText('No assets')).first().waitFor().catch(() => {})
   await topTab(/Portfolio/).click(); await subtab(/USA/).click()
   await page.getByText(/No portfolios in .*USA yet/).waitFor()
+
+  step('upload a CSV of holdings: one portfolio per country, asks update-and-overwrite or new addition, previews, then applies')
+  await page.getByTestId('upload-holdings').click()
+  const csv = 'Symbol,Description,Quantity,Last Price,Currency\nVTI,Vanguard Total Market,100,250.5,USD\nINFY.BSE,Infosys,50,1500,INR\n'
+  await page.getByLabel('File to upload').setInputFiles({ name: 'holdings.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) })
+  await page.getByText(/Check each match/).waitFor()
+  assert.equal(await page.getByRole('button', { name: 'Apply changes' }).isDisabled(), true, 'must choose update or new addition first')
+  await page.getByLabel('New addition').check()
+  const prev = await page.getByTestId('import-preview').innerText()
+  assert.match(prev, /USA: create the portfolio "USA portfolio"/); assert.match(prev, /India/)
+  await page.getByRole('button', { name: 'Apply changes' }).click()
+  await page.getByTestId('import-modal').waitFor({ state: 'detached' })
+  await subtab(/USA/).click()
+  await page.getByText('USA portfolio').first().waitFor()
+  await page.getByText('VTI').first().waitFor()
+
+  step('upload accounts on the Assets tab')
+  await topTab(/Assets/).click()
+  await page.getByTestId('upload-accounts').click()
+  const acc = 'Account Name,Account Number,Balance,Currency\nUploaded checking,987654,"$8,200",USD\n'
+  await page.getByLabel('File to upload').setInputFiles({ name: 'accounts.csv', mimeType: 'text/csv', buffer: Buffer.from(acc) })
+  await page.getByLabel('Update and overwrite').check()
+  await page.getByTestId('import-preview').getByText(/Uploaded checking/).waitFor()
+  await page.getByRole('button', { name: 'Apply changes' }).click()
+  await page.getByText('Uploaded checking').first().waitFor()
 } catch (e) {
   await page.screenshot({ path: `${OUT}/failure.png`, fullPage: true })
   console.error('FAILED:', e.message)

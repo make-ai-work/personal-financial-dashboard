@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { passphraseStrength } from '../lib/vault.js'
-import { MIX, ownerLabel } from '../lib/format.js'
+import { ownerLabel } from '../lib/format.js'
 import { getCollapsed, setCollapsed } from '../lib/uiprefs.js'
 
 const openModals = [] // Escape (and the Android Back button) close only the top-most dialog
@@ -55,7 +55,7 @@ export const OwnerChip = ({ owner, parentLabel }) => (
 export function OwnerPicker({ value, onChange, parentLabel }) {
   const opts = [
     ['mine', 'Mine', 'Only me'],
-    ['joint', 'Joint', `Me + ${parentLabel.toLowerCase()}`],
+    ['joint', 'Me + Others', 'Me and anyone else'],
     ['spouse', 'Spouse', 'Only my spouse'],
     ['parent', parentLabel, `Only ${parentLabel.toLowerCase()}`],
   ]
@@ -72,18 +72,6 @@ export function OwnerPicker({ value, onChange, parentLabel }) {
   )
 }
 
-export function MixBar({ mix }) {
-  if (!mix) return <span className="muted">n/a</span>
-  const txt = mix.map((p, i) => (p ? `${MIX[i].short} ${p}` : '')).filter(Boolean).join(' · ')
-  return (
-    <>
-      <div className="mix">
-        {mix.map((p, i) => p > 0 && <i key={i} className={`m-${MIX[i].key}`} style={{ width: `${p}%` }} title={`${MIX[i].label} ${p}%`} />)}
-      </div>
-      <div className="mixtxt">{txt}</div>
-    </>
-  )
-}
 
 export function PassphraseForm({ submitLabel, onSubmit, busy, error }) {
   const [pass, setPass] = useState('')
@@ -113,7 +101,7 @@ export function PassphraseForm({ submitLabel, onSubmit, busy, error }) {
         <input className="pw" type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
       </label>
       <div className="warn">
-        <b>There is no recovery.</b> If you forget this passphrase, the file cannot be opened by anyone. Store it in a password manager.
+        <b>Keep it safe.</b> If you forget this passphrase, the file cannot be opened by anyone, unless you made a recovery key (Settings, after you create the vault). Store it in a password manager.
       </div>
       <label className="check">
         <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} /> I understand and have saved my passphrase

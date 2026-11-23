@@ -122,7 +122,25 @@ export default function SettingsPage() {
   const list = SECTIONS.filter((x) => x.id !== 'set-ai' || !auth.demoSite)
   return (
     <div className="wide-pad">
-      <div className="split7030 settings">
+      <div className="split7030 settings split-flip">
+        <aside className="sp-r">
+          <div className="panel">
+            <div className="p-head"><div className="title">On this page</div></div>
+            <nav className="idx" aria-label="Settings sections">
+              {list.filter((s) => data || !s.needsData).map((s) => (
+                <button key={s.id} className={active === s.id ? 'on' : ''} onClick={() => goTo(s.id)}>{s.label}</button>
+              ))}
+            </nav>
+          </div>
+          <div className="panel">
+            <div className="p-head"><div className="title">This device</div></div>
+            <div className="pad">
+              <RunAsApp />
+              <div className="row"><span>Version<small>{auth.native ? 'Android app' : window.desktopApp ? 'Windows app' : auth.demoSite ? 'Demo site' : 'Web app'}</small></span><span data-testid="app-version">{__APP_VERSION__}</span></div>
+              <div className="row"><span>Your data<small>{vault.demo ? 'Sample data, nothing saved' : vault.storage === 'app' ? 'Vault file inside this app' : vault.storage === 'drive' ? 'Google Drive' : vault.fileName || 'Vault file you choose'}</small></span><span className="chip">{data ? 'Unlocked' : 'Locked'}</span></div>
+            </div>
+          </div>
+        </aside>
         <div className="sp-l">
           <AccountSettings />
           {!auth.demoSite && <AiSettings />}
@@ -145,24 +163,6 @@ export default function SettingsPage() {
             </>
           )}
         </div>
-        <aside className="sp-r">
-          <div className="panel">
-            <div className="p-head"><div className="title">On this page</div></div>
-            <nav className="idx" aria-label="Settings sections">
-              {list.filter((s) => data || !s.needsData).map((s) => (
-                <button key={s.id} className={active === s.id ? 'on' : ''} onClick={() => goTo(s.id)}>{s.label}</button>
-              ))}
-            </nav>
-          </div>
-          <div className="panel">
-            <div className="p-head"><div className="title">This device</div></div>
-            <div className="pad">
-              <RunAsApp />
-              <div className="row"><span>Version<small>{auth.native ? 'Android app' : window.desktopApp ? 'Windows app' : auth.demoSite ? 'Demo site' : 'Web app'}</small></span><span data-testid="app-version">{__APP_VERSION__}</span></div>
-              <div className="row"><span>Your data<small>{vault.demo ? 'Sample data, nothing saved' : vault.storage === 'app' ? 'Vault file inside this app' : vault.storage === 'drive' ? 'Google Drive' : vault.fileName || 'Vault file you choose'}</small></span><span className="chip">{data ? 'Unlocked' : 'Locked'}</span></div>
-            </div>
-          </div>
-        </aside>
       </div>
     </div>
   )

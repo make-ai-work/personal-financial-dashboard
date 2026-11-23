@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { COUNTRIES, COUNTRY_CODES, curSym } from '../lib/format.js'
 import { moveCountry, toggleCountry } from '../lib/countries.js'
 
-// Choose which countries a section shows (1-5), in order. The first is the reporting currency.
+// Choose which countries the app shows, in order (one list for every tab). The first is the reporting currency.
 // Unticking only hides a country: its data stays in the file.
 // describe(code) -> { count, text } for the line under each country. noun = [singular, plural].
 export default function CountriesPicker({ value, onChange, describe, noun }) {
@@ -48,7 +48,7 @@ export default function CountriesPicker({ value, onChange, describe, noun }) {
         })}
       </div>
       <div className="pad sub">
-        Pick one to five countries. Each gets its own tab. The first in the list is the reporting currency: exchange rates are fetched from it.
+        Pick at least one country. This one list is used by Assets, Property, Portfolio, Retirement and Home, and each gets its own tab where tabs are per country. The first in the list is the reporting currency: exchange rates are fetched from it.
         Unticking a country only hides it; its data stays in your encrypted file and comes back when you tick it again.
       </div>
       {pending && (

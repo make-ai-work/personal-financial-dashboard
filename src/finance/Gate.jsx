@@ -118,6 +118,25 @@ export function Unlock() {
   const [err, setErr] = useState('')
   const [dlg, setDlg] = useState('') // vault inside the app only: 'restore' | 'delete'
   const inApp = v.isApp && v.storage !== 'drive' // the Android app, with the vault kept inside it (not moved to Google Drive)
+  const [reset, setReset] = useState(false) // forgot the passphrase: use the recovery key
+  const [rkey, setRkey] = useState('')
+  const resetPass = async (newPass) => {
+    setBusy(true); setErr('')
+    try { await v.unlockWithRecovery(rkey, newPass) } catch (e2) { setErr(e2.message) } finally { setBusy(false) }
+  }
+  if (reset) {
+    return (
+      <div className="panel center narrow" data-testid="recovery-reset">
+        <div className="lock">🔑</div>
+        <h2>Reset your passphrase</h2>
+        <p className="note">Type the recovery key you saved when you made it, then choose a new passphrase. The old passphrase stops working. Your data is not changed.</p>
+        <label className="field">Recovery key<input className="pw" autoFocus autoComplete="off" spellCheck={false} placeholder="XXXX-XXXX-XXXX-…" aria-label="Recovery key" value={rkey} onChange={(e) => setRkey(e.target.value)} /></label>
+        {rkey.replace(/[^a-z0-9]/gi, '').length >= 26 && <PassphraseForm submitLabel="Set new passphrase and unlock" onSubmit={resetPass} busy={busy} error={err} />}
+        {err && rkey.replace(/[^a-z0-9]/gi, '').length < 26 && <div className="err">{err}</div>}
+        <button className="link" onClick={() => { setReset(false); setErr('') }}>← Back</button>
+      </div>
+    )
+  }
   const submit = async (e) => {
     e.preventDefault()
     setBusy(true)
@@ -141,6 +160,7 @@ export function Unlock() {
         {err && <div className="err">{err}</div>}
         <button className="btn primary wide" disabled={busy || !pass}>{busy ? 'Unlocking…' : 'Unlock'}</button>
       </form>
+      <button className="link" onClick={() => { setReset(true); setErr('') }} data-testid="forgot-passphrase">Forgot the passphrase? Use your recovery key…</button>
       <p className="note">The passphrase stays in memory only while unlocked. Auto-lock clears it after idle time.</p>
       {inApp ? (
         <>

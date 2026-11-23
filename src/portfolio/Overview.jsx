@@ -10,7 +10,7 @@ const VIEWS = [['class', 'Asset class'], ['geo', 'Geography'], ['ccy', 'Currency
 export default function Overview({ fx, onOpenCountry }) {
   const { data } = useVault()
   const today = todayISO()
-  const codes = data.settings.portfolioCountries
+  const codes = data.settings.countries
   const multi = codes.length > 1
   const { concentrationLimit: limit, rebalanceTol: tol, priceStaleDays: staleDays } = data.settings
   const cur = (c) => COUNTRIES[c].currency
@@ -29,7 +29,7 @@ export default function Overview({ fx, onOpenCountry }) {
   const attention = []
   for (const p of shown) {
     const c = countryOf(data, p)
-    if (!p.reconciled) attention.push({ k: `u-${p.id}`, c, text: <>Finish linking <b>{p.name}</b> to its Finance account.</> })
+    if (!p.reconciled) attention.push({ k: `u-${p.id}`, c, text: <>Finish linking <b>{p.name}</b> to its Assets account.</> })
     const r = rebalance(p, holdingsOf(data, p.id), tol)
     if (r && !r.invalid && r.flagged) attention.push({ k: `r-${p.id}`, c, text: <><b>{p.name}</b> is off target: {r.rows.filter((x) => x.off).map((x) => `${x.label} ${x.drift >= 0 ? '+' : '−'}${Math.abs(x.drift).toFixed(1)} pts`).join(', ')} (tolerance ±{tol}).</> })
   }
@@ -49,7 +49,7 @@ export default function Overview({ fx, onOpenCountry }) {
             <tr key={`tot-${c}`} className="total"><td>Total in {curSym(cur(c))}</td><td>{per.reduce((s, p) => s + p.t.count, 0)}</td><td>{per.reduce((s, p) => s + p.t.holdings, 0)}</td><td>{fmtc(cur(c), sumIn(cur(c)))}</td></tr>
           ))}
         </tbody></table></div>
-        {multi ? <FxBar fx={fx} note="These totals are already inside your Finance totals, through the linked accounts." /> : <div className="fx"><span>These totals are already inside your Finance totals, through the linked accounts.</span></div>}
+        {multi ? <FxBar fx={fx} note="These totals are already inside your Assets totals, through the linked accounts." /> : <div className="fx"><span>These totals are already inside your Assets totals, through the linked accounts.</span></div>}
       </div>
       </div>
       <aside className="sp-r">

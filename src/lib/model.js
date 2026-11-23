@@ -14,7 +14,7 @@ export const uid = () => crypto.randomUUID()
 
 export const emptyData = () => ({
   version: 1,
-  settings: { countries: ['us', 'in'], propertyCountries: ['us', 'in'], portfolioCountries: ['us', 'in'], concentrationLimit: 10, rebalanceTol: 5, priceStaleDays: 30, parentLabel: 'Parent', autoLockMin: 10, dueSoonDays: 30 },
+  settings: { countries: ['us', 'in'], concentrationLimit: 10, rebalanceTol: 5, priceStaleDays: 30, parentLabel: 'Parent', autoLockMin: 10, dueSoonDays: 30 },
   accounts: [],
   policies: [],
   balances: [],
@@ -31,10 +31,10 @@ export const emptyData = () => ({
 export function normalizeData(d) {
   const base = emptyData()
   const settings = { ...base.settings, ...(d?.settings || {}) }
-  settings.countries = sanitizeCountries(settings.countries, base.settings.countries)
-  // Property keeps its own list; a vault from before that existed starts from the Finance list.
-  settings.propertyCountries = sanitizeCountries(d?.settings?.propertyCountries || settings.countries)
-  settings.portfolioCountries = sanitizeCountries(d?.settings?.portfolioCountries || settings.countries)
+  // One list of countries for the whole app. A vault from before that (separate Property and Portfolio lists) gets the union, Finance's order first.
+  settings.countries = sanitizeCountries([...(settings.countries || []), ...(d?.settings?.propertyCountries || []), ...(d?.settings?.portfolioCountries || [])], base.settings.countries)
+  delete settings.propertyCountries
+  delete settings.portfolioCountries
   settings.dueSoonDays = d?.settings?.dueSoonDays ?? base.settings.dueSoonDays
   return {
     version: 1,

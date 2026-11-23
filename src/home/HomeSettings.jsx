@@ -3,6 +3,7 @@ import { homePrefs } from '../lib/homeprefs.js'
 import { IS_DEMO } from '../lib/demo.js'
 import { fetchQuotes, fmtPrice, tickerItems } from '../lib/ticker.js'
 import { AV_PROXIES, fetchAvQuotes } from '../lib/alphavantage.js'
+import { noteRequests } from '../lib/symbols.js'
 import { COUNTRIES } from '../lib/format.js'
 
 export default function HomeSettings({ countries }) {
@@ -25,7 +26,7 @@ export default function HomeSettings({ countries }) {
     setTest({ state: 'busy', text: 'Checking…' })
     if (av) {
       const spx = tickerItems(['us']).filter((i) => i.id === 'spx')
-      const out = await fetchAvQuotes(spx, avKey.trim(), { delayMs: 0 })
+      const out = await fetchAvQuotes(spx, avKey.trim(), { delayMs: 0, onRequest: () => noteRequests(1) })
       if (out.quotes.length) setTest({ state: 'ok', text: `✓ Working: SPY ETF ${fmtPrice(out.quotes[0].price)}` })
       else setTest({ state: 'bad', text: out.problems[0] || 'The key did not work.' })
       return

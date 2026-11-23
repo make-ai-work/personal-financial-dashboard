@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { COUNTRIES, curSym } from '../lib/format.js'
+import NumInput from './NumInput.jsx'
 
 const symbolOf = (currency) => Object.values(COUNTRIES).find((c) => c.currency === currency)
 const fmtRate = (currency, r) => {
@@ -38,7 +39,7 @@ export default function FxBar({ fx, note }) {
         {editing ? (
           <form onSubmit={submit}>
             {fx.quotes.map((q) => (
-              <input key={q} className="pw sm" inputMode="decimal" aria-label={`${curSym(fx.base)}1 in ${curSym(q)}`} placeholder={`${curSym(fx.base)}1 = ? ${curSym(q)}`}
+              <NumInput key={q} className="pw sm" aria-label={`${curSym(fx.base)}1 in ${curSym(q)}`} placeholder={`${curSym(fx.base)}1 = ? ${curSym(q)}`}
                 value={vals[q] ?? ''} onChange={(e) => setVals({ ...vals, [q]: e.target.value })} />
             ))}
             <button className="btn">Use</button>

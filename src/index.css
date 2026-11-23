@@ -79,12 +79,8 @@ td.act { text-align: right !important; padding-right: 12px; }
 .chip { font-size: .65rem; padding: 1px 8px; border-radius: 99px; font-weight: 600; color: var(--on-status); }
 .c-mine { background: var(--accent); color: var(--accent-text); } .c-joint { background: var(--amber); } .c-parent { background: var(--purple); } .c-spouse { background: var(--pink); color: var(--on-status); }
 .soon { background: var(--amber); margin-left: 4px; }
-.mix { display: flex; height: 9px; border-radius: 99px; overflow: hidden; min-width: 110px; background: var(--surface-2); }
-.mix i { display: block; }
 .m-equities { background: var(--blue); } .m-cash { background: var(--green); } .m-metals { background: var(--amber); } .m-bonds { background: var(--purple); }
 .mixtxt { font-size: .68rem; color: var(--muted); margin-top: 3px; }
-.mixleg { display: flex; gap: 14px; flex-wrap: wrap; padding: 8px 18px; font-size: .75rem; color: var(--muted); border-top: 1px solid var(--line); }
-.mixleg i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
 
 .fx { display: flex; justify-content: space-between; align-items: center; padding: 10px 18px; background: var(--surface-2); font-size: .82rem; color: var(--muted); gap: 8px; flex-wrap: wrap; }
 .fx b { color: var(--text); }
@@ -461,3 +457,28 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 .rplan-actions { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); font-size: .82rem; }
 .rplan-actions .acts { display: flex; gap: 6px; flex-wrap: wrap; } .rplan-actions .m { color: var(--muted); font-size: .76rem; }
 .rplan-actions .namefld { display: flex; gap: 6px; flex-wrap: wrap; } .rplan-actions input { min-width: 0; flex: 1; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 5px 7px; font-size: .85rem; }
+
+/* Settings: the index ("On this page") and This device are on the LEFT (30%), the settings on the right (70%). On a phone the settings come first. */
+.split7030.split-flip { grid-template-columns: minmax(0, 30fr) minmax(0, 70fr); }
+.settings .sp-r { position: sticky; top: 8px; }
+@media (max-width: 1000px) { .split7030.split-flip { grid-template-columns: minmax(0, 1fr); } .split-flip .sp-l { order: 1; } .split-flip .sp-r { order: 2; } }
+
+/* Mortgage payoff calculator (Property) */
+.calc { border-top: 1px solid var(--line); } .calc > summary { cursor: pointer; padding: 10px 18px; }
+.calc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px 16px; align-items: end; }
+.calc-grid .field input, .lump input { width: 100%; box-sizing: border-box; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 6px 8px; font: inherit; }
+.lumps { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; align-items: flex-start; }
+.lump { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; } .lump label { font-size: .85rem; display: flex; flex-direction: column; gap: 3px; }
+
+/* Add holding: ticker lookup */
+.lookup .two-in { display: flex; gap: 8px; } .lookup .two-in input { flex: 1; min-width: 0; }
+.matches { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+.match { text-align: left; background: var(--surface-2); color: var(--text); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 6px 9px; font: inherit; font-size: .86rem; cursor: pointer; }
+.match:hover { border-color: var(--accent); } .match small { color: var(--muted); }
+
+/* Upload dialog */
+.mapgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px 12px; margin: 6px 0 10px }
+.mapgrid .fld, [data-testid="import-modal"] .fld { display: flex; flex-direction: column; gap: 3px; font-size: .86rem }
+[data-testid="import-modal"] h4 { margin: 14px 0 6px }
+[data-testid="import-modal"] .choice { display: flex; flex-direction: column; gap: 6px }
+[data-testid="import-modal"] ul { margin: 4px 0; padding-left: 1.1rem }

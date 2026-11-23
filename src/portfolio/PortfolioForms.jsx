@@ -1,7 +1,11 @@
 import { useState } from 'react'
 import { Modal, OwnerPicker } from '../finance/ui.jsx'
 import { COUNTRIES, MIX, parseAmount, todayISO, curSym } from '../lib/format.js'
+import { lookupSymbol, usage as avUsage } from '../lib/symbols.js'
+import { homePrefs } from '../lib/homeprefs.js'
+import { useNav } from '../nav.jsx'
 import { CLASSES, HOLDING_TYPES, CLASSES as CLS, holdingValue, targetsTotal } from '../lib/portfolio.js'
+import NumInput from '../finance/NumInput.jsx'
 
 const s = (v) => (v == null ? '' : String(v))
 const num = (v) => (v === '' || v == null ? null : parseAmount(v))
@@ -22,8 +26,8 @@ export function PortfolioModal({ countries, defaultCountry, accounts, linkedIds,
 
   const submit = (e) => {
     e.preventDefault()
-    if (creating && !newAcc.name.trim()) return setErr('Name the new Finance account.')
-    if (!creating && !chosen) return setErr('Pick a Finance account to link.')
+    if (creating && !newAcc.name.trim()) return setErr('Name the new Assets account.')
+    if (!creating && !chosen) return setErr('Pick an Assets account to link.')
     const label = name.trim() || (creating ? newAcc.name.trim() : `${chosen.name}${chosen.institution ? ` · ${chosen.institution}` : ''}`)
     onSave({ name: label, country, accountId: creating ? null : chosen.id, newAccount: creating ? { ...newAcc, name: newAcc.name.trim(), institution: newAcc.institution.trim() } : null })
   }
@@ -43,13 +47,13 @@ export function PortfolioModal({ countries, defaultCountry, accounts, linkedIds,
           </label>
           <label className="field">Portfolio name (optional)<input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Defaults to the account name" /></label>
         </div>
-        <label className="field">Link to a Finance asset account
-          <select aria-label="Finance account" value={creating && free.length ? 'new' : accountId || (free[0]?.id ?? 'new')} onChange={(e) => setAccountId(e.target.value)}>
+        <label className="field">Link to an Assets asset account
+          <select aria-label="Assets account" value={creating && free.length ? 'new' : accountId || (free[0]?.id ?? 'new')} onChange={(e) => setAccountId(e.target.value)}>
             {free.map((a) => <option key={a.id} value={a.id}>{a.name}{a.institution ? ` · ${a.institution}` : ''} — {COUNTRIES[country].symbol}{Math.round(a.balance || 0).toLocaleString(COUNTRIES[country].locale)}</option>)}
-            <option value="new">+ Create a new Finance account…</option>
+            <option value="new">+ Create a new Assets account…</option>
           </select>
         </label>
-        {free.length === 0 && <p className="note">There is no unlinked asset account in {COUNTRIES[country].flag} {COUNTRIES[country].name} yet, so a new one will be created in Finance.</p>}
+        {free.length === 0 && <p className="note">There is no unlinked asset account in {COUNTRIES[country].flag} {COUNTRIES[country].name} yet, so a new one will be created in Assets.</p>}
         {creating && (
           <div className="subform">
             <div className="two">
@@ -63,7 +67,7 @@ export function PortfolioModal({ countries, defaultCountry, accounts, linkedIds,
           After you finish linking, the account's balance and asset-mix bar are calculated from this portfolio's holdings.
           {!creating && chosen ? <> Its current balance (<b>{COUNTRIES[country].symbol}{Math.round(chosen.balance || 0).toLocaleString(COUNTRIES[country].locale)}</b>) stays as it is until then, and you'll compare it with your holdings.</> : <> A new account starts at {cur} 0.</>}
         </div>
-        <div className="sub">Each Finance account can be linked to one portfolio. Deleting the portfolio later keeps the account with its last balance.</div>
+        <div className="sub">Each Assets account can be linked to one portfolio. Deleting the portfolio later keeps the account with its last balance.</div>
         {err && <div className="err">{err}</div>}
       </form>
     </Modal>
@@ -81,7 +85,23 @@ export function HoldingModal({ portfolio, country, initial, onSave, onClose }) {
     priceDate: initial?.priceDate || todayISO(), notes: initial?.notes || '',
   })
   const [err, setErr] = useState('')
+  const [look, setLook] = useState({ state: 'idle', matches: [], msg: '', source: '' })
+  const [used, setUsed] = useState(avUsage())
+  const avKey = homePrefs.avKey()
+  const nav = useNav()
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value })
+  // Ticker first: press Look up (nothing is asked while you type) and pick the match; the name and type are filled in, and you can still change them.
+  const doLook = async () => {
+    setLook({ state: 'busy', matches: [], msg: '', source: '' })
+    const r = await lookupSymbol(f.ticker, { key: avKey })
+    setUsed(r.usage)
+    if (r.error) setLook({ state: 'error', matches: [], msg: r.error, source: '' })
+    else setLook({ state: 'ok', matches: r.matches, msg: '', source: r.source })
+  }
+  const pickMatch = (m) => {
+    setF({ ...f, ticker: m.symbol, name: m.name, type: m.type === 'other' ? f.type : m.type, geo: f.geo || (m.country ? COUNTRIES[m.country]?.name || '' : '') })
+    setLook({ state: 'picked', matches: [], msg: `Filled in from ${m.symbol}. Check it, then enter the units and the price.`, source: '' })
+  }
   const live = holdingValue({ trackBy: f.trackBy, units: num(f.units) || 0, price: num(f.price) || 0, value: num(f.value) || 0 })
   const mixTotal = f.mix.reduce((t, v) => t + (parseAmount(v) || 0), 0)
 
@@ -111,10 +131,31 @@ export function HoldingModal({ portfolio, country, initial, onSave, onClose }) {
       footer={<><button type="button" className="btn" onClick={onClose}>Cancel</button><button form="hold-form" className="btn primary">Save holding</button></>}
     >
       <form id="hold-form" onSubmit={submit}>
-        <div className="two">
-          <label className="field">Name<input autoFocus value={f.name} onChange={set('name')} /></label>
-          {!unalloc && <label className="field">Ticker / symbol (optional)<input value={f.ticker} onChange={set('ticker')} /></label>}
-        </div>
+        {!unalloc && (
+          <div className="field lookup" data-testid="ticker-lookup">Ticker / symbol
+            <span className="two-in">
+              <input autoFocus value={f.ticker} aria-label="Ticker / symbol" placeholder="e.g. VTI, INFY.BSE, ISF.LON" onChange={(e) => { set('ticker')(e); if (look.state !== 'idle') setLook({ state: 'idle', matches: [], msg: '', source: '' }) }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (f.ticker.trim() && look.state !== 'busy') doLook() } }} />
+              <button type="button" className="btn" onClick={doLook} disabled={!f.ticker.trim() || look.state === 'busy'}>{look.state === 'busy' ? 'Looking up…' : 'Look up'}</button>
+            </span>
+            <small className="sub" data-testid="av-usage">{avKey
+              ? <>Alpha Vantage free key: <b>{used.used} of {used.limit}</b> requests used today, <b>{used.remaining}</b> left (resets tomorrow). A lookup uses 1; one you already did is free.</>
+              : <>No Alpha Vantage key yet, so type the name yourself, or <button type="button" className="link" onClick={() => { onClose(); nav.go('settings', { section: 'home' }) }}>add a key in Settings</button> to look symbols up.</>}</small>
+            {look.state === 'error' && <span className="err" role="alert" data-testid="lookup-error">{look.msg}</span>}
+            {look.state === 'picked' && <span className="okmsg" role="status">{look.msg}</span>}
+            {look.state === 'ok' && (
+              <span className="matches" role="listbox" aria-label="Matches" data-testid="lookup-matches">
+                {look.matches.slice(0, 6).map((m) => (
+                  <button type="button" role="option" key={m.symbol} className="match" onClick={() => pickMatch(m)}>
+                    <b>{m.symbol}</b> {m.name}<small> · {[m.region, m.currency, m.type].filter(Boolean).join(' · ')}</small>
+                  </button>
+                ))}
+                <small className="sub">{look.source === 'alphavantage' ? 'From Alpha Vantage (1 request used).' : look.source === 'cache' ? 'From an earlier lookup (no request used).' : 'From the offline ticker list (no request used).'}</small>
+              </span>
+            )}
+          </div>
+        )}
+        <label className="field">Name<input autoFocus={unalloc} value={f.name} onChange={set('name')} /></label>
         {!unalloc && (
           <>
             <div className="three">
@@ -129,7 +170,7 @@ export function HoldingModal({ portfolio, country, initial, onSave, onClose }) {
                 <div className="four">
                   {MIX.map((m, i) => (
                     <label key={m.key} className="field sub-field">{m.label}
-                      <input inputMode="decimal" value={f.mix[i]} onChange={(e) => setF({ ...f, mix: f.mix.map((v, j) => (j === i ? e.target.value : v)) })} />
+                      <NumInput value={f.mix[i]} onChange={(e) => setF({ ...f, mix: f.mix.map((v, j) => (j === i ? e.target.value : v)) })} />
                     </label>
                   ))}
                 </div>
@@ -149,10 +190,10 @@ export function HoldingModal({ portfolio, country, initial, onSave, onClose }) {
         <div className="three">
           {f.trackBy === 'units' && !unalloc ? (
             <>
-              <label className="field">Units<input inputMode="decimal" value={f.units} onChange={set('units')} /></label>
-              <label className="field">Price per unit ({sym})<input inputMode="decimal" value={f.price} onChange={set('price')} /></label>
+              <label className="field">Units<NumInput value={f.units} onChange={set('units')} /></label>
+              <label className="field">Price per unit ({sym})<NumInput value={f.price} onChange={set('price')} /></label>
             </>
-          ) : <label className="field">Total value ({sym})<input inputMode="decimal" value={f.value} onChange={set('value')} /></label>}
+          ) : <label className="field">Total value ({sym})<NumInput value={f.value} onChange={set('value')} /></label>}
           <label className="field">Price date<input type="date" value={f.priceDate} onChange={set('priceDate')} /></label>
         </div>
         {f.trackBy === 'units' && !unalloc && <div className="sub">Value: <b>{COUNTRIES[country].symbol}{fmt2(live)}</b></div>}
@@ -196,7 +237,7 @@ export function PricesModal({ country, portfolios, holdingsOf, onSave, onClose }
                   <td className="r">{h.trackBy === 'units' ? h.units : '—'}</td>
                   <td className="r">{h.trackBy === 'units' ? h.price : h.value}</td>
                   <td>{h.priceDate}</td>
-                  <td className="r"><input aria-label={`New ${h.trackBy === 'units' ? 'price' : 'value'} for ${h.name}`} inputMode="decimal" value={vals[h.id] ?? ''} onChange={(e) => setVals({ ...vals, [h.id]: e.target.value })} placeholder={h.trackBy === 'units' ? 'price' : 'total'} /></td>
+                  <td className="r"><NumInput aria-label={`New ${h.trackBy === 'units' ? 'price' : 'value'} for ${h.name}`} value={vals[h.id] ?? ''} onChange={(e) => setVals({ ...vals, [h.id]: e.target.value })} placeholder={h.trackBy === 'units' ? 'price' : 'total'} /></td>
                 </tr>
               ))}
             </tbody></table>
@@ -236,7 +277,7 @@ export function TargetsModal({ portfolio, onSave, onClose }) {
         <div className="four">
           {CLS.map((c) => (
             <label key={c.key} className="field sub-field">{c.label} %
-              <input autoFocus={c.key === 'equities'} inputMode="decimal" value={t[c.key]} onChange={(e) => setT({ ...t, [c.key]: e.target.value })} />
+              <NumInput autoFocus={c.key === 'equities'} value={t[c.key]} onChange={(e) => setT({ ...t, [c.key]: e.target.value })} />
             </label>
           ))}
         </div>

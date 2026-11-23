@@ -11,10 +11,13 @@ const load = async () => {
   return mod.default || mod
 }
 
+// Home insurance is stored as one JSON cell on the Property sheet (it has a list of coverage limits).
+const parseInsurance = (v) => { try { const j = JSON.parse(String(v || '')); return j && typeof j === 'object' ? j : null } catch { return null } }
+
 const ITEMS = ['ID', 'Country', 'Type', 'Name', 'Account number', 'Institution', 'Owner', 'Current balance',
   ...MIX.map((m) => `${m.label} %`), 'Maturity date', 'Value at maturity']
 const PROPERTY = ['ID', 'Name', 'Country', 'Address', 'Type', 'Owner', 'Purchase date', 'Purchase price', 'Bedrooms', 'Bathrooms', 'Size sq ft',
-  'Property tax / year', 'Insurance / year', 'HOA / month', 'Next tax due', 'Notes']
+  'Property tax / year', 'Insurance / year', 'HOA / month', 'Next tax due', 'Notes', 'Home insurance (JSON)']
 const PROPERTY_VALUES = ['ID', 'Property ID', 'Date', 'Value', 'Source', 'Notes']
 const LOANS = ['ID', 'Property ID', 'Lender', 'Loan number', 'Original amount', 'Start date', 'Term years', 'Rate %', 'Rate type', 'Monthly payment', 'Escrow', 'Payment day', 'Notes']
 const LOAN_UPDATES = ['ID', 'Loan ID', 'Date', 'Balance', 'Principal', 'Interest', 'Escrow', 'Notes']
@@ -45,7 +48,7 @@ export async function exportWorkbook(data) {
   sheet(wb, 'Rates', ['Date', 'From', 'To', 'Rate'], data.rates.map((r) => [r.date, r.from, r.to, r.rate]))
   sheet(wb, 'Property', PROPERTY, data.properties.map((p) => [
     p.id, p.name, p.country, p.address || '', p.type, p.owner, p.purchaseDate || '', p.purchasePrice ?? null, p.bedrooms ?? null, p.bathrooms ?? null,
-    p.sizeSqft ?? null, p.taxYear ?? null, p.insuranceYear ?? null, p.hoaMonth ?? null, p.taxDue || '', p.notes || '',
+    p.sizeSqft ?? null, p.taxYear ?? null, p.insuranceYear ?? null, p.hoaMonth ?? null, p.taxDue || '', p.notes || '', p.homeInsurance ? JSON.stringify(p.homeInsurance) : '',
   ]))
   sheet(wb, 'PropertyValues', PROPERTY_VALUES, data.propertyValues.map((v) => [v.id, v.propertyId, v.date, v.value, v.source, v.notes || '']))
   sheet(wb, 'Loans', LOANS, data.loans.map((l) => [
@@ -63,8 +66,6 @@ export async function exportWorkbook(data) {
   ]))
   sheet(wb, 'Settings', ['Key', 'Value'], [
     ['countries', data.settings.countries.join(',')],
-    ['propertyCountries', data.settings.propertyCountries.join(',')],
-    ['portfolioCountries', data.settings.portfolioCountries.join(',')],
     ['concentrationLimit', data.settings.concentrationLimit],
     ['rebalanceTol', data.settings.rebalanceTol],
     ['priceStaleDays', data.settings.priceStaleDays],
@@ -160,7 +161,7 @@ export async function importWorkbook(buffer) {
       id, name: String(r.Name), country: r.Country, address: String(r.Address ?? ''), type: typeKeys.includes(r.Type) ? r.Type : 'other',
       owner: OWNERS.includes(r.Owner) ? r.Owner : 'mine', purchaseDate: String(r['Purchase date'] ?? ''), purchasePrice: num(r['Purchase price']),
       bedrooms: num(r.Bedrooms), bathrooms: num(r.Bathrooms), sizeSqft: num(r['Size sq ft']), taxYear: num(r['Property tax / year']),
-      insuranceYear: num(r['Insurance / year']), hoaMonth: num(r['HOA / month']), taxDue: String(r['Next tax due'] ?? ''), notes: String(r.Notes ?? ''),
+      insuranceYear: num(r['Insurance / year']), hoaMonth: num(r['HOA / month']), taxDue: String(r['Next tax due'] ?? ''), notes: String(r.Notes ?? ''), ...(parseInsurance(r['Home insurance (JSON)']) ? { homeInsurance: parseInsurance(r['Home insurance (JSON)']) } : {}),
     })
   }
   for (const r of readRows(wb.getWorksheet('PropertyValues'))) {
@@ -216,10 +217,10 @@ export async function importWorkbook(buffer) {
       priceDate: String(r['Price date'] ?? ''), notes: String(r.Notes ?? ''),
     })
   }
+  const legacyCountries = []
   for (const r of readRows(wb.getWorksheet('Settings'))) {
     if (r.Key === 'countries') data.settings.countries = sanitizeCountries(String(r.Value).split(',').map((x) => x.trim()), data.settings.countries)
-    if (r.Key === 'propertyCountries') data.settings.propertyCountries = sanitizeCountries(String(r.Value).split(',').map((x) => x.trim()), data.settings.countries)
-    if (r.Key === 'portfolioCountries') data.settings.portfolioCountries = sanitizeCountries(String(r.Value).split(',').map((x) => x.trim()), data.settings.countries)
+    if (r.Key === 'propertyCountries' || r.Key === 'portfolioCountries') legacyCountries.push(...String(r.Value).split(',').map((x) => x.trim())) // older exports had separate lists
     if (r.Key === 'concentrationLimit' && num(r.Value) > 0) data.settings.concentrationLimit = num(r.Value)
     if (r.Key === 'rebalanceTol' && num(r.Value) > 0) data.settings.rebalanceTol = num(r.Value)
     if (r.Key === 'priceStaleDays' && num(r.Value) > 0) data.settings.priceStaleDays = num(r.Value)
@@ -227,5 +228,6 @@ export async function importWorkbook(buffer) {
     if (r.Key === 'autoLockMin' && num(r.Value) != null) data.settings.autoLockMin = num(r.Value)
     if (r.Key === 'dueSoonDays' && num(r.Value) > 0) data.settings.dueSoonDays = num(r.Value)
   }
+  if (legacyCountries.length) data.settings.countries = sanitizeCountries([...data.settings.countries, ...legacyCountries], data.settings.countries)
   return { data, warnings }
 }
