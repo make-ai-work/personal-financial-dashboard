@@ -28,21 +28,24 @@ export function ChanceBox({ plan, a, o, A, busy, problems, corOk }) {
   const cls = !A ? '' : A.succ >= target ? 'big-ok' : A.succ >= target - 0.15 ? 'big-mid' : 'big-bad'
   return (
     <div className="panel" data-testid="chance-box">
-      <div className="p-head"><div className="title">Chance of success <span className="sub">{a.n.toLocaleString()} simulations{busy ? ' · calculating…' : ''}</span></div>{status}</div>
+      <div className="p-head"><div className="title">Chance of success <span className="sub">{a.n.toLocaleString()} simulations{busy ? ' · calculating…' : ''}</span></div></div>
       {fixes}
       {A ? (
         <>
-          <div className="pad rbig" style={busy ? { opacity: 0.5 } : undefined}>
-            <b className={cls} data-testid="chance">{pct(A.succ, 1)}</b>
-            <span className="sub">chance your savings last to age {plan.life}</span>
-          </div>
-          <div className="kpis3" style={busy ? { opacity: 0.5 } : undefined}>
-            {[
-              [fmt(A.atRetirement.p50), 'Median savings at retirement'],
-              [`${fmt(A.atRetirement.p10)} – ${fmt(A.atRetirement.p90)}`, '10th to 90th percentile at retirement'],
-              [fmt(A.atEnd.p50), `Median left at age ${plan.life}`],
-              [A.medianDepletion ? `Age ${A.medianDepletion}` : '—', 'Typical age money runs out, where it does'],
-            ].map(([v, l]) => <div className="kpi" key={l}><small>{l}</small><b>{v}</b></div>)}
+          <div className="rchance" style={busy ? { opacity: 0.5 } : undefined}>
+            <div className="rbigcol">
+              <b className={cls} data-testid="chance">{pct(A.succ, 1)}</b>
+              <span className="rstatus">{status}</span>
+              <span className="sub">chance your savings last to age {plan.life}</span>
+            </div>
+            <div className="rkpis">
+              {[
+                [fmt(A.atRetirement.p50), 'Median savings at retirement'],
+                [`${fmt(A.atRetirement.p10)} – ${fmt(A.atRetirement.p90)}`, '10th to 90th percentile at retirement'],
+                [fmt(A.atEnd.p50), `Median left at age ${plan.life}`],
+                [A.medianDepletion ? `Age ${A.medianDepletion}` : '—', 'Typical age money runs out, where it does'],
+              ].map(([v, l]) => <div className="kpi" key={l}><small>{l}</small><b>{v}</b></div>)}
+            </div>
           </div>
           {A.succ >= target
             ? <div className="okrow">On track: this plan meets your {a.target}% target.</div>

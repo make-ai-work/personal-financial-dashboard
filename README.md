@@ -86,7 +86,7 @@ Demo site, web, installed web app, Windows app and Android app all open the same
   one; the highlighted one is the plan you are on, and under the tiles it has Save changes, Rename and Delete; an empty "+" tile saves your current inputs as another plan), then the **inputs** (your situation including
   contribution growth, *Savings used* picked from Finance asset accounts, *Inheritance*, *Income in retirement* with the **insurance survivor benefit**
   tick-box, and market conditions with a staleness warning; the savings and inheritance sections fold to a one-line summary). The **chance of success**
-  (with On track / Off track at your target, 85% by default) spans the width of the other two columns. Under it, in the middle: **results** (nest egg
+  (a large percentage on the left with On track / Off track at your target, 85% by default, under it, and the key figures on the right) spans the width of the other two columns. Under it, in the middle: **results** (nest egg
   needed, projected balance, surplus or shortfall, extra saving needed) and **monthly income, planned vs projected**; on the right: the **charts**
   (**Projected Net Worth**, **Chance your savings last**, and folded: when it runs out, the 10-year-yield sensitivity table and a comparison of the saved plans).
   *Advanced* (volatility, correlations,
@@ -137,7 +137,7 @@ Demo site, web, installed web app, Windows app and Android app all open the same
 On the lock screen, *Forgot the passphrase? Use your recovery key…* opens the vault with it and sets a new passphrase. Without a recovery key a forgotten passphrase cannot be reset.
 Files use format `WVLT2` (a random data key, stored once under the passphrase and once under the recovery key); older `WVLT1` files still open and are upgraded on the next save.
 
-**Number fields** show thousands separators as you type (1,250,000); the stored value is always the plain number. **Displayed amounts** with more than 9 digits in the whole-number part (1,000,000,000 and up) are shown in words instead: "$ 1.25 billion", and rupees in crore ("₹ 1,250 crore"); smaller amounts keep every digit.
+**Number fields** show thousands separators as you type (1,250,000); the stored value is always the plain number. **Displayed amounts** with more than 9 digits in the whole-number part (1,000,000,000 and up) are shown in words instead: "$ 1.25 billion", and rupees in crore once they are above 10 crore ("₹ 25 crore", "₹ 1,250 crore"); smaller amounts keep every digit.
 
 - Everything lives in one encrypted file (`*.wvault`), created and opened from the app. Nothing is
   sent to a server. Full account and policy numbers are stored in it.

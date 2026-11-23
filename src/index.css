@@ -574,3 +574,12 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 .fxchip b { font-weight: 600 }
 .home-grid .sumt { table-layout: auto; font-size: .76rem } .home-grid .sumt th, .home-grid .sumt td { padding: 6px 4px } .home-grid .sumt .cur { display: none } .home-grid .sumt th { font-size: .66rem }
 .home-grid .tblw { overflow-x: auto }
+
+/* Retirement: the chance of success, the big number on the left (with the status under it) and the figures on the right */
+.rchance { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 20px 28px; align-items: center; padding: 16px 18px }
+.rbigcol { display: flex; flex-direction: column; align-items: flex-start; gap: 8px }
+.rbigcol b { font-size: clamp(3.4rem, 7vw, 5rem); line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -.02em }
+.rstatus .pill { font-size: 1.15rem; font-weight: 700; padding: 6px 20px }
+.rkpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; min-width: 0 }
+.rkpis .kpi { min-width: 0 } .rkpis .kpi b { overflow-wrap: anywhere }
+@media (max-width: 700px) { .rchance { grid-template-columns: minmax(0, 1fr); padding: 14px } .rkpis { gap: 10px } }
