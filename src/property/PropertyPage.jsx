@@ -2,13 +2,15 @@ import { useState } from 'react'
 import { useVault } from '../finance/VaultContext.jsx'
 import Chart from '../finance/Chart.jsx'
 import { OwnerChip } from '../finance/ui.jsx'
-import { LoanModal, LoanUpdateModal, PropertyModal, ValuationModal, zillowUrl } from './PropertyForms.jsx'
+import { InsuranceModal, LoanModal, LoanUpdateModal, PropertyModal, ValuationModal, zillowUrl } from './PropertyForms.jsx'
+import PayoffCalculator, { regularPayment } from './PayoffCalculator.jsx'
+import { describeMonths, timeRemaining } from '../lib/amortization.js'
 import { COUNTRIES, fmtDate, maskNumber, money, todayISO } from '../lib/format.js'
 import { daysBetween } from '../lib/dates.js'
 import {
   addLoan, addLoanUpdate, addValuation, changeLast12Months, gainSincePurchase, history, loansOf, removeLoan, removeLoanUpdate,
   removeProperty, removeValuation, scheduledPayoff, snapshot, sourceLabel, typeIcon, typeLabel, updateLoan, updateLoanUpdate,
-  updateProperty, updateValuation, updatesOf, valueRange, valuationsOf,
+  updateProperty, updateValuation, updatesOf, valueRange, valuationsOf, COVERAGE_LINES, insuranceAnnual, insuranceWarnings, setHomeInsurance,
 } from '../lib/property.js'
 
 const sign = (n) => (n >= 0 ? '+ ' : '− ')
@@ -26,6 +28,8 @@ export default function PropertyPage({ property, reveal, onDeleted }) {
   const snap = snapshot(data, property, today)
   const vals = valuationsOf(data, property.id)
   const loans = loansOf(data, property.id)
+  const ins = property.homeInsurance || null
+  const insWarnings = insuranceWarnings(ins, snap.value, today, data.settings.dueSoonDays)
   const change = changeLast12Months(data, property.id, today)
   const gain = gainSincePurchase(property, snap.value)
   const range = valueRange(data, property.id)
@@ -103,6 +107,7 @@ export default function PropertyPage({ property, reveal, onDeleted }) {
       {snap.loans.map(({ loan: l, balance, date, recorded }) => {
         const ups = updatesOf(data, l.id)
         const payoff = scheduledPayoff(l)
+        const left = timeRemaining({ balance, ratePct: l.rate, payment: regularPayment(l), startDate: l.startDate, termYears: l.termYears }, today)
         return (
           <div className="panel" key={l.id}>
             <div className="p-head">
@@ -122,8 +127,10 @@ export default function PropertyPage({ property, reveal, onDeleted }) {
               <div><small>Current balance</small><b className="neg" style={{ fontSize: '1.2rem' }}>{fmt(balance)}</b><br />
                 <span className="sub">{recorded ? `recorded ${fmtDate(date)}` : 'estimated from the loan schedule — record an update'}</span></div>
               <Kv label="Scheduled payoff" sub={payoff ? 'from rate & term' : ''}>{payoff && new Date(payoff + 'T00:00:00').toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}</Kv>
+              <Kv label="Time remaining" sub={left && left.months > 0 ? `until ${new Date(left.payoffDate + 'T00:00:00').toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}${left.source === 'term' ? ' · from the start date and term' : ' · at your regular payment'}` : ''}>{left ? <span data-testid="time-remaining">{describeMonths(left.months)}</span> : null}</Kv>
               <Kv label="Notes">{l.notes}</Kv>
             </div>
+            <PayoffCalculator loan={l} balance={balance} fmt={fmt} />
             <div className="tblw"><table className="t-left t-loan"><thead><tr><th>Date</th><th className="r">Balance after</th><th className="r">Principal paid</th><th className="r">Interest paid</th><th className="r">Escrow paid</th><th>Notes</th><th /></tr></thead><tbody>
               {ups.length === 0 && <tr><td colSpan="7" className="none">No updates recorded yet.</td></tr>}
               {ups.map((u) => (
@@ -141,6 +148,30 @@ export default function PropertyPage({ property, reveal, onDeleted }) {
           </div>
         )
       })}
+      <div className="panel" data-testid="home-insurance">
+        <div className="p-head">
+          <div className="title">Home insurance {ins?.insurer && <span className="sub">{ins.insurer}</span>}</div>
+          <div className="row-actions"><button className="btn" onClick={() => setModal({ kind: 'insurance' })}>{ins ? 'Edit' : '+ Add home insurance'}</button></div>
+        </div>
+        {!ins && <div className="pad sub">No home insurance recorded for this property. Add the policy, its coverage limits and its renewal date to get a reminder and a check of the dwelling limit.</div>}
+        {ins && (
+          <>
+            {insWarnings.map((w, i) => <div key={i} className={w.level === 'bad' ? 'badrow' : 'warnrow'}>{w.text}</div>)}
+            <div className="kv">
+              <Kv label="Premium" sub={insuranceAnnual(ins) > 0 ? `${fmt(insuranceAnnual(ins))} per year · about ${fmt(insuranceAnnual(ins) / 12)} a month` : ''}>{ins.premium > 0 && fmt(ins.premium)}</Kv>
+              <Kv label="Renews">{ins.renewal && fmtDate(ins.renewal)}</Kv>
+              <Kv label="Deductible">{ins.deductible > 0 && fmt(ins.deductible)}</Kv>
+              <Kv label="Policy number">{ins.number && <span className="mono">{reveal ? ins.number : maskNumber(ins.number)}</span>}</Kv>
+              <Kv label="Rebuild cost">{ins.rebuildCost > 0 && fmt(ins.rebuildCost)}</Kv>
+            </div>
+            <div className="tblw"><table className="t-left" data-testid="coverage-limits"><thead><tr><th>Coverage</th><th className="r">Limit</th></tr></thead><tbody>
+              {COVERAGE_LINES.map((l) => <tr key={l.key}><td>{l.label}</td><td className="r">{ins.limits?.[l.key] > 0 ? fmt(ins.limits[l.key]) : '—'}</td></tr>)}
+              {(ins.extras || []).map((x) => <tr key={x.id}><td>{x.name || 'Other cover'}</td><td className="r">{x.limit > 0 ? fmt(x.limit) : '—'}</td></tr>)}
+            </tbody></table></div>
+            {ins.notes && <div className="pad sub">{ins.notes}</div>}
+          </>
+        )}
+      </div>
       <div className="panel"><div className="pad"><button className="btn" onClick={() => setModal({ kind: 'loan' })}>+ Add mortgage</button>
         {loans.length === 0 && <span className="sub"> No mortgage on this property. Add one to track balance, payments and equity.</span>}</div></div>
 
@@ -161,8 +192,13 @@ export default function PropertyPage({ property, reveal, onDeleted }) {
       </div>
 
       {modal?.kind === 'property' && (
-        <PropertyModal initial={property} countries={data.settings.propertyCountries} parentLabel={parentLabel} onClose={done}
+        <PropertyModal initial={property} countries={data.settings.countries} parentLabel={parentLabel} onClose={done}
           onSave={(patch) => { update((d) => updateProperty(d, property.id, patch)); done() }} />
+      )}
+      {modal?.kind === 'insurance' && (
+        <InsuranceModal property={property} initial={ins} onClose={done}
+          onSave={(v) => { update((d) => setHomeInsurance(d, property.id, v)); done() }}
+          onRemove={() => { if (window.confirm('Remove the home insurance from this property?')) { update((d) => setHomeInsurance(d, property.id, null)); done() } }} />
       )}
       {modal?.kind === 'valuation' && (
         <ValuationModal property={property} initial={modal.item} onClose={done}

@@ -1,7 +1,8 @@
 // Pure helpers for the Property tab. Dates are 'YYYY-MM-DD'; `today` is always passed in.
 //
 // property:      { id, name, country, address, type, owner, purchaseDate, purchasePrice, bedrooms, bathrooms,
-//                  sizeSqft, taxYear, insuranceYear, hoaMonth, taxDue, notes }
+//                  sizeSqft, taxYear, insuranceYear, hoaMonth, taxDue, notes, homeInsurance }
+// homeInsurance: null | { insurer, number, premium, frequency, renewal, deductible, rebuildCost, limits: { dwelling, structures, contents, loss, liability, medical }, extras: [{ id, name, limit }], notes }
 // valuation:     { id, propertyId, date, value, source, notes }                 (data.propertyValues)
 // loan:          { id, propertyId, lender, number, originalAmount, startDate, termYears, rate, rateType,
 //                  monthlyPayment, escrow, paymentDay, notes }                  (data.loans)
@@ -100,6 +101,42 @@ export function loanBalanceOn(d, loan, date) {
   return { balance: scheduledBalance(loan, date), date: null, recorded: false }
 }
 
+// ---- home insurance (one policy per property, with its coverage limits) ----
+export const COVERAGE_LINES = [
+  { key: 'dwelling', label: 'Dwelling (the building)' },
+  { key: 'structures', label: 'Other structures' },
+  { key: 'contents', label: 'Personal property (contents)' },
+  { key: 'loss', label: 'Loss of use (living costs)' },
+  { key: 'liability', label: 'Personal liability' },
+  { key: 'medical', label: 'Medical payments' },
+]
+export const PREMIUM_FREQUENCIES = [
+  { key: 'year', label: 'per year', perYear: 1 },
+  { key: 'quarter', label: 'per quarter', perYear: 4 },
+  { key: 'month', label: 'per month', perYear: 12 },
+]
+export const emptyInsurance = () => ({ insurer: '', number: '', premium: null, frequency: 'year', renewal: '', deductible: null, rebuildCost: null, limits: { dwelling: null, structures: null, contents: null, loss: null, liability: null, medical: null }, extras: [], notes: '' })
+export const insuranceAnnual = (ins) => (ins && ins.premium > 0 ? ins.premium * (PREMIUM_FREQUENCIES.find((f) => f.key === ins.frequency)?.perYear || 1) : 0)
+export const setHomeInsurance = (d, propertyId, homeInsurance) => updateProperty(d, propertyId, { homeInsurance })
+
+// Things worth a second look: a dwelling limit below the property's value or the rebuild cost, a missing dwelling limit, a renewal that is past or close.
+export function insuranceWarnings(ins, value, today, soonDays = 30) {
+  if (!ins) return []
+  const out = []
+  const dwelling = ins.limits?.dwelling
+  if (!(dwelling > 0)) out.push({ level: 'warn', text: 'No dwelling limit entered, so the building cover cannot be checked.' })
+  else {
+    if (ins.rebuildCost > 0 && dwelling < ins.rebuildCost) out.push({ level: 'bad', text: `The dwelling limit is below the rebuild cost you entered (short by ${Math.round(ins.rebuildCost - dwelling).toLocaleString('en-US')}).` })
+    else if (!(ins.rebuildCost > 0) && value > 0 && dwelling < value) out.push({ level: 'warn', text: 'The dwelling limit is below the property value. The land is not insured, so this can be fine; enter a rebuild cost to check properly.' })
+  }
+  if (ins.renewal) {
+    const days = daysBetween(today, ins.renewal)
+    if (days < 0) out.push({ level: 'bad', text: `The policy renewal date passed ${-days} day${days === -1 ? '' : 's'} ago. Update it or renew.` })
+    else if (days <= soonDays) out.push({ level: 'warn', text: `The policy renews in ${days} day${days === 1 ? '' : 's'}.` })
+  }
+  return out
+}
+
 // ---- values ----
 export const valuationsOf = (d, propertyId) => d.propertyValues.filter((v) => v.propertyId === propertyId).sort(byDateDesc)
 export const currentValuation = (d, propertyId) => valuationsOf(d, propertyId)[0] || null
@@ -170,6 +207,12 @@ export function dueItems(d, today, soonDays, properties) {
     if (p.taxDue) {
       const st = dueStatus(p.taxDue, today, soonDays)
       items.push({ id: `tax-${p.id}`, propertyId: p.id, country: p.country, label: `${p.name} · Property tax`, sub: p.taxYear > 0 ? `${money(p.country, p.taxYear)} per year` : 'Property tax', date: p.taxDue, status: st.status, text: st.text, days: st.days })
+    }
+  }
+  for (const p of properties) {
+    if (p.homeInsurance?.renewal) {
+      const st = dueStatus(p.homeInsurance.renewal, today, soonDays)
+      items.push({ id: `ins-${p.id}`, propertyId: p.id, country: p.country, label: `${p.name} · Home insurance renewal`, sub: [p.homeInsurance.insurer, insuranceAnnual(p.homeInsurance) > 0 && `${money(p.country, insuranceAnnual(p.homeInsurance))} per year`].filter(Boolean).join(' · ') || 'Home insurance', date: p.homeInsurance.renewal, ...st })
     }
   }
   return items.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))

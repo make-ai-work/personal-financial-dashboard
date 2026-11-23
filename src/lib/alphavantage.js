@@ -29,7 +29,7 @@ export function parseGlobalQuote(json) {
 }
 
 // Quotes for ticker items that have a stand-in, one request each, a little over a second apart (the free plan's limit).
-export async function fetchAvQuotes(items, key, { fetchImpl = fetch, delayMs = 1200 } = {}) {
+export async function fetchAvQuotes(items, key, { fetchImpl = fetch, delayMs = 1200, onRequest = () => {} } = {}) {
   const quotes = []
   const problems = []
   const todo = items.filter((i) => AV_PROXIES[i.id])
@@ -38,6 +38,7 @@ export async function fetchAvQuotes(items, key, { fetchImpl = fetch, delayMs = 1
     const p = AV_PROXIES[it.id]
     if (n && delayMs) await new Promise((r) => setTimeout(r, delayMs))
     try {
+      onRequest() // so the day's request count (shown in Add holding) includes the prices on Home
       const out = parseGlobalQuote(await (await fetchImpl(quoteUrl(p.symbol, key))).json())
       if (out?.error) { problems.push(out.error); break } // a limit message applies to every later request too
       if (out) quotes.push({ id: it.id, ...out, via: p.via })

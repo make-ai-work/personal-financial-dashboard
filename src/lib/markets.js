@@ -6,6 +6,7 @@ export const EXCHANGES = {
   uk: { name: 'London Stock Exchange', tz: 'Europe/London', open: [8, 0], close: [16, 30] },
   au: { name: 'ASX', tz: 'Australia/Sydney', open: [10, 0], close: [16, 0] },
   ch: { name: 'SIX Swiss Exchange', tz: 'Europe/Zurich', open: [9, 0], close: [17, 30] },
+  ie: { name: 'Euronext Dublin', tz: 'Europe/Dublin', open: [8, 0], close: [16, 30] },
 }
 const DAYS = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']

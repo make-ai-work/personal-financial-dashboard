@@ -4,6 +4,7 @@ import { addIncome, addInheritance, assetAccounts, accountCurrency, marketAgeDay
 import { portfolioFor } from '../lib/portfolio.js'
 import { usePhone } from '../lib/usePhone.js'
 import { NumRow, Row } from './fields.jsx'
+import NumInput from '../finance/NumInput.jsx'
 
 // A section that can be folded away. Folded, it still shows a one-line summary (like "3 accounts · $ 412,000").
 function Fold({ id, title, tag, summary, action, open = false, children }) {
@@ -67,16 +68,16 @@ export default function Inputs({ plan, fx }) {
               <span className="amt">{moneyCurrency(c, ac.balance)}</span>
               <span className="sec">
                 <span className={`chip c-${ac.owner}`}>{ownerLabel(ac.owner, data.settings.parentLabel)}</span>
-                <span className="src">{linked ? '📈 from holdings' : ac.mix?.[0] ? 'asset mix' : 'cash'}</span>
+                <span className="src">{linked ? '📈 from holdings' : 'savings only'}</span>
               </span>
             </label>
           )
         })}
         <NumRow label="Adjustment" hint="add or subtract money not in Finance" value={r.adjustment} onChange={(v) => set({ adjustment: v })} />
         <Row label={<b>Invested savings today</b>}><b>{fmt(plan.savings)}</b></Row>
-        <NumRow label="Equity share of portfolio" hint={r.eqOverride === null || r.eqOverride === '' ? `auto: ${plan.eqAuto.toFixed(1)}% from your accounts` : 'typed by you'}
+        <NumRow label="Equity share of portfolio" hint={r.eqOverride === null || r.eqOverride === '' ? (plan.mixFrom === 'portfolios' ? `auto: ${plan.eqAuto.toFixed(1)}% from your linked portfolios` : 'auto: 60% (no portfolio linked)') : 'typed by you'}
           value={r.eqOverride} placeholder="auto" width={70} suffix=" %" onChange={(v) => set({ eqOverride: v === '' ? null : v })} />
-        <div className="sub">Leave blank to use the asset mix of the ticked accounts (from your Portfolio holdings where an account is linked).</div>
+        <div className="sub">Leave blank to use the mix of the ticked accounts that are linked to a Portfolio (calculated from its holdings), or a neutral 60% when none is.</div>
       </Fold>
 
       <Fold id="r-inherit" title="Inheritance" summary={r.inherit.length ? `${r.inherit.length} entr${r.inherit.length === 1 ? 'y' : 'ies'} · ${fmt(inheritTotal)}` : 'none'}
@@ -91,7 +92,7 @@ export default function Inputs({ plan, fx }) {
               <label className="nm">Name<input value={x.name} onChange={(e) => update((d) => updateInheritance(d, x.id, { name: e.target.value }))} /></label>
               <button className="x" aria-label={`Remove ${x.name}`} title="Remove" onClick={() => update((d) => removeInheritance(d, x.id))}>✕</button>
               <label>Amount ({curSym(cur)})
-                <input type="number" inputMode="decimal" value={x.amt} aria-label={`${x.name} amount`} onChange={(e) => update((d) => updateInheritance(d, x.id, { amt: e.target.value === '' ? '' : Number(e.target.value) }))} />
+                <NumInput value={x.amt} aria-label={`${x.name} amount`} onChange={(e) => update((d) => updateInheritance(d, x.id, { amt: e.target.value === '' ? '' : Number(e.target.value) }))} />
               </label>
               <label>Year
                 <input type="number" value={x.year} aria-label={`${x.name} year`} onChange={(e) => update((d) => updateInheritance(d, x.id, { year: e.target.value === '' ? '' : Number(e.target.value) }))} />
@@ -112,7 +113,7 @@ export default function Inputs({ plan, fx }) {
             <button className="x" aria-label={`Remove ${s.name}`} title="Remove" onClick={() => update((d) => removeIncome(d, s.id))}>✕</button>
             <label>Per year (today's money)
               <span className="two-in">
-                <input type="number" inputMode="decimal" value={s.amt} aria-label={`${s.name} amount`} onChange={(e) => update((d) => updateIncome(d, s.id, { amt: e.target.value === '' ? '' : Number(e.target.value) }))} />
+                <NumInput value={s.amt} aria-label={`${s.name} amount`} onChange={(e) => update((d) => updateIncome(d, s.id, { amt: e.target.value === '' ? '' : Number(e.target.value) }))} />
                 <select value={s.cur || cur} aria-label={`${s.name} currency`} onChange={(e) => update((d) => updateIncome(d, s.id, { cur: e.target.value }))}>{currencies.map((c) => <option key={c} value={c}>{curSym(c)}</option>)}</select>
               </span>
             </label>

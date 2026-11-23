@@ -70,7 +70,7 @@ try {
   await page.getByText('Update date', { exact: true }).waitFor()
   const file = path.join(work, 'WealthTracker.wvault')
   assert.ok(existsSync(file), 'the vault file exists')
-  assert.equal(readFileSync(file).subarray(0, 5).toString(), 'WVLT1')
+  assert.equal(readFileSync(file).subarray(0, 5).toString(), 'WVLT2')
 
   step('Settings → Account: your own client ID form shows the redirect address to authorise (the Windows app signs in through your browser)')
   await page.getByRole('button', { name: 'Account', exact: true }).click()

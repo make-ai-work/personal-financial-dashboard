@@ -4,6 +4,7 @@ export const COUNTRIES = {
   uk: { code: 'uk', name: 'UK', flag: '🇬🇧', currency: 'GBP', symbol: '£ ', locale: 'en-GB' },
   au: { code: 'au', name: 'Australia', flag: '🇦🇺', currency: 'AUD', symbol: 'A$ ', locale: 'en-AU' },
   ch: { code: 'ch', name: 'Switzerland', flag: '🇨🇭', currency: 'CHF', symbol: 'CHF ', locale: 'de-CH' },
+  ie: { code: 'ie', name: 'Ireland', flag: '🇮🇪', currency: 'EUR', symbol: '€ ', locale: 'en-IE' },
 }
 export const COUNTRY_CODES = Object.keys(COUNTRIES)
 // A currency shown by its symbol ($, ₹, £, A$, CHF) instead of its code (USD, INR, ...). Unknown currencies keep their code.
@@ -11,7 +12,7 @@ export const curSym = (currency) => Object.values(COUNTRIES).find((c) => c.curre
 
 export const OWNERS = ['mine', 'joint', 'spouse', 'parent']
 export const ownerLabel = (owner, parentLabel = 'Parent') =>
-  owner === 'mine' ? 'Mine' : owner === 'joint' ? 'Joint' : owner === 'spouse' ? 'Spouse' : parentLabel || 'Parent'
+  owner === 'mine' ? 'Mine' : owner === 'joint' ? 'Me + Others' : owner === 'spouse' ? 'Spouse' : parentLabel || 'Parent'
 
 export const MIX = [
   { key: 'equities', label: 'Equities', short: 'Eq' },

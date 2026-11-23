@@ -35,7 +35,7 @@ export default function CountryPortfolios({ code, onAddPortfolio, onAddHolding, 
       </div>
 
       {pfs.length === 0 && (
-        <div className="panel"><div className="empty">No portfolios in {c.flag} {c.name} yet. A portfolio is linked to one of your Finance asset accounts; its holdings then drive that account's balance and asset mix.</div></div>
+        <div className="panel"><div className="empty">No portfolios in {c.flag} {c.name} yet. A portfolio is linked to one of your Assets asset accounts; its holdings then drive that account's balance and asset mix.</div></div>
       )}
       {pfs.map((p) => (
         <PortfolioPanel key={p.id} portfolio={p} country={code} account={data.accounts.find((a) => a.id === p.accountId)} staleDays={staleDays}

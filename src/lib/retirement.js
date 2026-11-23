@@ -62,8 +62,9 @@ export const planCurrency = (d) => {
 }
 export const accountCurrency = (a) => COUNTRIES[a.country]?.currency || 'USD'
 
-// Account mix order is [equities, cash, metals, bonds] (percent). No mix recorded = treated as cash.
-const mixOf = (a) => (a.mix && a.mix.some((x) => x > 0) ? a.mix : [0, 100, 0, 0])
+// Account mix order is [equities, cash, metals, bonds] (percent). Accounts no longer have a typed mix: only an account linked to a Portfolio has one, calculated
+// from its holdings. Ticked accounts with no linked portfolio add to the savings but not to the mix; with none linked the plan starts from a neutral 60/30/10 mix.
+const linkedMix = (d, a) => (d.portfolios.some((p) => p.accountId === a.id) && a.mix && a.mix.some((x) => x > 0) ? a.mix : null)
 const round1 = (x) => Math.round(x * 10) / 10
 
 // Resolve everything the screens need as plain numbers in the plan currency.
@@ -80,16 +81,19 @@ export function resolvePlan(d, fx, nowYear = new Date().getFullYear()) {
   }
   const picked = assetAccounts(d).filter((a) => r.selected.includes(a.id)).map((a) => {
     const balance = conv(a.balance, accountCurrency(a))
-    return { id: a.id, name: a.name, owner: a.owner, balance, mix: mixOf(a) }
+    return { id: a.id, name: a.name, owner: a.owner, balance, mix: linkedMix(d, a) }
   })
   const held = picked.reduce((s, a) => s + a.balance, 0)
   const savings = held + (Number(r.adjustment) || 0)
-  const mixSum = (i) => (held > 0 ? picked.reduce((s, a) => s + (a.balance * a.mix[i]) / 100, 0) / held : 0)
-  const eqAuto = mixSum(0) * 100
+  const mixed = picked.filter((a) => a.mix)
+  const mixHeld = mixed.reduce((s, a) => s + a.balance, 0)
+  const mixFrom = mixHeld > 0 ? 'portfolios' : 'default'
+  const mixSum = (i) => (mixHeld > 0 ? mixed.reduce((s, a) => s + (a.balance * a.mix[i]) / 100, 0) / mixHeld : 0)
+  const eqAuto = mixHeld > 0 ? mixSum(0) * 100 : 60
   const auto = { equities: mixSum(0) * 100, cash: mixSum(1) * 100, metals: mixSum(2) * 100, bonds: mixSum(3) * 100 }
-  const autoWeights = held > 0
+  const autoWeights = mixHeld > 0
     ? Object.fromEntries(KEYS.map((k) => [k, round1(auto[k])]))
-    : { equities: 60, bonds: 30, cash: 10, metals: 0 } // nothing ticked yet: a neutral starting mix
+    : { equities: 60, bonds: 30, cash: 10, metals: 0 } // no linked portfolio among the ticked accounts: a neutral starting mix
   // rounding to one decimal can leave the total 0.1 away from 100; give the difference to the largest class
   const drift = round1(100 - KEYS.reduce((s, k) => s + autoWeights[k], 0))
   if (drift) { const big = KEYS.reduce((b, k) => (autoWeights[k] > autoWeights[b] ? k : b), 'equities'); autoWeights[big] = round1(autoWeights[big] + drift) }
@@ -110,7 +114,7 @@ export function resolvePlan(d, fx, nowYear = new Date().getFullYear()) {
     currency, age, retAge, life, lumps, insurance, includeInsurance: !!r.includeInsurance, nowYear,
     ac: Number(r.ac) || 0, g: (Number(r.g) || 0) / 100, spend: Number(r.spend) || 0, tax: (Number(r.tax) || 0) / 100,
     inf: (Number(r.inf) || 0) / 100, y: (Number(r.y) || 0) / 100, prem: (Number(r.prem) || 0) / 100,
-    savings, held, picked, we, eqAuto, autoWeights, income, asOf: r.asOf, missingRates,
+    savings, held, picked, we, eqAuto, autoWeights, mixFrom, income, asOf: r.asOf, missingRates,
   }
 }
 

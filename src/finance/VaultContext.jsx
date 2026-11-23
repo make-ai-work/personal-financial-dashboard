@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
-import { decryptVault, encryptVault, newSession, parseVault } from '../lib/vault.js'
+import { decryptVault, decryptVaultWithRecovery, encryptVault, makeRecoveryKey, newSession, parseVault, removeRecoveryKey, setPassphrase } from '../lib/vault.js'
 import { emptyData, normalizeData } from '../lib/model.js'
 import { loadDemoData } from '../lib/demo.js'
 import {
@@ -34,6 +34,7 @@ export function VaultProvider({ children }) {
   const setDemoMode = (on) => { demoRef.current = on; setDemo(on) }
   const [data, setData] = useState(null)
   const [fileName, setFileName] = useState('')
+  const [hasRecovery, setHasRecovery] = useState(false) // this vault has a recovery key (so a forgotten passphrase can be reset)
   const [saveState, setSaveState] = useState('saved') // saved | saving | unsaved | error
   const [canWrite, setCanWrite] = useState(false) // true when saving writes straight to the file
   const [error, setError] = useState('')
@@ -117,6 +118,7 @@ export function VaultProvider({ children }) {
   const start = useCallback((initial, sess, h, name) => {
     setDemoMode(false) // a real vault now: the demo data (if any) is what it starts with
     session.current = sess
+    setHasRecovery(!!sess.rec)
     setHandle(h)
     dataRef.current = initial
     setData(initial)
@@ -188,6 +190,7 @@ export function VaultProvider({ children }) {
     if (!b) throw new Error('No file selected.')
     const { data: d, session: s } = await decryptVault(b, passphrase)
     session.current = s
+    setHasRecovery(!!s.rec)
     dataRef.current = normalizeData(d)
     setData(dataRef.current)
     setSaveState(!handle.current && needsDownload.current ? 'unsaved' : 'saved')
@@ -240,8 +243,41 @@ export function VaultProvider({ children }) {
   }, [lock, phase])
 
   const changePassphrase = useCallback(async (passphrase) => {
-    session.current = await newSession(passphrase)
+    session.current = await setPassphrase(session.current, passphrase) // the data key and any recovery key stay the same
     await persist()
+  }, [persist])
+
+  // Recovery key: made once, shown once. It opens the vault if the passphrase is forgotten (see unlockWithRecovery).
+  const createRecoveryKey = useCallback(async () => {
+    const { code, session: s } = await makeRecoveryKey(session.current)
+    session.current = s
+    setHasRecovery(true)
+    await persist()
+    return code
+  }, [persist])
+  const deleteRecoveryKey = useCallback(async () => {
+    session.current = removeRecoveryKey(session.current)
+    setHasRecovery(false)
+    await persist()
+  }, [persist])
+
+  // Forgot the passphrase: open with the recovery key and set a new passphrase in one step (the old passphrase stops working).
+  const unlockWithRecovery = useCallback(async (recoveryKey, newPassphrase) => {
+    let b = bytes.current
+    if (handle.current) {
+      if (!(await ensurePermission(handle.current))) throw new Error('Permission to read the file was not granted.')
+      b = await readHandle(handle.current); bytes.current = b
+    }
+    if (!b) throw new Error('No file selected.')
+    const { data: d, session: s } = await decryptVaultWithRecovery(b, recoveryKey)
+    session.current = await setPassphrase(s, newPassphrase)
+    setHasRecovery(true)
+    dataRef.current = normalizeData(d)
+    setData(dataRef.current)
+    setError('')
+    setPhase('unlocked')
+    setSaveState('unsaved')
+    await persist() // writes the file with the new passphrase
   }, [persist])
 
   // Auto-lock after idle time.
@@ -442,7 +478,7 @@ export function VaultProvider({ children }) {
     oldCopy, canDeleteOldCopy: canDeleteOld(oldCopy, { desktop: isDesktop() }), deleteOldCopy, keepOldCopy,
     demo, startDemo, resetDemo, wipe,
     phase, data, fileName, saveState, canWrite, error, setError,
-    update, create, openFile, unlock, lock, switchFile, changePassphrase, downloadNow, exportBackup, deleteAppVault,
+    update, create, openFile, unlock, lock, switchFile, changePassphrase, hasRecovery, createRecoveryKey, deleteRecoveryKey, unlockWithRecovery, downloadNow, exportBackup, deleteAppVault,
     isApp: isNativeApp(),
   }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

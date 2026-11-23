@@ -17,6 +17,7 @@ const COUNTRY_ITEMS = {
   uk: { id: 'ftse', label: 'FTSE 100', sub: 'UK', group: 'index', symbol: 'FTSE:UKX' },
   au: { id: 'asx', label: 'ASX 200', sub: 'Australia', group: 'index', symbol: 'ASX:XJO' },
   ch: { id: 'smi', label: 'SMI', sub: 'Switzerland', group: 'index', symbol: 'SIX:SMI' },
+  ie: { id: 'iseq', label: 'ISEQ', sub: 'Ireland', group: 'index', symbol: 'ISEQ:ISEQ' }, // FCS symbol not verified against a live key
 }
 const FIXED_ITEMS = [
   { id: 'gold', label: 'Gold', sub: 'XAU/USD', group: 'forex', symbol: 'FX:XAUUSD' },

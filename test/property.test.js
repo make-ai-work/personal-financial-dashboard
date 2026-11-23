@@ -157,3 +157,23 @@ test('removing a property or loan removes dependants', () => {
   d = removeProperty(d, 'p1')
   assert.deepEqual([d.properties.length, d.propertyValues.length, d.loans.length, d.loanUpdates.length], [0, 0, 0, 0])
 })
+
+test('home insurance: annual premium, warnings, and a renewal reminder', async () => {
+  const { insuranceAnnual, insuranceWarnings, emptyInsurance, setHomeInsurance, dueItems } = await import('../src/lib/property.js')
+  const ins = { ...emptyInsurance(), insurer: 'State Farm', premium: 150, frequency: 'month', renewal: '2026-12-01', limits: { ...emptyInsurance().limits, dwelling: 300000 } }
+  assert.equal(insuranceAnnual(ins), 1800); assert.equal(insuranceAnnual({ ...ins, frequency: 'quarter', premium: 400 }), 1600); assert.equal(insuranceAnnual(null), 0)
+  // below the value: a gentle note; below the rebuild cost you entered: a firm one; fine otherwise
+  assert.equal(insuranceWarnings(ins, 410000, '2026-01-01')[0].level, 'warn')
+  assert.equal(insuranceWarnings({ ...ins, rebuildCost: 350000 }, 410000, '2026-01-01')[0].level, 'bad')
+  assert.equal(insuranceWarnings({ ...ins, rebuildCost: 250000 }, 410000, '2026-01-01').length, 0)
+  assert.match(insuranceWarnings(ins, 100000, '2026-11-25')[0].text, /renews in 6 days/)
+  assert.match(insuranceWarnings(ins, 100000, '2026-12-10')[0].text, /passed 9 days ago/)
+  assert.match(insuranceWarnings({ ...ins, limits: {} }, 1, '2026-01-01')[0].text, /No dwelling limit/)
+  // saved on the property, and shown in the reminders
+  let d = emptyData()
+  d = addProperty(d, { id: 'p1', name: 'Home', country: 'us', type: 'primary', owner: 'mine' })
+  d = setHomeInsurance(d, 'p1', ins)
+  assert.equal(d.properties[0].homeInsurance.insurer, 'State Farm')
+  const item = dueItems(d, '2026-11-20', 30, d.properties).find((i) => i.id === 'ins-p1')
+  assert.match(item.label, /Home insurance renewal/); assert.equal(item.date, '2026-12-01')
+})

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { parseAmount } from '../lib/format.js'
 import { holdingsOf, rebalance } from '../lib/portfolio.js'
+import NumInput from '../finance/NumInput.jsx'
 
 export default function Rebalance({ data, portfolios, tolerance, format, onEditTargets }) {
   const [id, setId] = useState(portfolios[0]?.id)
@@ -48,7 +49,7 @@ export default function Rebalance({ data, portfolios, tolerance, format, onEditT
           </div>
           <div className="pad" style={{ borderTop: '1px solid var(--line)' }}>
             <label className="field" style={{ margin: 0, maxWidth: 340 }}>New money to invest (optional)
-              <input className="pw" inputMode="decimal" value={money} onChange={(e) => setMoney(e.target.value)} />
+              <NumInput className="pw" value={money} onChange={(e) => setMoney(e.target.value)} />
             </label>
             {r.plan && (
               <div className="buyonly" style={{ marginTop: 10 }}>

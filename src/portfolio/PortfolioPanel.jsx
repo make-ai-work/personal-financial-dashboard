@@ -12,10 +12,10 @@ function ReconcileBanner({ portfolio, country, hasHoldings }) {
   const finish = () => update((d) => finishLinking(d, portfolio.id, mode, todayISO()))
   return (
     <div className="reconcile" role="region" aria-label="Finish linking">
-      <b>Finish linking to Finance.</b> Until you do, the Finance account keeps the balance you typed ({fmt(st.account)}).
+      <b>Finish linking to Assets.</b> Until you do, the Assets account keeps the balance you typed ({fmt(st.account)}).
       <div className="recon-grid">
         <span>Holdings total</span><b>{fmt(st.holdings)}</b>
-        <span>Finance account says</span><b>{fmt(st.account)}</b>
+        <span>Assets account says</span><b>{fmt(st.account)}</b>
         <span>Difference</span><b className={st.matches ? 'pos' : 'neg'}>{st.matches ? 'none — they match' : `${st.diff > 0 ? '' : '+ '}${fmt(Math.abs(st.diff))} ${st.diff > 0 ? 'unexplained' : 'more in holdings'}`}</b>
       </div>
       {st.canAddUnallocated && (
@@ -39,7 +39,7 @@ function ReconcileBanner({ portfolio, country, hasHoldings }) {
   )
 }
 
-// One portfolio: link chip, reconcile banner while linking, holdings table with the total that feeds Finance.
+// One portfolio: link chip, reconcile banner while linking, holdings table with the total that feeds Assets.
 export default function PortfolioPanel({ portfolio, country, account, staleDays, onAddHolding, onEditHolding, onTargets }) {
   const { data, update } = useVault()
   const { go } = useNav()
@@ -50,16 +50,16 @@ export default function PortfolioPanel({ portfolio, country, account, staleDays,
   const fmt = (n) => money(country, n)
   const label = account ? `${account.name}${account.institution ? ` · ${account.institution}` : ''}` : 'removed account'
   const del = () => {
-    if (!window.confirm(`Delete the portfolio “${portfolio.name}” and its ${hs.length} holding${hs.length === 1 ? '' : 's'}? The Finance account “${label}” stays, keeping its last balance.`)) return
+    if (!window.confirm(`Delete the portfolio “${portfolio.name}” and its ${hs.length} holding${hs.length === 1 ? '' : 's'}? The Assets account “${label}” stays, keeping its last balance.`)) return
     update((d) => removePortfolio(d, portfolio.id))
   }
 
   return (
     <div className="panel">
       <div className="p-head">
-        <div className="title">{portfolio.name} <span className="chiplink">📈 {portfolio.reconciled ? 'linked to' : 'linking to'} Finance: {label}</span></div>
+        <div className="title">{portfolio.name} <span className="chiplink">📈 {portfolio.reconciled ? 'linked to' : 'linking to'} Assets: {label}</span></div>
         <div className="row-actions">
-          <button className="btn" onClick={() => go('finance', { country })}>Open in Finance</button>
+          <button className="btn" onClick={() => go('finance', { country })}>Open in Assets</button>
           <button className="btn" onClick={() => onTargets(portfolio)}>{portfolio.targets ? 'Edit targets' : 'Set targets'}</button>
           <button className="btn danger-btn" onClick={del}>Delete portfolio</button>
           <button className="btn primary" onClick={() => onAddHolding(portfolio)}>+ Add holding</button>
@@ -88,7 +88,7 @@ export default function PortfolioPanel({ portfolio, country, account, staleDays,
             </tr>
           )
         })}
-        {hs.length > 0 && <tr className="total"><td>Total{portfolio.reconciled ? ` → Finance “${label}”` : ''}</td><td colSpan="5" /><td className="r">{fmt(total)}</td><td className="r">100%</td><td /></tr>}
+        {hs.length > 0 && <tr className="total"><td>Total{portfolio.reconciled ? ` → Assets “${label}”` : ''}</td><td colSpan="5" /><td className="r">{fmt(total)}</td><td className="r">100%</td><td /></tr>}
       </tbody></table></div>
     </div>
   )

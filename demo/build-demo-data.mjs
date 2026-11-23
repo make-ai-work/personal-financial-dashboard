@@ -9,7 +9,7 @@ import { analyse, summarise } from '../src/lib/montecarlo.js'
 
 const TODAY = '2026-11-15'
 let d = emptyData()
-d = { ...d, settings: { ...d.settings, countries: ['us', 'in'], propertyCountries: ['us', 'in'], portfolioCountries: ['us', 'in'], parentLabel: 'Parent' } }
+d = { ...d, settings: { ...d.settings, countries: ['us', 'in'], parentLabel: 'Parent' } }
 
 // ---- Finance accounts (final balances; linked portfolio accounts match their holdings) ----
 const A = (id, country, type, name, number, institution, owner, balance, mix, extra = {}) =>
