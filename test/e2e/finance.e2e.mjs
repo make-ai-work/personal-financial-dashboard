@@ -197,7 +197,22 @@ await wiz.getByRole('link', { name: /Determining an individual/ }).waitFor()
 assert.equal(await wiz.getByRole('link', { name: /Residential status/ }).first().getAttribute('href'), 'https://wm.incometaxindia.gov.in/w/residential-status')
 await page.getByTestId('wiz-next').click()
 await page.getByLabel('First year').selectOption('2024')
+await page.getByTestId('wiz-next').click() // optional travel dates
+await page.getByTestId('travel-step').waitFor()
+await page.getByTestId('add-trip').click()
+await page.getByLabel('Trip 1 left the US').fill('2025-06-01'); await page.getByLabel('Trip 1 came back').fill('2025-06-21'); await page.getByLabel('Trip 1 was to India').check()
+await page.getByTestId('travel-us-2025').getByText('346').waitFor() // 365 - 19 days away (the crossing days still count in the US)
+assert.equal(await page.getByTestId('travel-in-2025').innerText(), '21') // 1 to 21 June inclusive
+assert.equal(await page.getByTestId('travel-us-2024').innerText(), '366')
+await page.getByTestId('add-trip').click() // a trip with no dates yet counts for nothing and is not lost
+await page.getByLabel('Trip 2 left the US').waitFor()
+assert.equal(await page.getByTestId('travel-us-2025').innerText(), '346')
+await page.getByLabel('Remove trip 2').click()
+await page.screenshot({ path: `${OUT}/wizard-travel.png` })
+await page.getByTestId('travel-fill').click()
+await page.getByTestId('travel-done').waitFor()
 await page.getByTestId('wiz-next').click() // USA
+assert.equal(await page.getByLabel('US days 2025').inputValue(), '346', 'the days worked out from the dates are filled in, and can be changed')
 for (const [y, d] of [[2024, 40], [2025, 120], [2026, 160]]) await page.getByLabel(`US days ${y}`).fill(String(d))
 await page.getByTestId('us-res-2025').getByText('Nonresident').waitFor() // 120 + 40/3 = 133 (IRS example style): under 183
 await page.getByTestId('us-res-2026').getByText('Resident', { exact: true }).waitFor() // 160 + 120/3 + 40/6 = 206.7
@@ -242,7 +257,7 @@ await xl.saveAs(`${OUT}/export.xlsx`)
 const ExcelJS = require('exceljs')
 const wb = new ExcelJS.Workbook()
 await wb.xlsx.readFile(`${OUT}/export.xlsx`)
-assert.deepEqual(wb.worksheets.map((w) => w.name), ['Items', 'Insurance', 'Balances', 'Rates', 'Property', 'PropertyValues', 'Loans', 'LoanUpdates', 'Portfolios', 'Holdings', 'TaxResidency', 'TaxResidencyDays', 'Settings'])
+assert.deepEqual(wb.worksheets.map((w) => w.name), ['Items', 'Insurance', 'Balances', 'Rates', 'Property', 'PropertyValues', 'Loans', 'LoanUpdates', 'Portfolios', 'Holdings', 'TaxResidency', 'TaxResidencyDays', 'TaxResidencyTravel', 'Settings'])
 assert.ok(JSON.stringify(wb.getWorksheet('Items').getSheetValues()).includes('000123456821'))
 await page.screenshot({ path: `${OUT}/settings.png`, fullPage: true })
 
