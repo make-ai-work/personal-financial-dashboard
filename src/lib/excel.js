@@ -24,7 +24,7 @@ const LOAN_UPDATES = ['ID', 'Loan ID', 'Date', 'Balance', 'Principal', 'Interest
 const PORTFOLIOS = ['ID', 'Name', 'Finance account ID', 'Reconciled', 'Opening balance', 'Target equities %', 'Target bonds %', 'Target cash %', 'Target metals %']
 const HOLDINGS = ['ID', 'Portfolio ID', 'Name', 'Ticker', 'Type', 'Class', 'Split equities %', 'Split cash %', 'Split metals %', 'Split bonds %',
   'Sector', 'Geography', 'Track by', 'Units', 'Price', 'Value', 'Price date', 'Notes']
-const INSURANCE = ['ID', 'Country', 'Policy', 'Policy number', 'Policy company', 'Owner', 'Death benefit', 'Maturity date', 'Value on maturity']
+const INSURANCE = ['ID', 'Country', 'Policy', 'Policy number', 'Policy company', 'Owner', 'Death benefit', 'Maturity date', 'Value on maturity', 'Premium paid']
 
 function sheet(wb, name, headers, rows) {
   const ws = wb.addWorksheet(name)
@@ -42,7 +42,7 @@ export async function exportWorkbook(data) {
     ...(a.mix || [null, null, null, null]), a.maturityDate || '', a.maturityValue ?? null,
   ]))
   sheet(wb, 'Insurance', INSURANCE, data.policies.map((p) => [
-    p.id, p.country, p.name, p.number || '', p.company || '', p.owner, p.deathBenefit ?? null, p.maturityDate || '', p.maturityValue ?? null,
+    p.id, p.country, p.name, p.number || '', p.company || '', p.owner, p.deathBenefit ?? null, p.maturityDate || '', p.maturityValue ?? null, p.premiumPaid ?? null,
   ]))
   sheet(wb, 'Balances', ['Date', 'Account ID', 'Amount'], data.balances.map((b) => [b.date, b.accountId, b.amount]))
   sheet(wb, 'Rates', ['Date', 'From', 'To', 'Rate'], data.rates.map((r) => [r.date, r.from, r.to, r.rate]))
@@ -135,7 +135,7 @@ export async function importWorkbook(buffer) {
     data.policies.push({
       id: r.ID ? String(r.ID) : uid(), country: r.Country, name: String(r.Policy), number: String(r['Policy number'] ?? ''),
       company: String(r['Policy company'] ?? ''), owner: OWNERS.includes(r.Owner) ? r.Owner : 'mine',
-      deathBenefit: num(r['Death benefit']) ?? 0, maturityDate: String(r['Maturity date'] ?? ''), maturityValue: num(r['Value on maturity']),
+      deathBenefit: num(r['Death benefit']) ?? 0, maturityDate: String(r['Maturity date'] ?? ''), maturityValue: num(r['Value on maturity']), premiumPaid: num(r['Premium paid']),
     })
   }
   const ids = new Set(data.accounts.map((a) => a.id))

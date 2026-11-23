@@ -2,7 +2,7 @@
 //
 // account:  { id, country, type: 'asset'|'liability', name, number, institution, owner,
 //             balance, mix: [eq, cash, metals, bonds] | null, maturityDate, maturityValue }
-// policy:   { id, country, name, number, company, owner, deathBenefit, maturityDate, maturityValue }
+// policy:   { id, country, name, number, company, owner, deathBenefit, maturityDate, maturityValue, premiumPaid }
 // balance:  { date: 'YYYY-MM-DD', accountId, amount }   one row per account per saved update
 // rate:     { date, from, to, rate }                    1 `from` = `rate` `to`, saved with each update
 // property data in ./property.js; portfolios / holdings in ./portfolio.js

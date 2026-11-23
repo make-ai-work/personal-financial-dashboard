@@ -61,8 +61,9 @@ try {
   await addAccount('+ Add liability', { 'Account name': 'Mortgage', 'Account number': '3300918823', Lender: 'Wells Fargo', 'Current balance ($)': '78000' }, 'Me + Others')
   await page.getByRole('button', { name: '+ Add policy' }).click()
   const pm = page.getByRole('dialog')
-  for (const [l, v] of Object.entries({ 'Policy name': 'Term life', 'Policy number': 'POL-100234', 'Policy company': 'AIG', 'Death benefit ($)': '750000' })) await pm.getByLabel(l).fill(v)
+  for (const [l, v] of Object.entries({ 'Policy name': 'Term life', 'Policy number': 'POL-100234', 'Policy company': 'AIG', 'Death benefit ($)': '750000', 'Premium paid so far (optional, $)': '12400' })) await pm.getByLabel(l).fill(v)
   await pm.getByRole('button', { name: 'Save' }).click()
+  await page.getByRole('row', { name: /Term life/ }).getByText('$ 12,400').waitFor() // premium paid shows in the policy table
 
   step('masking, totals, validation')
   assert.ok(await page.getByText('•••• 6821').isVisible())
