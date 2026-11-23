@@ -159,7 +159,7 @@ await page.getByRole('tab', { name: /Assets/ }).click()
 await page.getByText('Update date', { exact: true }).waitFor()
 
 step('tax residency tab: date ranges, one bar per country, status changes marked, colours')
-const taxTab = page.getByRole('tab', { name: /Tax residency/ })
+const taxTab = page.getByRole('tab', { name: /Tax Residency/ })
 await taxTab.click()
 const addPeriod = async (country, status, from, to) => {
   await page.getByTestId(`tr-${country}`).getByRole('button', { name: '+ Add period' }).click()

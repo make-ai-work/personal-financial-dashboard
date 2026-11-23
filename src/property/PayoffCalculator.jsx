@@ -36,7 +36,12 @@ function PayoffChart({ base, extra, fmt }) {
   )
 }
 
-export default function PayoffCalculator({ loan, balance, fmt }) {
+// On the Calculators tab the calculator is shown open on its own; elsewhere it could fold away.
+const Wrap = ({ standalone, children }) => (standalone
+  ? <div className="calc standalone" data-testid="payoff-calc">{children}</div>
+  : <details className="calc" data-testid="payoff-calc"><summary><b>Payoff calculator</b> <span className="sub">try extra payments and see the payoff date, the interest and the time you save</span></summary>{children}</details>)
+
+export default function PayoffCalculator({ loan, balance, fmt, standalone = false }) {
   const today = todayISO()
   const [monthly, setMonthly] = useState('')
   const [yearly, setYearly] = useState('')
@@ -58,8 +63,7 @@ export default function PayoffCalculator({ loan, balance, fmt }) {
   const when = (r) => (r.neverPaysOff ? '—' : fmtDate(r.payoffDate))
 
   return (
-    <details className="calc" data-testid="payoff-calc">
-      <summary><b>Payoff calculator</b> <span className="sub">try extra payments and see the payoff date, the interest and the time you save</span></summary>
+    <Wrap standalone={standalone}>
       <div className="pad">
         {!(balance > 0) && <div className="okrow">This loan is paid off.</div>}
         <div className="calc-grid">
@@ -106,6 +110,6 @@ export default function PayoffCalculator({ loan, balance, fmt }) {
           </>
         )}
       </div>
-    </details>
+    </Wrap>
   )
 }

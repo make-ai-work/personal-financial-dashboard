@@ -3,7 +3,7 @@ import { useVault } from '../finance/VaultContext.jsx'
 import Chart from '../finance/Chart.jsx'
 import { OwnerChip } from '../finance/ui.jsx'
 import { InsuranceModal, LoanModal, LoanUpdateModal, PropertyModal, ValuationModal, zillowUrl } from './PropertyForms.jsx'
-import PayoffCalculator, { regularPayment } from './PayoffCalculator.jsx'
+import { regularPayment } from './PayoffCalculator.jsx'
 import { describeMonths, timeRemaining } from '../lib/amortization.js'
 import { COUNTRIES, fmtDate, maskNumber, money, todayISO } from '../lib/format.js'
 import { daysBetween } from '../lib/dates.js'
@@ -130,7 +130,6 @@ export default function PropertyPage({ property, reveal, onDeleted }) {
               <Kv label="Time remaining" sub={left && left.months > 0 ? `until ${new Date(left.payoffDate + 'T00:00:00').toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}${left.source === 'term' ? ' · from the start date and term' : ' · at your regular payment'}` : ''}>{left ? <span data-testid="time-remaining">{describeMonths(left.months)}</span> : null}</Kv>
               <Kv label="Notes">{l.notes}</Kv>
             </div>
-            <PayoffCalculator loan={l} balance={balance} fmt={fmt} />
             <div className="tblw"><table className="t-left t-loan"><thead><tr><th>Date</th><th className="r">Balance after</th><th className="r">Principal paid</th><th className="r">Interest paid</th><th className="r">Escrow paid</th><th>Notes</th><th /></tr></thead><tbody>
               {ups.length === 0 && <tr><td colSpan="7" className="none">No updates recorded yet.</td></tr>}
               {ups.map((u) => (

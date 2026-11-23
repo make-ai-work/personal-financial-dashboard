@@ -62,7 +62,7 @@ export default function Wizard({ onClose }) {
     </>
   )
   return (
-    <Modal wide title="Tax residency: guided check" onClose={onClose} footer={footer}>
+    <Modal wide title="Tax Residency: guided check" onClose={onClose} footer={footer}>
       <div data-testid="residency-wizard">
         <ol className="wiz-steps">{STEPS.map((s, i) => <li key={s} className={i === step ? 'on' : i < step ? 'done' : ''}><button type="button" onClick={() => setStep(i)}>{i + 1}. {s}</button></li>)}</ol>
 
