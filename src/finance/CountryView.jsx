@@ -129,9 +129,9 @@ export default function CountryView({ code, owner, reveal, fx }) {
       <Collapsible id="insurance" title="Insurance" sub={'not counted in net worth'} phone={phone} phoneFolded action={<button className="btn" onClick={() => setModal({ kind: 'policy' })}>+ Add policy</button>}>
         <div className="tblw">
           <table className="t-p">
-            <thead><tr><th>Policy</th><th>Policy number</th><th>Policy company</th><th>Owner</th><th>Death benefit</th><th>Maturity date</th><th>Value on maturity</th><th /></tr></thead>
+            <thead><tr><th>Policy</th><th>Policy number</th><th>Policy company</th><th>Owner</th><th>Death benefit</th><th>Premium paid</th><th>Maturity date</th><th>Value on maturity</th><th /></tr></thead>
             <tbody>
-              {policies.length === 0 && <tr><td colSpan="8" className="none">No policies{owner !== 'all' ? ' in this category' : ' yet'}.</td></tr>}
+              {policies.length === 0 && <tr><td colSpan="9" className="none">No policies{owner !== 'all' ? ' in this category' : ' yet'}.</td></tr>}
               {policies.map((p) => (
                 <tr key={p.id}>
                   <td><b>{p.name}</b></td>
@@ -139,6 +139,7 @@ export default function CountryView({ code, owner, reveal, fx }) {
                   <td>{p.company || '—'}</td>
                   <td><OwnerChip owner={p.owner} parentLabel={parentLabel} /></td>
                   <td><b>{fmt(p.deathBenefit)}</b></td>
+                  <td>{p.premiumPaid != null ? fmt(p.premiumPaid) : '—'}</td>
                   <td>{fmtDate(p.maturityDate)} {maturesSoon(p.maturityDate) && <span className="chip soon">soon</span>}</td>
                   <td>{p.maturityValue != null ? fmt(p.maturityValue) : '—'}</td>
                   <Actions kind="policy" item={p} />
