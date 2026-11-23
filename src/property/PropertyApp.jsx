@@ -11,7 +11,7 @@ import { addProperty } from '../lib/property.js'
 
 export default function PropertyApp() {
   const { data, update } = useVault()
-  const codes = data.settings.propertyCountries
+  const codes = data.settings.countries
   const fx = useFx(codes, data.rates)
   const [tab, setTab] = useState('overview')
   const [openId, setOpenId] = useState(null)

@@ -85,9 +85,9 @@ try {
   await topTab(/Portfolio/).click()
   await page.getByText('Portfolio summary').waitFor()
   await subtab('+ Add portfolio').click()
-  const opts = await dialog().getByLabel('Finance account').locator('option').allInnerTexts()
+  const opts = await dialog().getByLabel('Assets account').locator('option').allInnerTexts()
   assert.ok(opts.includes('Brokerage · Schwab — $ 96,000') && opts.includes('401(k) · Fidelity — $ 184,000') && opts.at(-1).includes('Create a new Finance account'))
-  await dialog().getByLabel('Finance account').selectOption({ label: 'Brokerage · Schwab — $ 96,000' })
+  await dialog().getByLabel('Assets account').selectOption({ label: 'Brokerage · Schwab — $ 96,000' })
   await dialog().getByRole('button', { name: 'Create portfolio' }).click()
   await dialog().waitFor({ state: 'detached' })
   await page.getByText('linking to Finance: Brokerage · Schwab').waitFor()
@@ -104,7 +104,7 @@ try {
   const banner = page.getByRole('region', { name: 'Finish linking' })
   const bt = await banner.innerText()
   assert.match(bt, /Holdings total\s+\$ 91,000/)
-  assert.match(bt, /Finance account says\s+\$ 96,000/)
+  assert.match(bt, /Assets account says\s+\$ 96,000/)
   assert.match(bt, /\$ 5,000 unexplained/)
   assert.ok(await banner.getByRole('radio', { name: /Add the difference as an unallocated holding/ }).isChecked(), 'unallocated must be the default')
   await subtab(/USA/).click()
@@ -130,7 +130,7 @@ try {
   step('second portfolio whose holdings EXCEED the typed balance: no unallocated option, balance rises')
   await topTab(/Portfolio/).click()
   await subtab('+ Add portfolio').click()
-  await dialog().getByLabel('Finance account').selectOption({ label: '401(k) · Fidelity — $ 184,000' })
+  await dialog().getByLabel('Assets account').selectOption({ label: '401(k) · Fidelity — $ 184,000' })
   await dialog().getByRole('button', { name: 'Create portfolio' }).click()
   await dialog().waitFor({ state: 'detached' })
   const K = '401(k) · Fidelity'
@@ -212,7 +212,7 @@ try {
 
   step('navigation both ways between Portfolio and Finance')
   await subtab(/USA/).click()
-  await panelOf(P).getByRole('button', { name: 'Open in Finance' }).click()
+  await panelOf(P).getByRole('button', { name: 'Open in Assets' }).click()
   await page.getByText('Assets').first().waitFor()
   await page.locator('.subtabs button.on', { hasText: 'USA' }).waitFor() // waits for the tab to switch
   await financeRow('Brokerage').getByRole('button', { name: 'Open portfolio' }).click()

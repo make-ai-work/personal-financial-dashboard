@@ -8,6 +8,7 @@ export const CAPITALS = {
   uk: { city: 'London', tz: 'Europe/London', zoneLocale: 'en-GB' },
   au: { city: 'Canberra', tz: 'Australia/Sydney', zoneLocale: 'en-AU' }, // Canberra keeps Sydney's clock
   ch: { city: 'Bern', tz: 'Europe/Zurich', zoneLocale: 'en-GB' },
+  ie: { city: 'Dublin', tz: 'Europe/Dublin', zoneLocale: 'en-IE' },
 }
 
 const clean = (s) => s.replace(/[  ]/g, ' ')

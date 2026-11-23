@@ -44,7 +44,7 @@ export default function Settings() {
   return (
     <>
       <div className="panel" id="set-countries">
-        <div className="p-head"><div className="title">Finance · Countries shown</div></div>
+        <div className="p-head"><div className="title">Countries shown (every tab)</div></div>
         <CountriesPicker
           value={data.settings.countries}
           onChange={(countries) => setSettings({ countries })}
@@ -52,7 +52,10 @@ export default function Settings() {
           describe={(code) => {
             const a = data.accounts.filter((x) => x.country === code).length
             const p = data.policies.filter((x) => x.country === code).length
-            return { count: a + p, text: a + p ? `${a} account${a === 1 ? '' : 's'}${p ? ` · ${p} polic${p === 1 ? 'y' : 'ies'}` : ''}` : 'No data yet' }
+            const h = data.properties.filter((x) => x.country === code).length
+            const o = data.portfolios.filter((x) => (data.accounts.find((ac) => ac.id === x.accountId)?.country || x.country) === code).length
+            const parts = [a && `${a} account${a === 1 ? '' : 's'}`, p && `${p} polic${p === 1 ? 'y' : 'ies'}`, h && `${h} propert${h === 1 ? 'y' : 'ies'}`, o && `${o} portfolio${o === 1 ? '' : 's'}`].filter(Boolean)
+            return { count: a + p + h + o, text: parts.length ? parts.join(' · ') : 'No data yet' }
           }}
         />
         <div className="col">

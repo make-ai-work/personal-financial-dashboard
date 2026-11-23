@@ -55,7 +55,7 @@ export const OwnerChip = ({ owner, parentLabel }) => (
 export function OwnerPicker({ value, onChange, parentLabel }) {
   const opts = [
     ['mine', 'Mine', 'Only me'],
-    ['joint', 'Joint', `Me + ${parentLabel.toLowerCase()}`],
+    ['joint', 'Me + Others', 'Me and anyone else'],
     ['spouse', 'Spouse', 'Only my spouse'],
     ['parent', parentLabel, `Only ${parentLabel.toLowerCase()}`],
   ]

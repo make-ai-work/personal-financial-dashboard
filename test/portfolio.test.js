@@ -212,7 +212,7 @@ test('totals, and older vaults get portfolio settings', () => {
   const { d } = schwab()
   assert.deepEqual(portfolioTotals(d, d.portfolios), { count: 1, holdings: 7, value: 96000 })
   const n = normalizeData({ settings: { countries: ['uk', 'us'] } })
-  assert.deepEqual(n.settings.portfolioCountries, ['uk', 'us'])
+  assert.deepEqual(n.settings.countries, ['uk', 'us'])
   assert.deepEqual([n.settings.concentrationLimit, n.settings.rebalanceTol, n.settings.priceStaleDays], [10, 5, 30])
   assert.deepEqual([n.portfolios, n.holdings], [[], []])
 })

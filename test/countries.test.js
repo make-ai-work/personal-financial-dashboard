@@ -23,13 +23,10 @@ test('move reorders within bounds only', () => {
   assert.deepEqual(moveCountry(['us', 'in', 'uk'], 'uk', 1), ['us', 'in', 'uk'])
 })
 
-test('older vaults get a property country list copied from Finance', () => {
-  const old = emptyData()
-  delete old.settings.propertyCountries
-  old.settings.countries = ['in', 'au', 'uk']
-  const d = normalizeData(old)
-  assert.deepEqual(d.settings.propertyCountries, ['in', 'au', 'uk'])
-  assert.deepEqual(d.settings.countries, ['in', 'au', 'uk'])
-  const own = normalizeData({ settings: { countries: ['us'], propertyCountries: ['ch', 'us'] } })
-  assert.deepEqual(own.settings.propertyCountries, ['ch', 'us']) // independent once set
+test('there is ONE list of countries: older vaults with separate Property and Portfolio lists get the union, Finance first', () => {
+  const d = normalizeData({ settings: { countries: ['in', 'au'], propertyCountries: ['ch', 'in'], portfolioCountries: ['uk'] } })
+  assert.deepEqual(d.settings.countries, ['in', 'au', 'ch', 'uk'])
+  assert.equal('propertyCountries' in d.settings, false); assert.equal('portfolioCountries' in d.settings, false)
+  assert.deepEqual(normalizeData({ settings: {} }).settings.countries, ['us', 'in']) // the default
+  assert.ok(normalizeData({ settings: { countries: ['ie', 'us'] } }).settings.countries.includes('ie'), 'Ireland is a country')
 })

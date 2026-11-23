@@ -11,7 +11,7 @@ const WINDOW_DAYS = 90
 export default function Overview({ owner, fx, onOpen }) {
   const { data } = useVault()
   const today = todayISO()
-  const codes = data.settings.propertyCountries
+  const codes = data.settings.countries
   const multi = codes.length > 1
   const cur = (c) => COUNTRIES[c].currency
   const visible = byOwner(data.properties.filter((p) => codes.includes(p.country)), owner)

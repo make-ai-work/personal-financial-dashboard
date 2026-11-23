@@ -13,7 +13,7 @@ import { useNav } from '../nav.jsx'
 export default function PortfolioApp() {
   const { data, update } = useVault()
   const { focus, clearFocus } = useNav()
-  const codes = data.settings.portfolioCountries
+  const codes = data.settings.countries
   const fx = useFx(codes, data.rates)
   const [tab, setTab] = useState('overview')
   const [modal, setModal] = useState(null)

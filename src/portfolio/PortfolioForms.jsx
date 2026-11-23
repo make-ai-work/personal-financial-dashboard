@@ -22,8 +22,8 @@ export function PortfolioModal({ countries, defaultCountry, accounts, linkedIds,
 
   const submit = (e) => {
     e.preventDefault()
-    if (creating && !newAcc.name.trim()) return setErr('Name the new Finance account.')
-    if (!creating && !chosen) return setErr('Pick a Finance account to link.')
+    if (creating && !newAcc.name.trim()) return setErr('Name the new Assets account.')
+    if (!creating && !chosen) return setErr('Pick an Assets account to link.')
     const label = name.trim() || (creating ? newAcc.name.trim() : `${chosen.name}${chosen.institution ? ` · ${chosen.institution}` : ''}`)
     onSave({ name: label, country, accountId: creating ? null : chosen.id, newAccount: creating ? { ...newAcc, name: newAcc.name.trim(), institution: newAcc.institution.trim() } : null })
   }
@@ -43,13 +43,13 @@ export function PortfolioModal({ countries, defaultCountry, accounts, linkedIds,
           </label>
           <label className="field">Portfolio name (optional)<input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Defaults to the account name" /></label>
         </div>
-        <label className="field">Link to a Finance asset account
-          <select aria-label="Finance account" value={creating && free.length ? 'new' : accountId || (free[0]?.id ?? 'new')} onChange={(e) => setAccountId(e.target.value)}>
+        <label className="field">Link to an Assets asset account
+          <select aria-label="Assets account" value={creating && free.length ? 'new' : accountId || (free[0]?.id ?? 'new')} onChange={(e) => setAccountId(e.target.value)}>
             {free.map((a) => <option key={a.id} value={a.id}>{a.name}{a.institution ? ` · ${a.institution}` : ''} — {COUNTRIES[country].symbol}{Math.round(a.balance || 0).toLocaleString(COUNTRIES[country].locale)}</option>)}
-            <option value="new">+ Create a new Finance account…</option>
+            <option value="new">+ Create a new Assets account…</option>
           </select>
         </label>
-        {free.length === 0 && <p className="note">There is no unlinked asset account in {COUNTRIES[country].flag} {COUNTRIES[country].name} yet, so a new one will be created in Finance.</p>}
+        {free.length === 0 && <p className="note">There is no unlinked asset account in {COUNTRIES[country].flag} {COUNTRIES[country].name} yet, so a new one will be created in Assets.</p>}
         {creating && (
           <div className="subform">
             <div className="two">
@@ -63,7 +63,7 @@ export function PortfolioModal({ countries, defaultCountry, accounts, linkedIds,
           After you finish linking, the account's balance and asset-mix bar are calculated from this portfolio's holdings.
           {!creating && chosen ? <> Its current balance (<b>{COUNTRIES[country].symbol}{Math.round(chosen.balance || 0).toLocaleString(COUNTRIES[country].locale)}</b>) stays as it is until then, and you'll compare it with your holdings.</> : <> A new account starts at {cur} 0.</>}
         </div>
-        <div className="sub">Each Finance account can be linked to one portfolio. Deleting the portfolio later keeps the account with its last balance.</div>
+        <div className="sub">Each Assets account can be linked to one portfolio. Deleting the portfolio later keeps the account with its last balance.</div>
         {err && <div className="err">{err}</div>}
       </form>
     </Modal>

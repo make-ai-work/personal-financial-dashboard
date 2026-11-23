@@ -161,7 +161,7 @@ export default function PropertyPage({ property, reveal, onDeleted }) {
       </div>
 
       {modal?.kind === 'property' && (
-        <PropertyModal initial={property} countries={data.settings.propertyCountries} parentLabel={parentLabel} onClose={done}
+        <PropertyModal initial={property} countries={data.settings.countries} parentLabel={parentLabel} onClose={done}
           onSave={(patch) => { update((d) => updateProperty(d, property.id, patch)); done() }} />
       )}
       {modal?.kind === 'valuation' && (

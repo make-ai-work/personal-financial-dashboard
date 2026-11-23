@@ -461,3 +461,8 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 .rplan-actions { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); font-size: .82rem; }
 .rplan-actions .acts { display: flex; gap: 6px; flex-wrap: wrap; } .rplan-actions .m { color: var(--muted); font-size: .76rem; }
 .rplan-actions .namefld { display: flex; gap: 6px; flex-wrap: wrap; } .rplan-actions input { min-width: 0; flex: 1; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 5px 7px; font-size: .85rem; }
+
+/* Settings: the index ("On this page") and This device are on the LEFT (30%), the settings on the right (70%). On a phone the settings come first. */
+.split7030.split-flip { grid-template-columns: minmax(0, 30fr) minmax(0, 70fr); }
+.settings .sp-r { position: sticky; top: 8px; }
+@media (max-width: 1000px) { .split7030.split-flip { grid-template-columns: minmax(0, 1fr); } .split-flip .sp-l { order: 1; } .split-flip .sp-r { order: 2; } }

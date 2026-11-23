@@ -63,8 +63,6 @@ export async function exportWorkbook(data) {
   ]))
   sheet(wb, 'Settings', ['Key', 'Value'], [
     ['countries', data.settings.countries.join(',')],
-    ['propertyCountries', data.settings.propertyCountries.join(',')],
-    ['portfolioCountries', data.settings.portfolioCountries.join(',')],
     ['concentrationLimit', data.settings.concentrationLimit],
     ['rebalanceTol', data.settings.rebalanceTol],
     ['priceStaleDays', data.settings.priceStaleDays],
@@ -216,10 +214,10 @@ export async function importWorkbook(buffer) {
       priceDate: String(r['Price date'] ?? ''), notes: String(r.Notes ?? ''),
     })
   }
+  const legacyCountries = []
   for (const r of readRows(wb.getWorksheet('Settings'))) {
     if (r.Key === 'countries') data.settings.countries = sanitizeCountries(String(r.Value).split(',').map((x) => x.trim()), data.settings.countries)
-    if (r.Key === 'propertyCountries') data.settings.propertyCountries = sanitizeCountries(String(r.Value).split(',').map((x) => x.trim()), data.settings.countries)
-    if (r.Key === 'portfolioCountries') data.settings.portfolioCountries = sanitizeCountries(String(r.Value).split(',').map((x) => x.trim()), data.settings.countries)
+    if (r.Key === 'propertyCountries' || r.Key === 'portfolioCountries') legacyCountries.push(...String(r.Value).split(',').map((x) => x.trim())) // older exports had separate lists
     if (r.Key === 'concentrationLimit' && num(r.Value) > 0) data.settings.concentrationLimit = num(r.Value)
     if (r.Key === 'rebalanceTol' && num(r.Value) > 0) data.settings.rebalanceTol = num(r.Value)
     if (r.Key === 'priceStaleDays' && num(r.Value) > 0) data.settings.priceStaleDays = num(r.Value)
@@ -227,5 +225,6 @@ export async function importWorkbook(buffer) {
     if (r.Key === 'autoLockMin' && num(r.Value) != null) data.settings.autoLockMin = num(r.Value)
     if (r.Key === 'dueSoonDays' && num(r.Value) > 0) data.settings.dueSoonDays = num(r.Value)
   }
+  if (legacyCountries.length) data.settings.countries = sanitizeCountries([...data.settings.countries, ...legacyCountries], data.settings.countries)
   return { data, warnings }
 }
