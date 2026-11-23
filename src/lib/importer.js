@@ -53,6 +53,28 @@ export async function readTable({ name, text, buffer }) {
   return tableFromRows(parseCsv(text))
 }
 
+// A date from a cell: an Excel date, 2027-02-01, 02/01/2027 (month first, as in the USA; day first when the first number is over 12), 1 Feb 2027. '' when unreadable.
+export function toISODate(v) {
+  if (v instanceof Date && !Number.isNaN(v.getTime())) return v.toISOString().slice(0, 10)
+  const t = String(v ?? '').trim()
+  if (!t) return ''
+  let m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(t)
+  let y, mo, da
+  if (m) [y, mo, da] = [m[1], m[2], m[3]]
+  else if ((m = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})$/.exec(t))) {
+    const a = Number(m[1]), b = Number(m[2])
+    ;[mo, da] = a > 12 ? [b, a] : [a, b]
+    y = m[3].length === 2 ? 2000 + Number(m[3]) : m[3]
+  } else {
+    const d = new Date(`${t} UTC`)
+    if (Number.isNaN(d.getTime())) return ''
+    return d.toISOString().slice(0, 10)
+  }
+  const iso = `${y}-${String(mo).padStart(2, '0')}-${String(da).padStart(2, '0')}`
+  const d = new Date(`${iso}T00:00:00Z`)
+  return Number.isNaN(d.getTime()) || d.getUTCMonth() + 1 !== Number(mo) ? '' : iso
+}
+
 export function toNumber(v) {
   if (v == null || v === '') return null
   if (typeof v === 'number') return Number.isFinite(v) ? v : null
@@ -88,6 +110,8 @@ export const ACCOUNT_FIELDS = [
   { key: 'country', label: 'Country', aliases: ['country', 'market', 'region'] },
   { key: 'currency', label: 'Currency', aliases: ['currency', 'ccy', 'curr'] },
   { key: 'type', label: 'Asset or liability', aliases: ['type', 'kind', 'asset or liability', 'class'] },
+  { key: 'maturityDate', label: 'Maturity date', aliases: ['maturity date', 'maturity', 'matures', 'matures on', 'maturity dt', 'end date'] },
+  { key: 'maturityValue', label: 'Value at maturity', aliases: ['maturity value', 'value at maturity', 'maturity amount', 'maturity proceeds', 'amount at maturity'] },
   { key: 'balance', label: 'Current balance', aliases: ['current balance', 'balance', 'amount', 'value', 'market value', 'total'] },
 ]
 // -> { fieldKey: header | '' }. Exact matches win, then headers that contain an alias; each header is used once.
@@ -118,12 +142,28 @@ export function resolveCountry(country, currency) {
 const HOLDING_TYPE = { stock: 'stock', equity: 'stock', share: 'stock', shares: 'stock', etf: 'etf', fund: 'fund', 'mutual fund': 'fund', bond: 'bond', cash: 'cash', other: 'other' }
 const CLASS_WORDS = [[/cash|money market/, 'cash'], [/bond|fixed income|treasury|debt/, 'bonds'], [/gold|silver|metal|commodit/, 'metals'], [/equit|stock|share|etf|fund/, 'equities']]
 const classOf = (v) => { const s = String(v || '').toLowerCase(); return s ? (CLASS_WORDS.find(([re]) => re.test(s))?.[1] || '') : '' }
+// A DEFAULT VALUE per field, chosen in the upload dialog: it is used for every row when the file has no such column, and for rows where the cell is blank.
+// Done by adding a hidden column, so the planners below need no special cases.
+export function applyDefaults(table, mapping, defaults = {}) {
+  const keys = Object.keys(defaults).filter((k) => String(defaults[k] ?? '').trim() !== '')
+  if (!keys.length) return { table, mapping }
+  const map = { ...mapping }
+  const cols = Object.fromEntries(keys.map((k) => [k, `__default_${k}`]))
+  const rows = table.rows.map((row) => {
+    const r = { ...row }
+    for (const k of keys) { const cell = mapping[k] ? row[mapping[k]] : ''; r[cols[k]] = String(cell ?? '').trim() === '' ? defaults[k] : cell }
+    return r
+  })
+  for (const k of keys) map[k] = cols[k]
+  return { table: { ...table, rows }, mapping: map }
+}
 const get = (row, mapping, key) => (mapping[key] ? row[mapping[key]] : '')
 
 // ---------- holdings -> portfolios (one per country) ----------
 // mode: 'update' (overwrite the holdings of the portfolios it touches) | 'add' (keep what is there, add the new rows, skip ones already held)
 // -> { lines: [string], warnings: [string], counts: { portfolios, holdings, skipped }, apply(d) }
-export function planHoldingsImport(d, table, mapping, mode, { today, defaultCountry } = {}) {
+export function planHoldingsImport(d, table0, mapping0, mode, { today, defaultCountry, defaults } = {}) {
+  const { table, mapping } = applyDefaults(table0, mapping0, defaults)
   const warnings = []
   const fallback = defaultCountry || d.settings.countries[0] || 'us'
   const groups = new Map()
@@ -189,7 +229,8 @@ export function planHoldingsImport(d, table, mapping, mode, { today, defaultCoun
 // ---------- accounts ----------
 // mode 'update': a file row that matches an existing account (same number, else same name in the same country) overwrites its fields and balance;
 // rows that match nothing are added. mode 'add': every row is added, except exact duplicates (same name, number and country), which are skipped.
-export function planAccountsImport(d, table, mapping, mode, { defaultCountry } = {}) {
+export function planAccountsImport(d, table0, mapping0, mode, { defaultCountry, defaults } = {}) {
+  const { table, mapping } = applyDefaults(table0, mapping0, defaults)
   const warnings = []
   const fallback = defaultCountry || d.settings.countries[0] || 'us'
   const items = []
@@ -204,7 +245,7 @@ export function planAccountsImport(d, table, mapping, mode, { defaultCountry } =
     const o = String(get(row, mapping, 'owner') ?? '').trim().toLowerCase()
     const owner = OWNERS.find((x) => x === o) || (/joint|both|me \+ others|family/.test(o) ? 'joint' : /spouse|wife|husband|partner/.test(o) ? 'spouse' : /parent|mom|dad|mother|father/.test(o) ? 'parent' : 'mine')
     const country = resolveCountry(get(row, mapping, 'country'), get(row, mapping, 'currency')) || fallback
-    items.push({ name, number: String(get(row, mapping, 'number') ?? '').trim(), institution: String(get(row, mapping, 'institution') ?? '').trim(), owner, country, type, balance: Math.abs(balance) })
+    items.push({ name, number: String(get(row, mapping, 'number') ?? '').trim(), institution: String(get(row, mapping, 'institution') ?? '').trim(), owner, country, type, balance: Math.abs(balance), maturityDate: type === 'asset' ? toISODate(get(row, mapping, 'maturityDate')) : '', maturityValue: type === 'asset' ? toNumber(get(row, mapping, 'maturityValue')) : null })
   })
   const same = (a, it) => (it.number && a.number ? a.number === it.number : a.name.toLowerCase() === it.name.toLowerCase() && a.country === it.country)
   const lines = []
@@ -220,8 +261,8 @@ export function planAccountsImport(d, table, mapping, mode, { defaultCountry } =
   const counts = { updated: updates.length, created: creates.length, skipped }
   function apply(data) {
     let next = data
-    for (const { hit, it } of updates) next = { ...next, accounts: next.accounts.map((a) => (a.id === hit.id ? { ...a, name: it.name, number: it.number || a.number, institution: it.institution || a.institution, owner: it.owner, country: it.country, balance: it.balance } : a)) }
-    for (const it of creates) next = addAccount(next, { country: it.country, type: it.type, name: it.name, number: it.number, institution: it.institution, owner: it.owner, balance: it.balance, mix: null, maturityDate: '', maturityValue: null })
+    for (const { hit, it } of updates) next = { ...next, accounts: next.accounts.map((a) => (a.id === hit.id ? { ...a, name: it.name, number: it.number || a.number, institution: it.institution || a.institution, owner: it.owner, country: it.country, balance: it.balance, maturityDate: it.maturityDate || a.maturityDate || '', maturityValue: it.maturityValue ?? a.maturityValue ?? null } : a)) }
+    for (const it of creates) next = addAccount(next, { country: it.country, type: it.type, name: it.name, number: it.number, institution: it.institution, owner: it.owner, balance: it.balance, mix: null, maturityDate: it.maturityDate, maturityValue: it.maturityValue })
     return next
   }
   return { lines, warnings, counts, apply }
