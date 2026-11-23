@@ -11,6 +11,7 @@ export default function Settings() {
   const v = useVault()
   const { data, update } = v
   const [changing, setChanging] = useState(false)
+  const [newKey, setNewKey] = useState('') // a just-made recovery key, shown once
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
   const [dlg, setDlg] = useState('') // app only: 'restore' | 'delete'
@@ -35,6 +36,10 @@ export default function Settings() {
     } catch (e) {
       if (!isAbort(e)) setMsg(e.message)
     }
+  }
+  const makeKey = async () => {
+    setBusy(true)
+    try { setNewKey(await v.createRecoveryKey()); setMsg('') } finally { setBusy(false) }
   }
   const changePass = async (p) => {
     setBusy(true)
@@ -131,6 +136,25 @@ export default function Settings() {
             <button className="btn" onClick={() => setChanging(!changing)}>{changing ? 'Cancel' : 'Change passphrase'}</button>
           </div>
           {changing && <div className="inline-form"><PassphraseForm submitLabel="Change passphrase" onSubmit={changePass} busy={busy} /></div>}
+          <div className="row" data-testid="recovery-row">
+            <span>Recovery key<small>{v.hasRecovery ? 'On. Opens your vault if you forget the passphrase.' : 'Off. Make one so a forgotten passphrase can be reset.'}</small></span>
+            <span className="acts">
+              <button className="btn" disabled={busy} onClick={makeKey}>{v.hasRecovery ? 'Make a new key' : 'Make a recovery key'}</button>
+              {v.hasRecovery && <button className="btn danger-btn" disabled={busy} onClick={async () => { await v.deleteRecoveryKey(); setNewKey(''); setMsg('Recovery key removed.') }}>Remove</button>}
+            </span>
+          </div>
+          {newKey && (
+            <div className="warn" data-testid="recovery-key-box">
+              <b>Your recovery key. It is shown only now.</b>
+              <div className="mono" data-testid="recovery-key" style={{ fontSize: '1.15rem', letterSpacing: '.05em', margin: '8px 0', wordBreak: 'break-all' }}>{newKey}</div>
+              Write it down or save it in a password manager, somewhere other than this vault. Anyone with this key and your file can open it. Making a new key stops the old one working.
+              <div className="acts" style={{ marginTop: 8 }}>
+                <button className="btn" onClick={() => navigator.clipboard?.writeText(newKey)}>Copy</button>
+                <button className="btn" onClick={() => download('recovery-key.txt', new TextEncoder().encode(`Finance Dashboard recovery key\n${newKey}\nKeep this somewhere safe and private.\n`))}>Save as a file</button>
+                <button className="btn primary" onClick={() => setNewKey('')}>I have saved it</button>
+              </div>
+            </div>
+          )}
           <div className="row">
             <span>Auto-lock after<small>Idle time before the app locks itself</small></span>
             <select className="pw sm" aria-label="Auto-lock after" value={data.settings.autoLockMin} onChange={(e) => setSettings({ autoLockMin: Number(e.target.value) })}>

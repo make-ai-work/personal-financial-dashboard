@@ -101,7 +101,7 @@ export function PassphraseForm({ submitLabel, onSubmit, busy, error }) {
         <input className="pw" type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
       </label>
       <div className="warn">
-        <b>There is no recovery.</b> If you forget this passphrase, the file cannot be opened by anyone. Store it in a password manager.
+        <b>Keep it safe.</b> If you forget this passphrase, the file cannot be opened by anyone, unless you made a recovery key (Settings, after you create the vault). Store it in a password manager.
       </div>
       <label className="check">
         <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} /> I understand and have saved my passphrase
