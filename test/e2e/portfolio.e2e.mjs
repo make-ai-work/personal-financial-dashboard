@@ -292,6 +292,31 @@ try {
   await page.getByText('Nothing here yet').or(page.getByText('No assets')).first().waitFor().catch(() => {})
   await topTab(/Portfolio/).click(); await subtab(/USA/).click()
   await page.getByText(/No portfolios in .*USA yet/).waitFor()
+
+  step('upload a CSV of holdings: one portfolio per country, asks update-and-overwrite or new addition, previews, then applies')
+  await page.getByTestId('upload-holdings').click()
+  const csv = 'Symbol,Description,Quantity,Last Price,Currency\nVTI,Vanguard Total Market,100,250.5,USD\nINFY.BSE,Infosys,50,1500,INR\n'
+  await page.getByLabel('File to upload').setInputFiles({ name: 'holdings.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) })
+  await page.getByText(/Check each match/).waitFor()
+  assert.equal(await page.getByRole('button', { name: 'Apply changes' }).isDisabled(), true, 'must choose update or new addition first')
+  await page.getByLabel('New addition').check()
+  const prev = await page.getByTestId('import-preview').innerText()
+  assert.match(prev, /USA: create the portfolio "USA portfolio"/); assert.match(prev, /India/)
+  await page.getByRole('button', { name: 'Apply changes' }).click()
+  await page.getByTestId('import-modal').waitFor({ state: 'detached' })
+  await subtab(/USA/).click()
+  await page.getByText('USA portfolio').first().waitFor()
+  await page.getByText('VTI').first().waitFor()
+
+  step('upload accounts on the Assets tab')
+  await topTab(/Assets/).click()
+  await page.getByTestId('upload-accounts').click()
+  const acc = 'Account Name,Account Number,Balance,Currency\nUploaded checking,987654,"$8,200",USD\n'
+  await page.getByLabel('File to upload').setInputFiles({ name: 'accounts.csv', mimeType: 'text/csv', buffer: Buffer.from(acc) })
+  await page.getByLabel('Update and overwrite').check()
+  await page.getByTestId('import-preview').getByText(/Uploaded checking/).waitFor()
+  await page.getByRole('button', { name: 'Apply changes' }).click()
+  await page.getByText('Uploaded checking').first().waitFor()
 } catch (e) {
   await page.screenshot({ path: `${OUT}/failure.png`, fullPage: true })
   console.error('FAILED:', e.message)

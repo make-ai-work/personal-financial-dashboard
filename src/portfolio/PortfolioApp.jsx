@@ -9,6 +9,7 @@ import { COUNTRIES } from '../lib/format.js'
 import { addHolding, addPortfolio, countryOf, holdingsOf, updateHolding, updatePortfolio, updatePrices } from '../lib/portfolio.js'
 import { addAccount } from '../lib/model.js'
 import { useNav } from '../nav.jsx'
+import ImportModal from '../finance/ImportModal.jsx'
 
 export default function PortfolioApp() {
   const { data, update } = useVault()
@@ -37,6 +38,7 @@ export default function PortfolioApp() {
         <button className={active === 'overview' ? 'on' : ''} onClick={() => setTab('overview')}>Overview</button>
         {codes.map((c) => <button key={c} className={active === c ? 'on' : ''} onClick={() => setTab(c)}>{COUNTRIES[c].flag} {COUNTRIES[c].name}</button>)}
         <button onClick={() => setModal({ kind: 'portfolio', country: codes.includes(active) ? active : codes[0] })}>+ Add portfolio</button>
+        <button onClick={() => setModal({ kind: 'import' })} data-testid="upload-holdings">Upload holdings…</button>
       </nav>
       <div className="subpage">
         {active === 'overview' && <Overview fx={fx} onOpenCountry={setTab} />}
@@ -50,6 +52,7 @@ export default function PortfolioApp() {
         )}
       </div>
 
+      {modal?.kind === 'import' && <ImportModal kind="holdings" defaultCountry={codes.includes(active) ? active : codes[0]} onClose={done} />}
       {modal?.kind === 'portfolio' && (
         <PortfolioModal countries={codes} defaultCountry={modal.country} accounts={data.accounts} linkedIds={linkedIds} parentLabel={data.settings.parentLabel} onClose={done}
           onSave={({ name, country, accountId, newAccount }) => {

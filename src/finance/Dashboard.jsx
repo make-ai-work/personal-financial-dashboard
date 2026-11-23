@@ -6,6 +6,7 @@ import { useFx } from './useFx.js'
 import CountryView from './CountryView.jsx'
 import StatusBar from './StatusBar.jsx'
 import FxBar from './FxBar.jsx'
+import ImportModal from './ImportModal.jsx'
 
 export default function Dashboard() {
   const v = useVault()
@@ -14,6 +15,7 @@ export default function Dashboard() {
   const [tab, setTab] = useState(codes[0])
   const [owner, setOwner] = useState('all')
   const [reveal, setReveal] = useState(false)
+  const [importing, setImporting] = useState(false)
   const fx = useFx(codes, data.rates)
   const { focus, clearFocus } = useNav()
   useEffect(() => {
@@ -42,9 +44,11 @@ export default function Dashboard() {
             ))}
           </span>
           <button className="btn sm" onClick={() => setReveal(!reveal)}>{reveal ? 'Hide account numbers' : 'Show account numbers'}</button>
+          <button className="btn sm" onClick={() => setImporting(true)} data-testid="upload-accounts">Upload accounts…</button>
         </div>
       )}
       {codes.length > 1 && <div className="fin-fx"><FxBar fx={fx} /></div>}
+      {importing && <ImportModal kind="accounts" defaultCountry={active} onClose={() => setImporting(false)} />}
       {codes.includes(active) && <CountryView key={active} code={active} owner={owner} reveal={reveal} fx={fx} />}
     </div>
   )

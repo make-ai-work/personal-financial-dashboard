@@ -475,3 +475,10 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 .matches { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
 .match { text-align: left; background: var(--surface-2); color: var(--text); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 6px 9px; font: inherit; font-size: .86rem; cursor: pointer; }
 .match:hover { border-color: var(--accent); } .match small { color: var(--muted); }
+
+/* Upload dialog */
+.mapgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px 12px; margin: 6px 0 10px }
+.mapgrid .fld, [data-testid="import-modal"] .fld { display: flex; flex-direction: column; gap: 3px; font-size: .86rem }
+[data-testid="import-modal"] h4 { margin: 14px 0 6px }
+[data-testid="import-modal"] .choice { display: flex; flex-direction: column; gap: 6px }
+[data-testid="import-modal"] ul { margin: 4px 0; padding-left: 1.1rem }
