@@ -53,3 +53,31 @@ test('yearly results become date ranges: US calendar years, India April to March
 test('a skipped year breaks a range', () => {
   assert.equal(yearsToRanges('us', [{ year: 2020, status: 'resident' }, { year: 2022, status: 'resident' }], 2025).length, 2)
 })
+
+import { projectDeparture } from '../src/lib/residency.js'
+test('a planned US departure: the US test fades over 2 years, India turns from NRI to RNOR, then ROR once the history is resident', () => {
+  // living in the US for years: ~330 days a year in the US, ~30 in India; today 2026-06-01; leaving on 2027-06-30
+  const usIn = Object.fromEntries([2022, 2023, 2024, 2025, 2026].map((y) => [y, { days: 335 }])) // (2026 counts days so far only in real use)
+  const inIn = Object.fromEntries([2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025].map((y) => [y, { days: 30 }]))
+  const inputs = { us: usIn, in: inIn }
+  const p = projectDeparture(inputs, { departure: '2027-06-30', usVisitDays: 30, indiaVisitDays: 30, givesUpGreenCard: true }, '2026-06-01', {})
+  const us = Object.fromEntries(p.usYears.map((x) => [x.year, x.status])), inn = Object.fromEntries(p.inYears.map((x) => [x.year, x.status]))
+  assert.equal(us[2027], 'resident') // most of the year in the US
+  assert.equal(us[2028], 'nonresident') // 30 days: under 31 + weighting does not matter below 31? 30 < 31
+  assert.equal(inn[2026], 'nri') // still living in the US
+  assert.equal(inn[2027], 'rnor') // from 30 June 2027 India: 275+ days, resident, but non-resident in 10 of 10 years
+  assert.ok(p.years.length >= 6)
+  assert.equal(projectDeparture(inputs, { departure: '2020-01-01' }, '2026-06-01'), null) // a past date is not a plan
+  assert.equal(projectDeparture(inputs, {}, '2026-06-01'), null)
+})
+test('a green card holder who keeps the card stays a US resident; giving it up ends it the year after leaving', () => {
+  const inputs = { us: { 2026: { days: 300, greenCard: true } }, in: {} }
+  const keep = projectDeparture(inputs, { departure: '2027-03-01', givesUpGreenCard: false }, '2026-10-01', {})
+  assert.ok(keep.usYears.filter((x) => x.year >= 2027).every((x) => x.status === 'resident'))
+  const give = projectDeparture(inputs, { departure: '2027-03-01', givesUpGreenCard: true }, '2026-10-01', {})
+  assert.deepEqual(give.usYears.filter((x) => x.year >= 2027 && x.year <= 2029).map((x) => x.status), ['resident', 'nonresident', 'nonresident'])
+})
+test('future years are written as real dates, not open ended', () => {
+  const r = yearsToRanges('us', [{ year: 2026, status: 'resident' }, { year: 2027, status: 'resident' }, { year: 2028, status: 'nonresident' }], 2026)
+  assert.deepEqual(r, [{ status: 'resident', from: '2026-01-01', to: '2027-12-31' }, { status: 'nonresident', from: '2028-01-01', to: '2028-12-31' }])
+})

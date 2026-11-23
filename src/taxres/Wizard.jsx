@@ -2,11 +2,11 @@ import { useState } from 'react'
 import { Modal } from '../finance/ui.jsx'
 import { useVault } from '../finance/VaultContext.jsx'
 import { todayISO } from '../lib/format.js'
-import { REF, INCOME_LIMIT_LAKH, indiaFYOf, indiaResidency, usResidency, yearsToRanges } from '../lib/residency.js'
+import { REF, INCOME_LIMIT_LAKH, indiaFYOf, indiaResidency, projectDeparture, usResidency, yearsToRanges } from '../lib/residency.js'
 import { normalizeInputs, setRanges, statusOf } from '../lib/taxres.js'
 import { countDays, travelProblems } from '../lib/travel.js'
 
-const STEPS = ['Start', 'About you', 'Travel dates (optional)', 'USA', 'India', 'Results']
+const STEPS = ['Start', 'About you', 'Travel dates (optional)', 'USA', 'India', 'Plan ahead (optional)', 'Results']
 const Src = ({ r }) => <a href={r.url} target="_blank" rel="noreferrer">{r.label}</a>
 const Tone = ({ country, status }) => { const s = statusOf(country, status); return <span className={`pill tone-${s.tone}`}>{s.label}</span> }
 
@@ -31,12 +31,16 @@ export default function Wizard({ onClose }) {
   const entered = (c, y) => inputs[c][y] && inputs[c][y].days !== '' && inputs[c][y].days != null
   const usList = usYears.filter((y) => entered('us', y)).map((y) => ({ year: y, status: usRes(y).status }))
   const inList = inYears.filter((y) => entered('in', y)).map((y) => ({ year: y, status: inRes(y).status }))
+  const proj = projectDeparture(inputs, inputs.plan, today, opts) // a planned future US departure, if one is set
+  const withPlan = !!(proj && inputs.plan.include)
+  const usFinal = withPlan ? [...usList.filter((x) => x.year < curYear), ...proj.usYears] : usList
+  const inFinal = withPlan ? [...inList.filter((x) => x.year < curFY), ...proj.inYears] : inList
 
   const apply = () => {
     const make = (country, list, cur) => yearsToRanges(country, list, cur)
     update((d) => {
       let next = d
-      for (const [c, list, cur] of [['us', usList, curYear], ['in', inList, curFY]]) {
+      for (const [c, list, cur] of [['us', usFinal, curYear], ['in', inFinal, curFY]]) {
         if (!list.length) continue
         const ranges = make(c, list, cur)
         const lo = ranges[0].from, hi = ranges.some((r) => r.to === '') ? '9999-12-31' : ranges[ranges.length - 1].to
@@ -52,8 +56,9 @@ export default function Wizard({ onClose }) {
     <>
       {step > 0 && <button className="btn" onClick={() => setStep(step - 1)}>← Back</button>}
       <span style={{ flex: 1 }} />
-      <button className="btn" onClick={onClose}>{step === 5 ? 'Close' : 'Save and close'}</button>
-      {step < 5 && <button className="btn primary" onClick={() => setStep(step + 1)} data-testid="wiz-next">{step === 4 ? 'See my results →' : step === 2 ? 'Next (skip if you will type days) →' : 'Next →'}</button>}
+      <button className="btn" onClick={onClose}>{step === 6 ? 'Close' : 'Save and close'}</button>
+      {step === 6 && <button className="btn primary" disabled={!usFinal.length && !inFinal.length} onClick={apply} data-testid="wiz-apply">Save these Dates</button>}
+      {step < 6 && <button className="btn primary" onClick={() => setStep(step + 1)} data-testid="wiz-next">{step === 5 ? 'See my results →' : step === 2 ? 'Next (skip if you will type days) →' : step === 5 ? 'Next →' : 'Next →'}</button>}
     </>
   )
   return (
@@ -142,8 +147,10 @@ export default function Wizard({ onClose }) {
           </>
         )}
 
-        {step === 5 && (
-          <Results usYears={usYears} inYears={inYears} entered={entered} usRes={usRes} inRes={inRes} usList={usList} inList={inList} apply={apply} applied={applied} />
+        {step === 5 && <PlanStep inputs={inputs} proj={proj} set={set} today={today} />}
+
+        {step === 6 && (
+          <Results usYears={usYears} inYears={inYears} entered={entered} usRes={usRes} inRes={inRes} proj={proj} withPlan={withPlan} applied={applied} set={set} inputs={inputs} />
         )}
       </div>
     </Modal>
@@ -209,7 +216,55 @@ function TravelStep({ inputs, start, today, usYears, inYears, set }) {
   )
 }
 
-function Results({ usYears, inYears, entered, usRes, inRes, usList, inList, apply, applied }) {
+// Optional: model leaving the US for good on a future date. Uses the days entered so far and runs the same rules on the coming years.
+function PlanStep({ inputs, proj, set, today }) {
+  const pl = inputs.plan
+  const setPlan = (patch) => set((i) => { i.plan = { ...i.plan, ...patch }; return i })
+  const bad = pl.departure && pl.departure <= today
+  const anyGreenCard = Object.values(inputs.us).some((r) => r.greenCard)
+  const fyLabel = (y) => `FY ${y}-${String((y + 1) % 100).padStart(2, '0')}`
+  const lines = []
+  if (proj) {
+    const depYear = Number(pl.departure.slice(0, 4))
+    const firstNon = proj.usYears.find((x) => x.year >= depYear && x.status === 'nonresident')
+    lines.push(firstNon ? `USA: you would be a US tax resident through ${firstNon.year - 1}, and a nonresident from ${firstNon.year}.` : 'USA: with these answers you stay a US tax resident through the years shown.')
+    let prev = null
+    for (const x of proj.inYears) { if (x.status !== prev) lines.push(`India: ${statusOf('in', x.status).label} from ${fyLabel(x.year)}${prev ? ` (was ${statusOf('in', prev).label})` : ''}.`); prev = x.status }
+  }
+  return (
+    <div data-testid="plan-step">
+      <p>Optional. Model leaving the US for good on a future date, to see when your tax status would change in each country. It starts from the days you have entered and works out the coming years.</p>
+      <div className="two">
+        <label className="field">If I leave the US for good on<input type="date" value={pl.departure} onChange={(e) => setPlan({ departure: e.target.value })} aria-label="Planned US departure date" /></label>
+        <label className="field">…and expect to visit the US (days a year after leaving)<input type="number" min="0" max="365" value={pl.usVisitDays} onChange={(e) => setPlan({ usVisitDays: e.target.value })} aria-label="Visit days in the US after leaving" /></label>
+      </div>
+      <label className="field">Days a year I expect to spend in India before I leave (visits)<input type="number" min="0" max="365" value={pl.indiaVisitDays} onChange={(e) => setPlan({ indiaVisitDays: e.target.value })} aria-label="Visit days in India before leaving" style={{ maxWidth: 160 }} /></label>
+      {anyGreenCard && <label className="chk"><input type="checkbox" checked={pl.givesUpGreenCard} onChange={(e) => setPlan({ givesUpGreenCard: e.target.checked })} aria-label="Give up the green card" /><span>I will give up my green card when I leave<span className="sub" style={{ display: 'block' }}>If you keep it, you stay a US tax resident whatever your days.</span></span></label>}
+      {bad && <div className="badrow">Choose a date after today. To record a past departure, use the travel dates step.</div>}
+      {proj && (
+        <>
+          <h4>What would change</h4>
+          <ul data-testid="plan-summary">{lines.map((l) => <li key={l}>{l}</li>)}</ul>
+          <div className="tblw"><table className="t-left wiz-t" data-testid="plan-table">
+            <thead><tr><th>Year</th><th>USA days</th><th>USA</th><th>India days (FY from April)</th><th>India</th></tr></thead>
+            <tbody>
+              {proj.years.map((x) => (
+                <tr key={x.year}>
+                  <td><b>{x.year}</b></td>
+                  <td>{x.us ? x.usDays : '—'}</td><td data-testid={`plan-us-${x.year}`}>{x.us ? <Tone country="us" status={x.us.status} /> : '—'}</td>
+                  <td>{x.in ? x.inDays : '—'}</td><td data-testid={`plan-in-${x.year}`}>{x.in ? <Tone country="in" status={x.in.status} /> : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table></div>
+        </>
+      )}
+      <div className="sub" style={{ marginTop: 8 }}>Assumptions: the current year keeps the days you entered and adds the days to come. Days after you leave are in India except your US visits; days before are in the US except your India visits. The India answers (left for employment, income over the limit, taxed elsewhere) stay as in your latest year. A green card is kept until the year you leave; in that year a green card holder is treated as resident for the whole year (dual-status is not modelled). Years are shown for 4 years after you leave.</div>
+    </div>
+  )
+}
+
+function Results({ usYears, inYears, entered, usRes, inRes, proj, withPlan, applied, set, inputs }) {
   const block = (country, years, res, label) => {
     const rows = years.filter((y) => entered(country === 'us' ? 'us' : 'in', y))
     return (
@@ -233,9 +288,23 @@ function Results({ usYears, inYears, entered, usRes, inRes, usList, inList, appl
       <p className="sub">Each year shows its result. Open a year to see the rule behind it and the official page it comes from.</p>
       {block('us', usYears, usRes, 'USA (calendar years)')}
       {block('in', inYears, inRes, 'India (financial years, April to March)')}
-      <div className="row-actions">
-        <button className="btn primary" disabled={!usList.length && !inList.length} onClick={apply} data-testid="wiz-apply">Use these results on the Tax Residency tab</button>
-      </div>
+      {proj && (
+        <div className="wiz-res" data-testid="wiz-plan">
+          <h4>Planned: leaving the US for good on {proj.departure}</h4>
+          <label className="chk"><input type="checkbox" checked={inputs.plan.include} onChange={(e) => set((i) => { i.plan = { ...i.plan, include: e.target.checked }; return i })} aria-label="Include the planned years" /><span>Include the planned years when I save the dates</span></label>
+          {['us', 'in'].map((c) => (
+            <div key={c}>
+              <b>{c === 'us' ? 'USA' : 'India'}</b>
+              {proj.years.filter((x) => x[c]).map((x) => (
+                <details key={x.year} className="wiz-year">
+                  <summary><b>{c === 'in' ? `FY ${x.year}-${String((x.year + 1) % 100).padStart(2, '0')}` : x.year}</b> <Tone country={c} status={x[c].status} /> <span className="sub">planned</span></summary>
+                  <ul>{x[c].reasons.map((r, i) => <li key={i}>{r.text} <span className="sub">Source: <Src r={r.ref} /></span></li>)}</ul>
+                </details>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
       {applied && <div className="okrow" data-testid="wiz-applied">{applied}</div>}
       <div className="warnrow">Guidance, not tax advice. Treaty tie-breakers, the first-year choice and dual-status years are not applied. Check the official pages: <Src r={REF.usStatus} />, <Src r={REF.usSpt} />, <Src r={REF.india} />.</div>
     </>

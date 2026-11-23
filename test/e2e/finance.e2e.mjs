@@ -222,7 +222,20 @@ assert.equal(await page.getByLabel(/Left for employment/).count(), 0, 'citizen q
 for (const [y, d] of [[2024, 10], [2025, 10], [2026, 200]]) await page.getByLabel(`India days ${y}`).fill(String(d))
 await page.getByTestId('in-res-2025').getByText('NRI').waitFor()
 await page.getByTestId('in-res-2026').getByText('RNOR').waitFor() // resident, but non-resident in 9 of the previous 10 years
+await page.getByTestId('wiz-next').click() // plan ahead (optional)
+await page.getByTestId('plan-step').waitFor()
+await page.getByLabel('Planned US departure date').fill('2027-06-30'); await page.getByLabel('Visit days in the US after leaving').fill('30'); await page.getByLabel('Visit days in India before leaving').fill('20')
+await page.getByTestId('plan-us-2027').getByText('Resident', { exact: true }).waitFor() // most of 2027 in the US, plus the earlier years
+await page.getByTestId('plan-us-2028').getByText('Nonresident').waitFor() // 30 visit days: under 31
+const planned = await page.getByTestId('plan-summary').innerText()
+assert.match(planned, /nonresident from 2028/); assert.match(planned, /ROR from FY 2029-30 \(was RNOR\)/)
+await page.screenshot({ path: `${OUT}/wizard-plan.png` })
 await page.getByTestId('wiz-next').click() // results
+await page.getByTestId('wiz-plan').getByText(/Planned: leaving the US for good on 2027-06-30/).waitFor()
+assert.ok(await page.getByTestId('wiz-apply').isVisible(), 'Save these Dates is in the footer')
+assert.equal(await page.getByRole('dialog').getByRole('button', { name: 'Save these Dates' }).count(), 1)
+const [bs, bc] = [await page.getByTestId('wiz-apply').boundingBox(), await page.getByRole('dialog').getByRole('button', { name: 'Close', exact: true }).last().boundingBox()]
+assert.ok(bs.x > bc.x && Math.abs(bs.y - bc.y) < 6, 'Save these Dates sits right next to Close')
 await page.getByTestId('wiz-in').locator('summary', { hasText: 'FY 2026-27' }).click()
 assert.match(await page.getByTestId('wiz-in').innerText(), /Resident but not ordinarily resident[\s\S]*non-resident in 10 of the previous 10/)
 assert.equal(await page.getByTestId('wiz-in').getByRole('link', { name: /Residential status/ }).first().getAttribute('href'), 'https://wm.incometaxindia.gov.in/w/residential-status')
@@ -232,6 +245,15 @@ await page.getByTestId('wiz-applied').waitFor()
 await page.getByRole('dialog').getByRole('button', { name: 'Close', exact: true }).last().click()
 assert.match(await page.getByTestId('tr-now-us').innerText(), /Resident/); assert.match(await page.getByTestId('tr-now-in').innerText(), /RNOR/)
 assert.match(await page.getByTestId('tr-changes-us').innerText(), /1 Jan 2026[\s\S]*Nonresident → Resident/)
+assert.match(await page.getByTestId('tr-changes-us').innerText(), /1 Jan 2028[\s\S]*Resident → Nonresident/) // the planned departure was saved as dates
+assert.match(await page.getByTestId('tr-changes-in').innerText(), /FY 2029-30[\s\S]*RNOR → ROR/)
+{ // dates on the left, the picture on the right; no words inside the bars
+  await page.screenshot({ path: `${OUT}/taxres-layout.png`, fullPage: true })
+  const [l, r] = [await page.getByTestId('tr-us').boundingBox(), await page.getByTestId('tr-timeline').boundingBox()]
+  assert.ok(l.x + l.width <= r.x + 2, 'dates are left of the graph')
+  for (const c of ['us', 'in']) for (const t of await page.getByTestId(`tr-bar-${c}`).locator('.tr-seg').allInnerTexts()) assert.equal(t.trim(), '', 'no text inside the bars')
+  assert.equal(await page.getByTestId('tr-timeline').locator('.tr-future').count(), 2, 'the future is hatched on both bars')
+}
 await page.getByRole('tab', { name: /Assets/ }).click()
 
 step('saved file holds no plaintext, then reopen it after a reload')
