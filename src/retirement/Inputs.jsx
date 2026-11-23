@@ -30,7 +30,7 @@ export default function Inputs({ plan, fx }) {
   const rateOf = (c) => (c === fx.base ? 1 : fx.rates[c])
   const rateText = currencies.filter((c) => c !== cur && rateOf(c) > 0 && rateOf(cur) > 0).map((c) => `${curSym(cur)}1 = ${curSym(c)}${(rateOf(c) / rateOf(cur)).toLocaleString('en-US', { maximumFractionDigits: 2 })}`).join(' · ')
   const inheritTotal = r.inherit.reduce((s, x) => s + (Number(x.amt) || 0), 0)
-  const insuranceCount = (data.policies || []).filter((p) => Number(p.deathBenefit) > 0).length
+  const insuranceCount = (data.policies || []).filter((p) => Number(p.maturityValue) > 0).length
 
   return (
     <>
@@ -126,8 +126,8 @@ export default function Inputs({ plan, fx }) {
           <span>Include insurance survivor benefit
             <span className="sub" style={{ display: 'block' }}>
               {insuranceCount === 0
-                ? 'No insurance policy with a death benefit in Finance yet.'
-                : `Adds the death benefit of your ${insuranceCount} Finance polic${insuranceCount === 1 ? 'y' : 'ies'} (${fmt(plan.insurance)}) to your nest egg at retirement.`}
+                ? 'No insurance policy with a value at maturity in Assets yet.'
+                : `Adds the value at maturity of your ${insuranceCount} Assets polic${insuranceCount === 1 ? 'y' : 'ies'} (${fmt(plan.insurance)}) to your nest egg at retirement. The death benefit is not counted.`}
             </span>
           </span>
         </label>

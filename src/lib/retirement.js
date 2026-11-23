@@ -17,7 +17,7 @@ export const defaultPlan = () => ({
   selected: [], adjustment: 0, eqOverride: null,
   income: [], // [{ id, name, amt, cur, from, to }]
   inherit: [], // [{ id, name, amt, year }]: a flat amount (in the plan currency, as typed, not inflation-adjusted) added to your savings in that calendar year
-  includeInsurance: false, // add the death benefit of the Finance insurance policies to the nest egg (at retirement)
+  includeInsurance: false, // add the value at maturity of the Assets insurance policies to the nest egg (at retirement)
   y: 4.7, inf: 3.7, prem: 4.5, asOf: '', // placeholders until you enter your own, see the stale-data warning
 })
 export const defaultMc = () => ({
@@ -100,8 +100,8 @@ export function resolvePlan(d, fx, nowYear = new Date().getFullYear()) {
   const we = r.eqOverride === null || r.eqOverride === '' || r.eqOverride === undefined ? eqAuto / 100 : Number(r.eqOverride) / 100
   const income = r.income.map((s) => ({ id: s.id, name: s.name, amt: conv(s.amt, s.cur || currency), from: s.from, to: s.to }))
   const age = Number(r.age), retAge = Number(r.retAge), life = Number(r.life)
-  // Policies' death benefits, in the plan currency. Counted in the nest egg (at retirement) only when the box is ticked.
-  const insurance = (d.policies || []).reduce((sum, p) => sum + conv(p.deathBenefit, COUNTRIES[p.country]?.currency || currency), 0)
+  // Policies' VALUE AT MATURITY (the survivor benefit paid out; not the death benefit), in the plan currency. Counted in the nest egg (at retirement) only when the box is ticked.
+  const insurance = (d.policies || []).reduce((sum, p) => sum + conv(Number(p.maturityValue) > 0 ? p.maturityValue : 0, COUNTRIES[p.country]?.currency || currency), 0)
   // Lump sums, each as { t: years from now, amt }: flat amounts as typed. Past years and years after the plan age are ignored.
   const lumps = []
   const T = Math.max(0, life - age)

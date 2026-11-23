@@ -188,7 +188,7 @@ try {
 
   step('insurance survivor benefit adds to the nest egg when ticked')
   await page.getByLabel('Include insurance survivor benefit').check()
-  await page.getByText('No insurance policy with a death benefit in Finance yet.').waitFor()
+  await page.getByText('No insurance policy with a value at maturity in Assets yet.').waitFor()
   await page.getByLabel('Include insurance survivor benefit').uncheck()
 
   step('impossible correlations are explained and "Make valid" repairs them')
