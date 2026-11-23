@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { Modal, OwnerPicker } from '../finance/ui.jsx'
 import { COUNTRIES, MIX, parseAmount, todayISO, curSym } from '../lib/format.js'
+import { lookupSymbol, usage as avUsage } from '../lib/symbols.js'
+import { homePrefs } from '../lib/homeprefs.js'
+import { useNav } from '../nav.jsx'
 import { CLASSES, HOLDING_TYPES, CLASSES as CLS, holdingValue, targetsTotal } from '../lib/portfolio.js'
 
 const s = (v) => (v == null ? '' : String(v))
@@ -81,7 +84,23 @@ export function HoldingModal({ portfolio, country, initial, onSave, onClose }) {
     priceDate: initial?.priceDate || todayISO(), notes: initial?.notes || '',
   })
   const [err, setErr] = useState('')
+  const [look, setLook] = useState({ state: 'idle', matches: [], msg: '', source: '' })
+  const [used, setUsed] = useState(avUsage())
+  const avKey = homePrefs.avKey()
+  const nav = useNav()
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value })
+  // Ticker first: press Look up (nothing is asked while you type) and pick the match; the name and type are filled in, and you can still change them.
+  const doLook = async () => {
+    setLook({ state: 'busy', matches: [], msg: '', source: '' })
+    const r = await lookupSymbol(f.ticker, { key: avKey })
+    setUsed(r.usage)
+    if (r.error) setLook({ state: 'error', matches: [], msg: r.error, source: '' })
+    else setLook({ state: 'ok', matches: r.matches, msg: '', source: r.source })
+  }
+  const pickMatch = (m) => {
+    setF({ ...f, ticker: m.symbol, name: m.name, type: m.type === 'other' ? f.type : m.type, geo: f.geo || (m.country ? COUNTRIES[m.country]?.name || '' : '') })
+    setLook({ state: 'picked', matches: [], msg: `Filled in from ${m.symbol}. Check it, then enter the units and the price.`, source: '' })
+  }
   const live = holdingValue({ trackBy: f.trackBy, units: num(f.units) || 0, price: num(f.price) || 0, value: num(f.value) || 0 })
   const mixTotal = f.mix.reduce((t, v) => t + (parseAmount(v) || 0), 0)
 
@@ -111,10 +130,31 @@ export function HoldingModal({ portfolio, country, initial, onSave, onClose }) {
       footer={<><button type="button" className="btn" onClick={onClose}>Cancel</button><button form="hold-form" className="btn primary">Save holding</button></>}
     >
       <form id="hold-form" onSubmit={submit}>
-        <div className="two">
-          <label className="field">Name<input autoFocus value={f.name} onChange={set('name')} /></label>
-          {!unalloc && <label className="field">Ticker / symbol (optional)<input value={f.ticker} onChange={set('ticker')} /></label>}
-        </div>
+        {!unalloc && (
+          <div className="field lookup" data-testid="ticker-lookup">Ticker / symbol
+            <span className="two-in">
+              <input autoFocus value={f.ticker} aria-label="Ticker / symbol" placeholder="e.g. VTI, INFY.BSE, ISF.LON" onChange={(e) => { set('ticker')(e); if (look.state !== 'idle') setLook({ state: 'idle', matches: [], msg: '', source: '' }) }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (f.ticker.trim() && look.state !== 'busy') doLook() } }} />
+              <button type="button" className="btn" onClick={doLook} disabled={!f.ticker.trim() || look.state === 'busy'}>{look.state === 'busy' ? 'Looking up…' : 'Look up'}</button>
+            </span>
+            <small className="sub" data-testid="av-usage">{avKey
+              ? <>Alpha Vantage free key: <b>{used.used} of {used.limit}</b> requests used today, <b>{used.remaining}</b> left (resets tomorrow). A lookup uses 1; one you already did is free.</>
+              : <>No Alpha Vantage key yet, so type the name yourself, or <button type="button" className="link" onClick={() => { onClose(); nav.go('settings', { section: 'home' }) }}>add a key in Settings</button> to look symbols up.</>}</small>
+            {look.state === 'error' && <span className="err" role="alert" data-testid="lookup-error">{look.msg}</span>}
+            {look.state === 'picked' && <span className="okmsg" role="status">{look.msg}</span>}
+            {look.state === 'ok' && (
+              <span className="matches" role="listbox" aria-label="Matches" data-testid="lookup-matches">
+                {look.matches.slice(0, 6).map((m) => (
+                  <button type="button" role="option" key={m.symbol} className="match" onClick={() => pickMatch(m)}>
+                    <b>{m.symbol}</b> {m.name}<small> · {[m.region, m.currency, m.type].filter(Boolean).join(' · ')}</small>
+                  </button>
+                ))}
+                <small className="sub">{look.source === 'alphavantage' ? 'From Alpha Vantage (1 request used).' : look.source === 'cache' ? 'From an earlier lookup (no request used).' : 'From the offline ticker list (no request used).'}</small>
+              </span>
+            )}
+          </div>
+        )}
+        <label className="field">Name<input autoFocus={unalloc} value={f.name} onChange={set('name')} /></label>
         {!unalloc && (
           <>
             <div className="three">

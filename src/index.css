@@ -469,3 +469,9 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 .calc-grid .field input, .lump input { width: 100%; box-sizing: border-box; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 6px 8px; font: inherit; }
 .lumps { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; align-items: flex-start; }
 .lump { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; } .lump label { font-size: .85rem; display: flex; flex-direction: column; gap: 3px; }
+
+/* Add holding: ticker lookup */
+.lookup .two-in { display: flex; gap: 8px; } .lookup .two-in input { flex: 1; min-width: 0; }
+.matches { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+.match { text-align: left; background: var(--surface-2); color: var(--text); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 6px 9px; font: inherit; font-size: .86rem; cursor: pointer; }
+.match:hover { border-color: var(--accent); } .match small { color: var(--muted); }

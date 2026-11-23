@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { demoAuth, fetchQuotes, fmtPrice, forgetToken, groupsToRefresh, mergeCache, tickerItems } from '../lib/ticker.js'
 import { marketStatus } from '../lib/markets.js'
 import { AV_PROXIES, fetchAvQuotes } from '../lib/alphavantage.js'
+import { noteRequests } from '../lib/symbols.js'
 import { homePrefs } from '../lib/homeprefs.js'
 import { IS_DEMO } from '../lib/demo.js'
 
@@ -121,7 +122,7 @@ function AvTicker({ countries, version, onSettings }) {
     if (mode === 'timer' && document.visibilityState === 'hidden') return
     running.current = true
     setBusy(true)
-    const out = await fetchAvQuotes(items, key)
+    const out = await fetchAvQuotes(items, key, { onRequest: () => noteRequests(1) })
     running.current = false
     const byId = new Map((c?.quotes || []).map((q) => [q.id, q]))
     for (const q of out.quotes) byId.set(q.id, q)
