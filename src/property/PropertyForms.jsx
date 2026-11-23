@@ -3,6 +3,7 @@ import { Modal, OwnerPicker } from '../finance/ui.jsx'
 import { COUNTRIES, parseAmount, todayISO, curSym } from '../lib/format.js'
 import { COVERAGE_LINES, PREMIUM_FREQUENCIES, PROPERTY_TYPES, VALUE_SOURCES, emptyInsurance } from '../lib/property.js'
 import { uid } from '../lib/model.js'
+import NumInput from '../finance/NumInput.jsx'
 
 const s = (v) => (v == null ? '' : String(v))
 const num = (v) => (v === '' || v == null ? null : parseAmount(v))
@@ -49,23 +50,23 @@ export function PropertyModal({ initial, countries, parentLabel, onSave, onClose
         <div className="three">
           <label className="field">Type<select value={f.type} onChange={set('type')}>{PROPERTY_TYPES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}</select></label>
           <label className="field">Purchase date<input type="date" value={f.purchaseDate} onChange={set('purchaseDate')} /></label>
-          <label className="field">Purchase price ({sym})<input inputMode="decimal" value={f.purchasePrice} onChange={set('purchasePrice')} /></label>
+          <label className="field">Purchase price ({sym})<NumInput value={f.purchasePrice} onChange={set('purchasePrice')} /></label>
         </div>
         <div className="three">
           <label className="field">Bedrooms (optional)<input inputMode="numeric" value={f.bedrooms} onChange={set('bedrooms')} /></label>
-          <label className="field">Bathrooms (optional)<input inputMode="decimal" value={f.bathrooms} onChange={set('bathrooms')} /></label>
-          <label className="field">Size, sq ft (optional)<input inputMode="numeric" value={f.sizeSqft} onChange={set('sizeSqft')} /></label>
+          <label className="field">Bathrooms (optional)<NumInput value={f.bathrooms} onChange={set('bathrooms')} /></label>
+          <label className="field">Size, sq ft (optional)<NumInput value={f.sizeSqft} onChange={set('sizeSqft')} /></label>
         </div>
         <div className="three">
-          <label className="field">Property tax / year (optional)<input inputMode="decimal" value={f.taxYear} onChange={set('taxYear')} /></label>
-          <label className="field">Insurance / year (optional)<input inputMode="decimal" value={f.insuranceYear} onChange={set('insuranceYear')} /></label>
-          <label className="field">HOA / month (optional)<input inputMode="decimal" value={f.hoaMonth} onChange={set('hoaMonth')} /></label>
+          <label className="field">Property tax / year (optional)<NumInput value={f.taxYear} onChange={set('taxYear')} /></label>
+          <label className="field">Insurance / year (optional)<NumInput value={f.insuranceYear} onChange={set('insuranceYear')} /></label>
+          <label className="field">HOA / month (optional)<NumInput value={f.hoaMonth} onChange={set('hoaMonth')} /></label>
         </div>
         <label className="field">Next property tax due (optional)<input type="date" value={f.taxDue} onChange={set('taxDue')} /></label>
         <div className="field">Who owns it?<OwnerPicker value={f.owner} onChange={(owner) => setF({ ...f, owner })} parentLabel={parentLabel} /></div>
         {!initial && (
           <label className="field">Current value ({sym}) — optional, becomes the first entry in the value history
-            <input inputMode="decimal" value={f.currentValue} onChange={set('currentValue')} />
+            <NumInput value={f.currentValue} onChange={set('currentValue')} />
           </label>
         )}
         <label className="field">Notes (optional)<textarea rows="2" value={f.notes} onChange={set('notes')} /></label>
@@ -102,7 +103,7 @@ export function ValuationModal({ property, initial, onSave, onClose }) {
         )}
         <div className="two">
           <label className="field">Date<input type="date" value={f.date} onChange={set('date')} /></label>
-          <label className="field">Value ({sym})<input autoFocus inputMode="decimal" value={f.value} onChange={set('value')} /></label>
+          <label className="field">Value ({sym})<NumInput autoFocus value={f.value} onChange={set('value')} /></label>
         </div>
         <div className="two">
           <label className="field">Source<select value={f.source} onChange={set('source')}>{VALUE_SOURCES.map((x) => <option key={x.key} value={x.key}>{x.label}</option>)}</select></label>
@@ -147,18 +148,18 @@ export function LoanModal({ property, initial, onSave, onClose }) {
           <label className="field">Loan number (optional)<input className="mono" autoComplete="off" value={f.number} onChange={set('number')} /></label>
         </div>
         <div className="three">
-          <label className="field">Original loan ({sym})<input inputMode="decimal" value={f.originalAmount} onChange={set('originalAmount')} /></label>
+          <label className="field">Original loan ({sym})<NumInput value={f.originalAmount} onChange={set('originalAmount')} /></label>
           <label className="field">Start date<input type="date" value={f.startDate} onChange={set('startDate')} /></label>
-          <label className="field">Term (years)<input inputMode="decimal" value={f.termYears} onChange={set('termYears')} /></label>
+          <label className="field">Term (years)<NumInput value={f.termYears} onChange={set('termYears')} /></label>
         </div>
         <div className="three">
-          <label className="field">Interest rate (%)<input inputMode="decimal" value={f.rate} onChange={set('rate')} /></label>
+          <label className="field">Interest rate (%)<NumInput value={f.rate} onChange={set('rate')} /></label>
           <label className="field">Rate type<select value={f.rateType} onChange={set('rateType')}><option value="fixed">Fixed</option><option value="adjustable">Adjustable</option></select></label>
           <label className="field">Payment day of month (optional)<input inputMode="numeric" value={f.paymentDay} onChange={set('paymentDay')} /></label>
         </div>
         <div className="two">
-          <label className="field">Monthly payment ({sym})<input inputMode="decimal" value={f.monthlyPayment} onChange={set('monthlyPayment')} /></label>
-          <label className="field">…of which escrow (optional)<input inputMode="decimal" value={f.escrow} onChange={set('escrow')} /></label>
+          <label className="field">Monthly payment ({sym})<NumInput value={f.monthlyPayment} onChange={set('monthlyPayment')} /></label>
+          <label className="field">…of which escrow (optional)<NumInput value={f.escrow} onChange={set('escrow')} /></label>
         </div>
         <p className="note">Rate, term and start date let the app estimate your balance for months before your first recorded update.</p>
         <label className="field">Notes (optional)<input value={f.notes} onChange={set('notes')} /></label>
@@ -193,12 +194,12 @@ export function LoanUpdateModal({ property, loan, initial, onSave, onClose }) {
       <form id="upd-form" onSubmit={submit}>
         <div className="two">
           <label className="field">Date<input type="date" value={f.date} onChange={set('date')} /></label>
-          <label className="field">Balance after this payment ({sym})<input autoFocus inputMode="decimal" value={f.balance} onChange={set('balance')} /></label>
+          <label className="field">Balance after this payment ({sym})<NumInput autoFocus value={f.balance} onChange={set('balance')} /></label>
         </div>
         <div className="three">
-          <label className="field">Principal paid (optional)<input inputMode="decimal" value={f.principal} onChange={set('principal')} /></label>
-          <label className="field">Interest paid (optional)<input inputMode="decimal" value={f.interest} onChange={set('interest')} /></label>
-          <label className="field">Escrow paid (optional)<input inputMode="decimal" value={f.escrow} onChange={set('escrow')} /></label>
+          <label className="field">Principal paid (optional)<NumInput value={f.principal} onChange={set('principal')} /></label>
+          <label className="field">Interest paid (optional)<NumInput value={f.interest} onChange={set('interest')} /></label>
+          <label className="field">Escrow paid (optional)<NumInput value={f.escrow} onChange={set('escrow')} /></label>
         </div>
         <label className="field">Notes (optional)<input value={f.notes} onChange={set('notes')} placeholder="e.g. extra payment, rate change" /></label>
         {!initial && <label className="check"><input type="checkbox" checked={alsoEdit} onChange={(e) => setAlsoEdit(e.target.checked)} /> The interest rate or monthly payment changed — update the loan details too</label>}
@@ -244,19 +245,19 @@ export function InsuranceModal({ property, initial, onSave, onRemove, onClose })
           <label className="field">Policy number (optional)<input value={f.number} onChange={set('number')} /></label>
         </div>
         <div className="three">
-          <label className="field">Premium ({sym})<input inputMode="decimal" value={f.premium} onChange={set('premium')} /></label>
+          <label className="field">Premium ({sym})<NumInput value={f.premium} onChange={set('premium')} /></label>
           <label className="field">Paid<select value={f.frequency} onChange={set('frequency')}>{PREMIUM_FREQUENCIES.map((x) => <option key={x.key} value={x.key}>{x.label}</option>)}</select></label>
           <label className="field">Renewal date<input type="date" value={f.renewal} onChange={set('renewal')} /></label>
         </div>
         <div className="two">
-          <label className="field">Deductible ({sym})<input inputMode="decimal" value={f.deductible} onChange={set('deductible')} /></label>
-          <label className="field">Rebuild cost, if you know it ({sym})<input inputMode="decimal" value={f.rebuildCost} onChange={set('rebuildCost')} /></label>
+          <label className="field">Deductible ({sym})<NumInput value={f.deductible} onChange={set('deductible')} /></label>
+          <label className="field">Rebuild cost, if you know it ({sym})<NumInput value={f.rebuildCost} onChange={set('rebuildCost')} /></label>
         </div>
         <div className="field">Coverage limits ({sym})
           <div className="two">
             {COVERAGE_LINES.map((l) => (
               <label key={l.key} className="field sub-field">{l.label}
-                <input inputMode="decimal" value={f.limits[l.key]} aria-label={`Limit: ${l.label}`} onChange={(e) => setF({ ...f, limits: { ...f.limits, [l.key]: e.target.value } })} />
+                <NumInput value={f.limits[l.key]} aria-label={`Limit: ${l.label}`} onChange={(e) => setF({ ...f, limits: { ...f.limits, [l.key]: e.target.value } })} />
               </label>
             ))}
           </div>
@@ -265,7 +266,7 @@ export function InsuranceModal({ property, initial, onSave, onRemove, onClose })
           {f.extras.map((x, i) => (
             <div className="two" key={x.id}>
               <input value={x.name} aria-label={`Other cover ${i + 1} name`} placeholder="Name" onChange={(e) => setF({ ...f, extras: f.extras.map((y) => (y.id === x.id ? { ...y, name: e.target.value } : y)) })} />
-              <span className="two-in"><input inputMode="decimal" value={x.limit} aria-label={`Other cover ${i + 1} limit`} placeholder="Limit" onChange={(e) => setF({ ...f, extras: f.extras.map((y) => (y.id === x.id ? { ...y, limit: e.target.value } : y)) })} />
+              <span className="two-in"><NumInput value={x.limit} aria-label={`Other cover ${i + 1} limit`} placeholder="Limit" onChange={(e) => setF({ ...f, extras: f.extras.map((y) => (y.id === x.id ? { ...y, limit: e.target.value } : y)) })} />
                 <button type="button" className="x" aria-label={`Remove other cover ${i + 1}`} onClick={() => setF({ ...f, extras: f.extras.filter((y) => y.id !== x.id) })}>✕</button></span>
             </div>
           ))}

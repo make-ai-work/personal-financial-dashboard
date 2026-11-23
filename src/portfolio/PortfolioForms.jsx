@@ -5,6 +5,7 @@ import { lookupSymbol, usage as avUsage } from '../lib/symbols.js'
 import { homePrefs } from '../lib/homeprefs.js'
 import { useNav } from '../nav.jsx'
 import { CLASSES, HOLDING_TYPES, CLASSES as CLS, holdingValue, targetsTotal } from '../lib/portfolio.js'
+import NumInput from '../finance/NumInput.jsx'
 
 const s = (v) => (v == null ? '' : String(v))
 const num = (v) => (v === '' || v == null ? null : parseAmount(v))
@@ -169,7 +170,7 @@ export function HoldingModal({ portfolio, country, initial, onSave, onClose }) {
                 <div className="four">
                   {MIX.map((m, i) => (
                     <label key={m.key} className="field sub-field">{m.label}
-                      <input inputMode="decimal" value={f.mix[i]} onChange={(e) => setF({ ...f, mix: f.mix.map((v, j) => (j === i ? e.target.value : v)) })} />
+                      <NumInput value={f.mix[i]} onChange={(e) => setF({ ...f, mix: f.mix.map((v, j) => (j === i ? e.target.value : v)) })} />
                     </label>
                   ))}
                 </div>
@@ -189,10 +190,10 @@ export function HoldingModal({ portfolio, country, initial, onSave, onClose }) {
         <div className="three">
           {f.trackBy === 'units' && !unalloc ? (
             <>
-              <label className="field">Units<input inputMode="decimal" value={f.units} onChange={set('units')} /></label>
-              <label className="field">Price per unit ({sym})<input inputMode="decimal" value={f.price} onChange={set('price')} /></label>
+              <label className="field">Units<NumInput value={f.units} onChange={set('units')} /></label>
+              <label className="field">Price per unit ({sym})<NumInput value={f.price} onChange={set('price')} /></label>
             </>
-          ) : <label className="field">Total value ({sym})<input inputMode="decimal" value={f.value} onChange={set('value')} /></label>}
+          ) : <label className="field">Total value ({sym})<NumInput value={f.value} onChange={set('value')} /></label>}
           <label className="field">Price date<input type="date" value={f.priceDate} onChange={set('priceDate')} /></label>
         </div>
         {f.trackBy === 'units' && !unalloc && <div className="sub">Value: <b>{COUNTRIES[country].symbol}{fmt2(live)}</b></div>}
@@ -236,7 +237,7 @@ export function PricesModal({ country, portfolios, holdingsOf, onSave, onClose }
                   <td className="r">{h.trackBy === 'units' ? h.units : '—'}</td>
                   <td className="r">{h.trackBy === 'units' ? h.price : h.value}</td>
                   <td>{h.priceDate}</td>
-                  <td className="r"><input aria-label={`New ${h.trackBy === 'units' ? 'price' : 'value'} for ${h.name}`} inputMode="decimal" value={vals[h.id] ?? ''} onChange={(e) => setVals({ ...vals, [h.id]: e.target.value })} placeholder={h.trackBy === 'units' ? 'price' : 'total'} /></td>
+                  <td className="r"><NumInput aria-label={`New ${h.trackBy === 'units' ? 'price' : 'value'} for ${h.name}`} value={vals[h.id] ?? ''} onChange={(e) => setVals({ ...vals, [h.id]: e.target.value })} placeholder={h.trackBy === 'units' ? 'price' : 'total'} /></td>
                 </tr>
               ))}
             </tbody></table>
@@ -276,7 +277,7 @@ export function TargetsModal({ portfolio, onSave, onClose }) {
         <div className="four">
           {CLS.map((c) => (
             <label key={c.key} className="field sub-field">{c.label} %
-              <input autoFocus={c.key === 'equities'} inputMode="decimal" value={t[c.key]} onChange={(e) => setT({ ...t, [c.key]: e.target.value })} />
+              <NumInput autoFocus={c.key === 'equities'} value={t[c.key]} onChange={(e) => setT({ ...t, [c.key]: e.target.value })} />
             </label>
           ))}
         </div>

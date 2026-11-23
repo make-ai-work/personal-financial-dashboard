@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { COUNTRIES, parseAmount, curSym } from '../lib/format.js'
 import { Modal, OwnerPicker } from './ui.jsx'
+import NumInput from './NumInput.jsx'
 
 const str = (v) => (v == null ? '' : String(v))
 
@@ -48,14 +49,14 @@ export function AccountModal({ type, country, initial, locked, parentLabel, onSa
         </div>
         <div className="two">
           <label className="field">{isAsset ? 'Bank / holding company' : 'Lender'}<input value={f.institution} onChange={set('institution')} /></label>
-          <label className="field">Current balance ({sym})<input inputMode="decimal" value={f.balance} onChange={set('balance')} disabled={locked} />{locked && <small>Comes from the linked portfolio. Change holdings or prices in Portfolio.</small>}</label>
+          <label className="field">Current balance ({sym})<NumInput value={f.balance} onChange={set('balance')} disabled={locked} />{locked && <small>Comes from the linked portfolio. Change holdings or prices in Portfolio.</small>}</label>
         </div>
         <div className="field">Who owns it?<OwnerPicker value={f.owner} onChange={(owner) => setF({ ...f, owner })} parentLabel={parentLabel} /></div>
         {isAsset && !locked && (
           <>
             <div className="two">
               <label className="field">Deposit maturity date (optional)<input type="date" value={f.maturityDate} onChange={set('maturityDate')} /></label>
-              <label className="field">Value at maturity (optional, {sym})<input inputMode="decimal" value={f.maturityValue} onChange={set('maturityValue')} /></label>
+              <label className="field">Value at maturity (optional, {sym})<NumInput value={f.maturityValue} onChange={set('maturityValue')} /></label>
             </div>
           </>
         )}
@@ -100,11 +101,11 @@ export function PolicyModal({ country, initial, parentLabel, onSave, onClose }) 
         </div>
         <div className="two">
           <label className="field">Policy company<input value={f.company} onChange={set('company')} /></label>
-          <label className="field">Death benefit ({sym})<input inputMode="decimal" value={f.deathBenefit} onChange={set('deathBenefit')} /></label>
+          <label className="field">Death benefit ({sym})<NumInput value={f.deathBenefit} onChange={set('deathBenefit')} /></label>
         </div>
         <div className="two">
           <label className="field">Maturity date (optional)<input type="date" value={f.maturityDate} onChange={set('maturityDate')} /></label>
-          <label className="field">Value on maturity (optional, {sym})<input inputMode="decimal" placeholder="none for term policies" value={f.maturityValue} onChange={set('maturityValue')} /></label>
+          <label className="field">Value on maturity (optional, {sym})<NumInput placeholder="none for term policies" value={f.maturityValue} onChange={set('maturityValue')} /></label>
         </div>
         <div className="field">Whose policy?<OwnerPicker value={f.owner} onChange={(owner) => setF({ ...f, owner })} parentLabel={parentLabel} /></div>
         {err && <div className="err">{err}</div>}

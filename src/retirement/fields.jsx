@@ -1,4 +1,5 @@
 // Small form pieces shared by the Retirement pages.
+import NumInput from '../finance/NumInput.jsx'
 
 // Label + number input on one row. `value` may be '' while typing.
 export function NumRow({ label, hint, value, onChange, step, width = 110, placeholder, suffix, min, id }) {
@@ -6,7 +7,7 @@ export function NumRow({ label, hint, value, onChange, step, width = 110, placeh
     <label className="rowf">
       <span>{label}{hint && <small>{hint}</small>}</span>
       <span className="inl">
-        <input type="number" inputMode="decimal" value={value ?? ''} step={step} min={min} placeholder={placeholder} style={{ width }} id={id}
+        <NumInput value={value ?? ''} step={step} min={min} placeholder={placeholder} style={{ width }} id={id}
           onChange={(e) => onChange(e.target.value === '' ? '' : Number(e.target.value))} aria-label={label} />
         {suffix}
       </span>

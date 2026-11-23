@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { compare, describeMonths, levelPayment } from '../lib/amortization.js'
 import { fmtDate, todayISO } from '../lib/format.js'
 import { addMonths } from '../lib/dates.js'
+import NumInput from '../finance/NumInput.jsx'
 
 // The regular principal-and-interest payment of a recorded loan: the monthly payment less escrow, else the standard payment for its original amount and term.
 export function regularPayment(loan) {
@@ -62,17 +63,17 @@ export default function PayoffCalculator({ loan, balance, fmt }) {
       <div className="pad">
         {!(balance > 0) && <div className="okrow">This loan is paid off.</div>}
         <div className="calc-grid">
-          <label className="field">Interest rate (% a year)<input inputMode="decimal" value={rate} aria-label="Calculator interest rate" onChange={(e) => setRate(e.target.value)} /></label>
-          <label className="field">Regular payment per month<small className="sub">principal and interest, without escrow</small><input inputMode="decimal" value={payment} aria-label="Calculator regular payment" onChange={(e) => setPayment(e.target.value)} /></label>
-          <label className="field">Extra every month<input inputMode="decimal" value={monthly} placeholder="0" aria-label="Extra payment every month" onChange={(e) => setMonthly(e.target.value)} /></label>
+          <label className="field">Interest rate (% a year)<NumInput value={rate} aria-label="Calculator interest rate" onChange={(e) => setRate(e.target.value)} /></label>
+          <label className="field">Regular payment per month<small className="sub">principal and interest, without escrow</small><NumInput value={payment} aria-label="Calculator regular payment" onChange={(e) => setPayment(e.target.value)} /></label>
+          <label className="field">Extra every month<NumInput value={monthly} placeholder="0" aria-label="Extra payment every month" onChange={(e) => setMonthly(e.target.value)} /></label>
           <label className="field">Extra once a year
-            <span className="two-in"><input inputMode="decimal" value={yearly} placeholder="0" aria-label="Extra payment once a year" onChange={(e) => setYearly(e.target.value)} />
+            <span className="two-in"><NumInput value={yearly} placeholder="0" aria-label="Extra payment once a year" onChange={(e) => setYearly(e.target.value)} />
               <select value={yearlyMonth} aria-label="Month of the yearly extra" onChange={(e) => setYearlyMonth(Number(e.target.value))}>{MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}</select></span></label>
         </div>
         <div className="lumps">
           {lumps.map((l, i) => (
             <div className="lump" key={i}>
-              <label>One-time extra<input inputMode="decimal" value={l.amount} aria-label={`One-time extra ${i + 1} amount`} onChange={(e) => setLumps(lumps.map((x, j) => (j === i ? { ...x, amount: e.target.value } : x)))} /></label>
+              <label>One-time extra<NumInput value={l.amount} aria-label={`One-time extra ${i + 1} amount`} onChange={(e) => setLumps(lumps.map((x, j) => (j === i ? { ...x, amount: e.target.value } : x)))} /></label>
               <label>On<input type="date" value={l.date} aria-label={`One-time extra ${i + 1} date`} onChange={(e) => setLumps(lumps.map((x, j) => (j === i ? { ...x, date: e.target.value } : x)))} /></label>
               <button type="button" className="x" aria-label={`Remove one-time extra ${i + 1}`} onClick={() => setLumps(lumps.filter((_, j) => j !== i))}>✕</button>
             </div>
