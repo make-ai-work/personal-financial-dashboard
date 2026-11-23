@@ -1,7 +1,7 @@
 {
   "name": "personal-financial-dashboard",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.1",
   "description": "Personal finance dashboard: accounts, property, portfolio and retirement planning, with an encrypted vault (file or Google Drive). Runs as a web app, a Windows app and an Android app.",
   "author": "saurskr",
   "license": "MIT",
