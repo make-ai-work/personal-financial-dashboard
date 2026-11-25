@@ -136,19 +136,28 @@ function DemoBar() {
 }
 
 // The tab strip. A tab with `needs` (country codes) is shown only when all of them are in the countries list.
+// The Settings gear is drawn twice: at the end of the buttons on a wide screen (far right of the one row), and at the end of the tabs on a phone
+// (CSS shows one of them).
+function tabsShown(data) {
+  const countries = data?.settings?.countries || []
+  return TABS.filter((t) => !t.needs || t.needs.every((c) => countries.includes(c)))
+}
+function GearTab({ current, setTab, cls }) {
+  const { data } = useVault()
+  return tabsShown(data).filter((t) => t.gear).map((t) => (
+    <button key={t.id} role="tab" aria-label={t.name} title={t.name} aria-selected={t.id === current.id} className={`gear ${cls}${t.id === current.id ? ' on' : ''}`} onClick={() => setTab(t.id)}>{t.label}</button>
+  ))
+}
 function TabsBar({ current, setTab }) {
   const { data } = useVault()
-  const countries = data?.settings?.countries || []
-  const shown = TABS.filter((t) => !t.needs || t.needs.every((c) => countries.includes(c)))
+  const shown = tabsShown(data)
   return (
     <nav className="tabs" role="tablist">
       {shown.filter((t) => !t.gear).map((t) => (
         <button key={t.id} role="tab" aria-selected={t.id === current.id} className={t.id === current.id ? 'on' : ''} onClick={() => setTab(t.id)}>{t.label}</button>
       ))}
       <span className="tabsp" />
-      {shown.filter((t) => t.gear).map((t) => (
-        <button key={t.id} role="tab" aria-label={t.name} title={t.name} aria-selected={t.id === current.id} className={`gear${t.id === current.id ? ' on' : ''}`} onClick={() => setTab(t.id)}>{t.label}</button>
-      ))}
+      <GearTab current={current} setTab={setTab} cls="gear-tabs" />
     </nav>
   )
 }
@@ -170,7 +179,7 @@ function Shell() {
   const ready = auth.phase === PHASE.ready
   useEffect(() => { if (!ready) { setTab('home'); setFocus(null) } }, [ready]) // every sign-in lands on Home, whatever page you left from
 
-  // The title bar and the tabs stay at the top while you scroll (on a phone only the tabs, so the screen is not eaten up). --appbar-h is how much
+  // The menu row (tabs on the left, light/dark, account, Save and Logout on the right) stays at the top while you scroll (on a phone the buttons scroll away and only the tabs stay). --appbar-h is how much
   // room that takes, so the other sticky panels sit just below it.
   const [el, setEl] = useState(null) // the bar, once it is on screen (after sign-in and unlock)
   useEffect(() => {
@@ -188,20 +197,16 @@ function Shell() {
   }, [el])
 
 
-  const header = (acct) => (
-    <header className="topbar">
-      <h1>WealthBridge</h1>
-      <span className="topbar-actions">
-        <button className="btn" onClick={() => setTheme(dark ? 'light' : 'dark')} aria-label={dark ? 'Light mode' : 'Dark mode'}><span className="hide-sm">{dark ? 'Light mode' : 'Dark mode'}</span><span className="show-sm">{dark ? '☀️' : '🌙'}</span></button>
-        {acct}
-      </span>
-    </header>
+  const themeBtn = (
+    <button className="btn" onClick={() => setTheme(dark ? 'light' : 'dark')} aria-label={dark ? 'Light mode' : 'Dark mode'}><span className="hide-sm">{dark ? 'Light mode' : 'Dark mode'}</span><span className="show-sm">{dark ? '☀️' : '🌙'}</span></button>
   )
+  // Before the app opens (sign-in, where to save, passphrase) there is no menu: just a thin row with the light/dark switch.
+  const header = () => <div className="slimbar">{themeBtn}</div>
 
   if (!ready) {
     return (
       <>
-        {header(null)}
+        {header()}
         <main className="page"><SignIn /></main>
       </>
     )
@@ -209,12 +214,14 @@ function Shell() {
   return (
     <VaultProvider>
       <NavContext.Provider value={nav}>
-        <LandingGate header={header(null)}>
+        <LandingGate header={header()}>
         <DemoBar />
         {auth.native && <NativeBridge tab={tab} setTab={setTab} />}
         <div className="appbar" ref={setEl}>
-          {header(<>{!auth.demoSite && <AskAiButton />}{auth.native ? null : <Account />}<SessionButtons /></>)}
-          <TabsBar current={current} setTab={setTab} />
+          <div className="menubar">
+            <span className="menubar-actions">{themeBtn}{!auth.demoSite && <AskAiButton />}{auth.native ? null : <Account />}<SessionButtons /><GearTab current={current} setTab={setTab} cls="gear-end" /></span>
+            <TabsBar current={current} setTab={setTab} />
+          </div>
         </div>
         {!auth.demoSite && <AiHost />}
         {current.wide ? <main className="wide-page">{current.render()}</main> : <main className="page">{current.render()}</main>}

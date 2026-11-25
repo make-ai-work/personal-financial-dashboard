@@ -38,7 +38,7 @@ Stop it with `Ctrl+C`. If port 4173 is busy use `npm start -- --port 5000` (the 
 
 ## Sign-in and storage: the same screen flow on every version
 
-The title bar and the tabs stay at the top while you scroll (on a phone only the tabs). The top bar has **Save** (writes the encrypted vault now; in a browser that cannot write the file in place it downloads the encrypted file) and **Logout** (saves, then locks and signs out; if the save fails it tells you why and lets you stay or log out anyway). The old "file · encrypted · saved" strip is gone; a message only appears when something needs action (reconnect Google Drive, a conflict, a failed save).
+There is no title banner: one menu row holds the tabs on the left and, on the right, light/dark, your name (Account), **Save**, **Logout** and the Settings gear. It stays at the top while you scroll (on a phone the buttons sit in a row above the tabs and scroll away; the tabs stay). **Save** (writes the encrypted vault now; in a browser that cannot write the file in place it downloads the encrypted file) and **Logout** (saves, then locks and signs out; if the save fails it tells you why and lets you stay or log out anyway). The old "file · encrypted · saved" strip is gone; a message only appears when something needs action (reconnect Google Drive, a conflict, a failed save).
 
 Demo site, web, installed web app, Windows app and Android app all open the same way:
 
