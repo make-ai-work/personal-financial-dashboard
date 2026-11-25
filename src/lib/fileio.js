@@ -27,7 +27,7 @@ export const driveRemembered = () => !!driveStored() && drive.driveClientReady()
 
 export const isAbort = (e) => e?.name === 'AbortError'
 
-const VAULT_TYPES = [{ description: 'Finance Dashboard vault', accept: { 'application/octet-stream': ['.wvault'] } }]
+const VAULT_TYPES = [{ description: 'WealthBridge vault', accept: { 'application/octet-stream': ['.wvault'] } }]
 
 function pickViaInput(accept) {
   return new Promise((resolve, reject) => {

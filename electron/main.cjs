@@ -23,7 +23,7 @@ if (!app.requestSingleInstanceLock()) { app.quit() } else {
     server = createAppServer({ root, onOAuthResult: (r) => (oauth ? oauth.handleResult(r) : { ok: false, message: 'Not ready.' }) })
     let info
     try { info = await server.listen(PORT) } catch {
-      dialog.showErrorBox('Finance Dashboard', `Port ${PORT} is already in use by another program, so the app cannot start. Close the other program and try again.`)
+      dialog.showErrorBox('WealthBridge', `Port ${PORT} is already in use by another program, so the app cannot start. Close the other program and try again.`)
       app.quit(); return
     }
     const origin = info.origin
@@ -35,7 +35,7 @@ if (!app.requestSingleInstanceLock()) { app.quit() } else {
       fromApp(e)
       let p = TEST_DIR ? path.join(TEST_DIR, 'open.wvault') : null
       if (!p) {
-        const r = await dialog.showOpenDialog(win, { title: 'Open your data file', properties: ['openFile'], filters: [{ name: 'Finance Dashboard vault', extensions: ['wvault'] }, { name: 'All files', extensions: ['*'] }] })
+        const r = await dialog.showOpenDialog(win, { title: 'Open your data file', properties: ['openFile'], filters: [{ name: 'WealthBridge vault', extensions: ['wvault'] }, { name: 'All files', extensions: ['*'] }] })
         if (r.canceled || !r.filePaths[0]) return null
         p = r.filePaths[0]
       }
@@ -46,7 +46,7 @@ if (!app.requestSingleInstanceLock()) { app.quit() } else {
       fromApp(e)
       let p = TEST_DIR ? path.join(TEST_DIR, String(suggestedName)) : null
       if (!p) {
-        const r = await dialog.showSaveDialog(win, { title: 'Where should your data file go?', defaultPath: path.join(app.getPath('documents'), String(suggestedName)), filters: [{ name: 'Finance Dashboard vault', extensions: ['wvault'] }] })
+        const r = await dialog.showSaveDialog(win, { title: 'Where should your data file go?', defaultPath: path.join(app.getPath('documents'), String(suggestedName)), filters: [{ name: 'WealthBridge vault', extensions: ['wvault'] }] })
         if (r.canceled || !r.filePath) return null
         p = r.filePath
       }
@@ -64,7 +64,7 @@ if (!app.requestSingleInstanceLock()) { app.quit() } else {
 
     Menu.setApplicationMenu(null)
     win = new BrowserWindow({
-      width: 1360, height: 900, minWidth: 380, minHeight: 600, show: !TEST_DIR, autoHideMenuBar: true, title: 'Finance Dashboard',
+      width: 1360, height: 900, minWidth: 380, minHeight: 600, show: !TEST_DIR, autoHideMenuBar: true, title: 'WealthBridge',
       webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true },
     })
     // Links to other sites open in the normal browser, never inside the app; the app cannot navigate away from itself.

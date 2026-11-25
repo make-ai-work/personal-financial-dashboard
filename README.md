@@ -1,4 +1,6 @@
-# Personal Financial Dashboard
+# WealthBridge
+
+*Simple, completely private, multi-country personal wealth tracker and retirement planner.*
 
 A private, local-first dashboard for your money: **accounts and insurance, property, portfolio and retirement planning**, with an encrypted vault you
 keep in a file or in your own Google Drive. One codebase (React 18 + Vite, no server) runs as a **web app**, an installable **PWA**, a **Windows app**
@@ -25,8 +27,8 @@ keep in a file or in your own Google Drive. One codebase (React 18 + Vite, no se
 | **Android** | Build it in Android Studio. See [Android app](#android-app). |
 
 ```bash
-git clone https://github.com/saurskr/personal-financial-dashboard   # or download the ZIP from GitHub and unzip it
-cd personal-financial-dashboard
+git clone https://github.com/saurskr/wealth-bridge   # or download the ZIP from GitHub and unzip it
+cd wealth-bridge
 npm install        # once
 npm start          # builds the app and serves it; then open http://localhost:4173 in your browser
 ```
@@ -190,7 +192,7 @@ Google Cloud project has the **Google Drive API** enabled.
 
 The phone's Google account (Credential Manager) checks the app itself, so Android needs **one more OAuth client** in the same Google Cloud project:
 
-1. **Credentials → Create credentials → OAuth client ID → Android.** Package name `io.github.saurskr.dashboard` (change it if you changed the app id), and the **SHA-1
+1. **Credentials → Create credentials → OAuth client ID → Android.** Package name `app.saurskr.wealthbridge` (change it if you changed the app id), and the **SHA-1
    fingerprint** of the key the app is signed with. For a debug build (Android Studio Run): `keytool -list -v -keystore %USERPROFILE%\.android\debug.keystore -alias androiddebugkey -storepass android -keypass android` (Windows).
    A release build or the Play Store build has its own fingerprint: add it as another Android client.
 2. **Keep the Web client** you already have (the built-in `VITE_GOOGLE_CLIENT_ID`): the app passes it to Google as the *web client ID* alongside the Android client.
@@ -284,7 +286,7 @@ After changing the web app, run `npm run android:sync` again before Run.
 - **Where the data is:** one encrypted vault file in the app's private folder (not visible to other apps or the file manager), saved safely
   (a complete temporary copy is written first, so a crash mid-save cannot lose it). **Uninstalling the app or clearing its data deletes
   it**, so use *Export backup* now and then; backups are encrypted. Android's automatic cloud backup is switched off for the app.
-- **App id:** `io.github.saurskr.dashboard` (in `capacitor.config.json` and `android/app/build.gradle`). Change both before publishing if
+- **App id:** `app.saurskr.wealthbridge` (in `capacitor.config.json` and `android/app/build.gradle`). Change both before publishing if
   you want a different one: Google Play never lets it change after release.
 - **Icon and splash screen:** three rising tiles on the app's teal. The drawing and every size (Android, Windows `.ico`, PWA 192/512/maskable)
   come from one script: edit `scripts/make-icons.mjs`, run `node scripts/make-icons.mjs`, then `npm run android:assets`.
@@ -306,7 +308,7 @@ the file for next time (you only type the passphrase). Everything is in `electro
 
 - **Get the .exe:** on GitHub go to **Actions → Build Windows app → Run workflow**, then download `windows-app` from the finished run.
   Pushing a tag such as `v1.0.1` also attaches the files to a release. Or build it yourself: `npm install`, then `npm run win:build`;
-  the files appear in `release/` (`FinanceDashboard-<version>-portable.exe` and the installer).
+  the files appear in `release/` (`WealthBridge-<version>-portable.exe` and the installer).
 - **Try it without packaging:** `npm run win:dev` builds the web app and opens it in Electron.
 - **Windows warning:** the files are not code-signed, so SmartScreen says "Windows protected your PC" the first time: **More info →
   Run anyway**. Signing needs a paid certificate.
@@ -326,7 +328,7 @@ Two ways to get the app in its own window with no tabs and no address bar. Neith
 
 - **Double-click launcher (the local version).** Install [Node.js](https://nodejs.org) (LTS) once, then double-click **`Run as app.cmd`** in
   the project folder. The first run installs what the app needs and builds it; then your Edge (or Chrome) opens the app in its own window on
-  `http://localhost:4173`. **Close the window to stop it.** Run `npm run shortcut` once to put a **Finance Dashboard** shortcut (with the app
+  `http://localhost:4173`. **Close the window to stop it.** Run `npm run shortcut` once to put a **WealthBridge** shortcut (with the app
   icon) on your Desktop and in the Start menu. Details: it keeps its own browser profile (so the app remembers your settings and your data
   file separately from your normal browsing), a second double-click reuses the running copy, and `node scripts/run-as-app.mjs --port 5000`,
   `--rebuild` and `BROWSER_PATH` / `BROWSER_ARGS` let you change the port, rebuild, or pick the browser.

@@ -89,7 +89,7 @@ function buildHeader(session) {
 }
 
 export function parseVault(bytes) {
-  const bad = (m) => new VaultError('NOT_A_VAULT', m || 'This is not a Finance Dashboard vault file.')
+  const bad = (m) => new VaultError('NOT_A_VAULT', m || 'This is not a WealthBridge vault file.')
   if (!(bytes instanceof Uint8Array) || bytes.length < HEADER1_LEN + IV_LEN + 16) throw bad()
   const v1 = MAGIC1.every((b, i) => bytes[i] === b)
   if (!v1 && !MAGIC.every((b, i) => bytes[i] === b)) throw bad()

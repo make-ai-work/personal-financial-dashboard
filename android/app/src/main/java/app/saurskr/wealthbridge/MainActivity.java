@@ -1,4 +1,4 @@
-package io.github.saurskr.dashboard;
+package app.saurskr.wealthbridge;
 
 import android.content.Intent;
 import com.getcapacitor.BridgeActivity;

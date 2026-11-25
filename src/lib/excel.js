@@ -125,7 +125,7 @@ export async function importWorkbook(buffer) {
   const wb = new ExcelJS.Workbook()
   await wb.xlsx.load(buffer)
   if (!wb.getWorksheet('Items')) {
-    throw new Error('This file is not in the Finance Dashboard layout (no "Items" sheet). Export one from Settings to see the layout.')
+    throw new Error('This file is not in the WealthBridge layout (no "Items" sheet). Export one from Settings to see the layout.')
   }
   const data = emptyData()
   const warnings = []

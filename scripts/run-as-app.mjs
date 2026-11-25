@@ -31,6 +31,7 @@ export function findBrowser({ platform = process.platform, env = process.env, ex
 
 // Its own browser profile: the app keeps its own settings and remembered data file, and closing the window ends the process.
 export function profileDir({ platform = process.platform, env = process.env, home = homedir() } = {}) {
+  // the folder keeps its old name on purpose: renaming it would hide the settings and remembered file of anyone who already runs the app
   if (platform === 'win32') return join(env.LOCALAPPDATA || join(home, 'AppData', 'Local'), 'FinanceDashboard', 'profile')
   if (platform === 'darwin') return join(home, 'Library', 'Application Support', 'FinanceDashboard', 'profile')
   return join(env.XDG_DATA_HOME || join(home, '.local', 'share'), 'FinanceDashboard', 'profile')

@@ -1,6 +1,6 @@
 {
-  "appId": "io.github.saurskr.dashboard",
-  "appName": "My Dashboard",
+  "appId": "app.saurskr.wealthbridge",
+  "appName": "WealthBridge",
   "webDir": "dist",
   "android": {
     "allowMixedContent": false
