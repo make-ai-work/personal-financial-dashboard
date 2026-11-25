@@ -1,17 +1,17 @@
 {
-  "name": "personal-financial-dashboard",
+  "name": "wealth-bridge",
   "private": true,
   "version": "1.0.1",
   "description": "Personal finance dashboard: accounts, property, portfolio and retirement planning, with an encrypted vault (file or Google Drive). Runs as a web app, a Windows app and an Android app.",
   "author": "saurskr",
   "license": "MIT",
-  "homepage": "https://github.com/saurskr/personal-financial-dashboard#readme",
+  "homepage": "https://github.com/saurskr/wealth-bridge#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/saurskr/personal-financial-dashboard.git"
+    "url": "git+https://github.com/saurskr/wealth-bridge.git"
   },
   "bugs": {
-    "url": "https://github.com/saurskr/personal-financial-dashboard/issues"
+    "url": "https://github.com/saurskr/wealth-bridge/issues"
   },
   "type": "module",
   "main": "electron/main.cjs",
@@ -69,8 +69,8 @@
     "vite": "^7.3.7"
   },
   "build": {
-    "appId": "io.github.saurskr.dashboard",
-    "productName": "Finance Dashboard",
+    "appId": "app.saurskr.wealthbridge",
+    "productName": "WealthBridge",
     "directories": {
       "output": "release",
       "buildResources": "build"
@@ -92,10 +92,10 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "artifactName": "FinanceDashboard-${version}-setup.${ext}"
+      "artifactName": "WealthBridge-${version}-setup.${ext}"
     },
     "portable": {
-      "artifactName": "FinanceDashboard-${version}-portable.${ext}"
+      "artifactName": "WealthBridge-${version}-portable.${ext}"
     }
   }
 }

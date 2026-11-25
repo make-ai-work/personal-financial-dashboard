@@ -5,7 +5,7 @@ import { isoDate } from './format.js'
 import { normalizeData } from './model.js'
 
 export const IS_DEMO = import.meta.env?.VITE_DEMO === 'true'
-export const APP_URL = 'https://github.com/saurskr/personal-financial-dashboard#readme'
+export const APP_URL = 'https://github.com/saurskr/wealth-bridge#readme'
 
 const monthDiff = (from, to) => (Number(to.slice(0, 4)) - Number(from.slice(0, 4))) * 12 + Number(to.slice(5, 7)) - Number(from.slice(5, 7))
 

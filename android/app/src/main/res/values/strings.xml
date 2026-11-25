@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">My Dashboard</string>
-    <string name="title_activity_main">My Dashboard</string>
-    <string name="package_name">io.github.saurskr.dashboard</string>
-    <string name="custom_url_scheme">io.github.saurskr.dashboard</string>
+    <string name="app_name">WealthBridge</string>
+    <string name="title_activity_main">WealthBridge</string>
+    <string name="package_name">app.saurskr.wealthbridge</string>
+    <string name="custom_url_scheme">app.saurskr.wealthbridge</string>
 </resources>

@@ -48,7 +48,8 @@ export function SignIn() {
   const googleOff = demoSite || !googleReady
   return (
     <div className="panel center narrow">
-      <h2>Welcome</h2>
+      <h2>Welcome to WealthBridge</h2>
+      <p className="tagline">Simple, completely private, multi-country personal wealth tracker and retirement planner.</p>
       <p className="note">{demoSite
         ? 'This is the demo. Google sign-in is switched off here.'
         : 'Sign in with Google to keep your own data, or carry on in demo mode with sample data.'}</p>

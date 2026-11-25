@@ -150,7 +150,7 @@ export default function Settings() {
               Write it down or save it in a password manager, somewhere other than this vault. Anyone with this key and your file can open it. Making a new key stops the old one working.
               <div className="acts" style={{ marginTop: 8 }}>
                 <button className="btn" onClick={() => navigator.clipboard?.writeText(newKey)}>Copy</button>
-                <button className="btn" onClick={() => download('recovery-key.txt', new TextEncoder().encode(`Finance Dashboard recovery key\n${newKey}\nKeep this somewhere safe and private.\n`))}>Save as a file</button>
+                <button className="btn" onClick={() => download('recovery-key.txt', new TextEncoder().encode(`WealthBridge recovery key\n${newKey}\nKeep this somewhere safe and private.\n`))}>Save as a file</button>
                 <button className="btn primary" onClick={() => setNewKey('')}>I have saved it</button>
               </div>
             </div>
