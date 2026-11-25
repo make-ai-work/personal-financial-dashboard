@@ -1,7 +1,7 @@
 {
-  "name": "Finance Dashboard",
-  "short_name": "Finance",
-  "description": "Your personal finances in one place. Your data stays in an encrypted file you keep.",
+  "name": "WealthBridge",
+  "short_name": "WealthBridge",
+  "description": "Simple, completely private, multi-country personal wealth tracker and retirement planner. Your data stays in an encrypted file you keep.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

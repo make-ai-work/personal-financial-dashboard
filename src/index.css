@@ -599,3 +599,6 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 .rkpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; min-width: 0 }
 .rkpis .kpi { min-width: 0 } .rkpis .kpi b { overflow-wrap: anywhere }
 @media (max-width: 700px) { .rchance { grid-template-columns: minmax(0, 1fr); padding: 14px } .rkpis { gap: 10px } }
+
+/* sign-in screen: the one-line description of the app under the welcome title */
+.tagline{margin:-4px 0 10px;color:var(--muted);font-size:.95rem;line-height:1.4}

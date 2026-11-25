@@ -27,7 +27,7 @@ try {
   assert.equal(await page.locator('link[rel=manifest]').getAttribute('href'), './manifest.webmanifest')
   assert.equal(await page.locator('meta[name=theme-color]').getAttribute('content'), '#0f4c4c')
   const m = await (await page.request.get(`${base}/manifest.webmanifest`)).json()
-  assert.deepEqual([m.name, m.display, m.start_url, m.scope, m.theme_color], ['Finance Dashboard', 'standalone', './', './', '#0f4c4c'])
+  assert.deepEqual([m.name, m.display, m.start_url, m.scope, m.theme_color], ['WealthBridge', 'standalone', './', './', '#0f4c4c'])
   assert.deepEqual(m.icons.map((i) => `${i.sizes}:${i.purpose}`).sort(), ['192x192:any', '512x512:any', '512x512:maskable'])
   for (const i of m.icons) { const r = await page.request.get(`${base}/${i.src}`); assert.equal(r.status(), 200); assert.equal(r.headers()['content-type'], 'image/png') }
 

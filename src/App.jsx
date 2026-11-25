@@ -190,7 +190,7 @@ function Shell() {
 
   const header = (acct) => (
     <header className="topbar">
-      <h1>My Dashboard</h1>
+      <h1>WealthBridge</h1>
       <span className="topbar-actions">
         <button className="btn" onClick={() => setTheme(dark ? 'light' : 'dark')} aria-label={dark ? 'Light mode' : 'Dark mode'}><span className="hide-sm">{dark ? 'Light mode' : 'Dark mode'}</span><span className="show-sm">{dark ? '☀️' : '🌙'}</span></button>
         {acct}
