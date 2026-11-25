@@ -286,8 +286,8 @@ After changing the web app, run `npm run android:sync` again before Run.
   it**, so use *Export backup* now and then; backups are encrypted. Android's automatic cloud backup is switched off for the app.
 - **App id:** `io.github.saurskr.dashboard` (in `capacitor.config.json` and `android/app/build.gradle`). Change both before publishing if
   you want a different one: Google Play never lets it change after release.
-- **Icon and splash screen:** a simple placeholder drawn in the app's colours. Replace `assets/icon-only.png`, `icon-foreground.png` and
-  `icon-background.png` (1024×1024) and run `npm run android:assets`.
+- **Icon and splash screen:** three rising tiles on the app's teal. The drawing and every size (Android, Windows `.ico`, PWA 192/512/maskable)
+  come from one script: edit `scripts/make-icons.mjs`, run `node scripts/make-icons.mjs`, then `npm run android:assets`.
 - **Release to Google Play:** in Android Studio, *Build → Generate Signed App Bundle*. Create a signing key once and **keep it safe and
   out of git**; losing it means you cannot update the app.
 - **Tests:** the app behaviour (first launch, create, relaunch and unlock, backup, restore, delete, Back button, lock after time away) is
