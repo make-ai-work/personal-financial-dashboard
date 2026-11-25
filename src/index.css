@@ -14,8 +14,7 @@ button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .55; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.topbar { background: var(--head); color: var(--head-text); padding: 10px 24px; display: flex; justify-content: space-between; align-items: center; }
-.topbar h1 { font-size: 1.05rem; margin: 0; }
+.slimbar { display: flex; justify-content: flex-end; align-items: center; padding: 10px 24px; }
 .tabs, .subtabs { background: var(--surface); border-bottom: 1px solid var(--line); padding: 0 24px; display: flex; gap: 4px; overflow-x: auto; }
 .tabs button, .subtabs button { background: none; border: 0; border-bottom: 3px solid transparent; color: var(--muted); padding: 12px 14px; white-space: nowrap; }
 .tabs button.on, .subtabs button.on { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
@@ -225,7 +224,7 @@ tr.cur td { background: var(--surface-2); font-weight: 600; }
 
 /* Phone: simpler everywhere. Tighter chrome, calmer tables, full-width dialogs, less detail. */
 @media (max-width: 640px) {
-  .topbar { padding: 8px 14px; } .topbar h1 { font-size: .98rem; }
+  .slimbar { padding: 8px 14px; }
   .tabs { padding: 0 8px; } .tabs button, .subtabs button { padding: 10px 11px; font-size: .88rem; }
   .page { padding: 4px 10px 40px; }
   .panel { border-radius: var(--r-sm); box-shadow: none; margin-bottom: 12px; }
@@ -243,7 +242,11 @@ tr.cur td { background: var(--surface-2); font-weight: 600; }
 }
 
 /* Sign-in and account */
-.topbar-actions { display: flex; gap: 8px; align-items: center; }
+/* one row: the tabs on the left (they scroll if they do not fit), the buttons on the right */
+.menubar { display: flex; align-items: stretch; background: var(--surface); border-bottom: 1px solid var(--line); }
+.menubar .tabs { order: 1; flex: 1; min-width: 0; border-bottom: 0; }
+.gear-tabs { display: none } /* the gear sits after the buttons on a wide screen; on a phone it is at the end of the tabs */
+.menubar-actions { order: 2; flex: none; display: flex; gap: 8px; align-items: center; padding: 0 24px 0 8px; }
 .show-sm { display: none; }
 .gbtn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; margin: 18px 0 4px; padding: 10px 14px; background: #fff; color: #3c4043; border: 1px solid #dadce0; border-radius: var(--r-sm); font-weight: 600; }
 .gbtn:hover { background: #f8f9fa; }
@@ -321,11 +324,12 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 .warn-text { color: var(--amber); font-weight: 600; }
 
 /* Phone notch and gesture bar (the Android app draws edge to edge). Unknown variables fall back to 0 in a normal browser. */
-.topbar { padding-top: calc(10px + max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px))); }
+
+.slimbar { padding-top: calc(10px + max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px))); }
 .wide-page, .page { padding-bottom: calc(60px + max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px))); }
-@media (min-width: 641px) { .tabs, .topbar { padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); } }
+@media (min-width: 641px) { .tabs, .slimbar { padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); } }
 @media (max-width: 640px) {
-  .topbar { padding-top: calc(8px + max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px))); padding-left: max(14px, env(safe-area-inset-left, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px)); }
+  .slimbar { padding-top: calc(8px + max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px))); padding-left: max(14px, env(safe-area-inset-left, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px)); }
   .tabs { padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)); }
 }
 
@@ -511,7 +515,7 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 .tr-now.tone-orange, .tr-now.tone-green, .tr-now.tone-lgreen { border-color: transparent }
 .tr-page .panel { margin-bottom: 14px }
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0 }
-@media (max-width: 640px) { .topbar { flex-wrap: wrap; row-gap: 6px } .topbar-actions { flex-wrap: wrap; gap: 6px; justify-content: flex-end; min-width: 0 } .topbar-actions .btn { padding: 5px 9px } }
+@media (max-width: 640px) { .gear-tabs { display: block } .gear-end { display: none } .menubar { flex-direction: column; border-bottom: 0; background: none } .menubar-actions { order: 1; flex-wrap: wrap; gap: 6px; justify-content: flex-end; padding: 6px 12px; padding-top: calc(6px + max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px))); background: var(--surface); border-bottom: 1px solid var(--line) } .menubar-actions .btn { padding: 5px 9px } .menubar .tabs { order: 2; flex: none; border-bottom: 1px solid var(--line) } }
 .tr-page .p-head .acts { display: flex; gap: 8px; align-items: center; flex-wrap: wrap }
 
 /* Tax residency guided check */
@@ -588,7 +592,7 @@ code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--
 
 /* The title bar and the tabs stay at the top while scrolling. On a phone only the tabs do (the bar would take too much of a small screen). */
 .appbar { position: sticky; top: 0; z-index: 8 }
-@media (max-width: 640px) { .appbar { display: contents } .tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 8 } }
+@media (max-width: 640px) { .appbar, .menubar { display: contents } .tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 8 } }
 .side { top: calc(var(--appbar-h, 0px) + 12px) } .fin-right { top: calc(var(--appbar-h, 0px) + 8px) } .settings .sp-r { top: calc(var(--appbar-h, 0px) + 8px) } .tr-graph { top: calc(var(--appbar-h, 0px) + 8px) }
 .calc.standalone .kpis3 { grid-template-columns: repeat(2, minmax(0, 1fr)) }
 /* Retirement: the chance of success, the big number on the left (with the status under it) and the figures on the right */
